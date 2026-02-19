@@ -1,24 +1,24 @@
 # Highlights
 
-Analyzed non-bug threads: 115 / 124
+Analyzed non-bug threads: 101 / 110
 
 ## Features
 
-- Floor layout and logistics: repeatedly discussed across 69 threads.
-- Planet and surface mechanics: repeatedly discussed across 55 threads.
-- Science and progression: repeatedly discussed across 44 threads.
-- QoL and automation: repeatedly discussed across 40 threads.
-- Combat pressure and defenses: repeatedly discussed across 35 threads.
-- Loot, rewards, and bonuses: repeatedly discussed across 28 threads.
+- Floor layout and logistics: repeatedly discussed across 62 threads.
+- Planet and surface mechanics: repeatedly discussed across 51 threads.
+- QoL and automation: repeatedly discussed across 39 threads.
+- Science and progression: repeatedly discussed across 39 threads.
+- Combat pressure and defenses: repeatedly discussed across 32 threads.
+- Loot, rewards, and bonuses: repeatedly discussed across 26 threads.
 
 ## Highlights
 
-- Floor layout and logistics: positive feedback appeared in 48 threads.
-- Planet and surface mechanics: positive feedback appeared in 40 threads.
-- Science and progression: positive feedback appeared in 36 threads.
+- Floor layout and logistics: positive feedback appeared in 44 threads.
+- Planet and surface mechanics: positive feedback appeared in 38 threads.
+- Science and progression: positive feedback appeared in 33 threads.
 - QoL and automation: positive feedback appeared in 30 threads.
-- Combat pressure and defenses: positive feedback appeared in 28 threads.
-- Loot, rewards, and bonuses: positive feedback appeared in 20 threads.
+- Combat pressure and defenses: positive feedback appeared in 27 threads.
+- Loot, rewards, and bonuses: positive feedback appeared in 19 threads.
 
 ## Complaints
 
