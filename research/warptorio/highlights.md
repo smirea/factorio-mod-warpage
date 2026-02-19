@@ -1,6 +1,6 @@
 # Highlights
 
-Analyzed non-bug threads: 15 / 22
+Analyzed non-bug threads: 15 / 15
 
 ## Features
 
