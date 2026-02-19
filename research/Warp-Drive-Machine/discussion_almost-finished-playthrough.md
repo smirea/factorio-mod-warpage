@@ -1,0 +1,30 @@
+# almost finished playthrough
+
+- URL: https://mods.factorio.com/mod/Warp-Drive-Machine/discussion/65e73a951c4386f599958519
+- Thread ID: 65e73a951c4386f599958519
+- Started by: EffChew
+
+---
+**EffChew (op):** Hello, somewhat experienced factorio player here that has done 2.7k megabase, completed K2, SE, Warptorio2, and a good amount through seablock.
+
+I'm currently researching the rocket silo with 8 warp drive upgrades complete and all platforms upgraded fully. I don't see any other very in depth comments and wanted to share my thoughts. I also get this is an early version.
+
+Overall, this is a very grindy tedious experience compared to playing and completing warptorio2 previously. I like the ideas utilized here but I have to be honest that it ended up letting me down in most aspects of the game. The potential is there, it just needs to be refined. I also miss using the warp floor to teleport in and out of the ship like in warptorio2 after placing down the warp insured platform/harvester platforms. Not utilizing any teleports like that makes this a chore.
+
+Warponium ore is a bear. I found myself choosing between cave diving to find warponium or mining much needed resources on the planet surface. It was really a one or the other based on time as biter attacks would end up destroying my outposts due to sheer numbers if trying to do both. Unfortunately the usual resources won out almost every time hoping that getting those next few tech upgrades would make everything easier.
+
+Putting the warp insured spaceship floor as being behind warponium plates left me not utilizing it. I can't help but be extremely disappointed on this one. Caves were tedious/dangerous with early tech levels and difficult to find warponium without bots and majority of mining speed upgrades. I found myself rushing for bots instead. I then ended up continuing to use blueprints via personal roboports for placing my miners for outposts. It should be encouraged to utilize the warp insured early on and not be behind warponium plates in my opinion. My first experience with finding warponium ore left me annoyed not knowing/having the correct pieces to give water to the miners.
+
+The warp sucker is a fine idea. I like the concept but was also really disappointed when i found i couldn't use it for warponium ore. Unless i'm doing something wrong? I was highly looking forward to making my warponium mining much easier. Without this, it leaves navigating the caves and finding/mining the warponium ore as still tedious even with decked out power armor mk2 and unmoduled 100% miner productivity.
+
+I found the random pirates on planets to be annoying as my gun turrets are out ranged. I found myself leaving those planets asap. The first pirate attacks were okay but i have to stress how important having at least a rocket launcher with a bunch of ammo and raw fish is at the very least with a tank being better. I can see people getting easily annoyed with the first pirate attack for sure. I had to reload back to arm myself properly to be ready for that. Those super fast biters made for also not an enjoyable planet to leave asap as well.
+
+Spaceship condenser. How i loved having water straight in my spaceship on warptorio2. Boy what a let down and waste of resources to even unlock let alone upgrade to rank 4. I saw no difference in water production between the different ranks with setting at 1 but that's maybe because the water creation was so low that i didn't even notice a change. However could be a bug? It provides like 5 water a second on mod setting 1 which is practically useless. On max setting 10, it seems to do about 250 a second and if i put multiple, it halves the output. I didn't realize there was a mod setting until having unlocked rank 4. Having a 2x2 nuclear reactor on my floor 3 leaves me needing more water. It's unfortunate that i have to continue to offshore pumps from the planets. I also found it tedious as stated before that I needed water for warponium as i used my warp pipe 1 for oil and warp pipe 2 was for sulfuric acid. It wasn't until i unlocked warp pipe 3 where I had one dedicated for water and didn't need to swap them around.
+
+The solarium is an idea tossed in but needs to be expanded on. The wind speed / solar power based on each planet sounds like a cool idea. We just need better than basic solar panels and there's currently no way to interact with the wind speed aspect at all. The mid game was a very difficult transition from coal straight to nuclear. The solar was never going output enough energy or even reduce the coal intake in a meaningful amount. The mass flooring upgrade techs needed to happen first and then there's all the new flooring needed. As an end i'd maybe suggest having flooring create 20x instead of 10x or some other thought. It is really grindy.
+
+My favorite part of the mod was utilizing the spaceship linked chest 1 in early mid game. Creating the circuits for entering various items in the chest but still keeping the chest empty when it's requested from another part of the ship was enjoyable to get working. Literally more effective than bots. It's what got me hooked on the mod originally. Also having the warp drive being repaired and then upgraded is a neat concept. Expanding upon the warp upgrade level and giving some extra bonuses like less fuel requirements might be a good idea? Or maybe reduce the pollution levels being created? Just some ideas.
+
+I want to like it but i just found the notable techs lacking which continues leaving the gameplay in a tedious state. The coolest tech before launching a rocket is probably the involution bomb which resets the pollution and biter evolution back to 0. Overall, i'm not sure i'd suggest others to jump right in for a play through just yet. Not being one for using optional mods, I've realized that some of the optional mods are more of a recommended or even could be required for an optimal experience. Maybe a bit more guiding on additional mods would be a good thing?
+
+I appreciate your time and effort in making this. I see much more potential around the corner. It has a vision that takes it beyond warptorio2.

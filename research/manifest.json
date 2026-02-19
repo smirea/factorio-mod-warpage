@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-02-19T22:11:34Z",
+  "base_url": "https://mods.factorio.com",
+  "min_downloads": 1000,
+  "include_core_below_threshold": true,
+  "mods": [
+    {
+      "slug": "warptorio2",
+      "title": "Warptorio 2",
+      "downloads": 34428,
+      "threads": 179,
+      "messages": 606
+    },
+    {
+      "slug": "Warp-Drive-Machine",
+      "title": "Warp Drive Machine",
+      "downloads": 16319,
+      "threads": 227,
+      "messages": 589
+    },
+    {
+      "slug": "warptorio-space-age",
+      "title": "Warptorio 2.0 (Space Age)",
+      "downloads": 9113,
+      "threads": 111,
+      "messages": 418
+    },
+    {
+      "slug": "warptorio",
+      "title": "Warptorio",
+      "downloads": 108,
+      "threads": 22,
+      "messages": 82
+    }
+  ],
+  "failures": [],
+  "pruned_to_category": "Overhaul",
+  "pruned_at": "2026-02-19T22:11:47Z"
+}
