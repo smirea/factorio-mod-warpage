@@ -1,0 +1,150 @@
+local util = require("__core__/lualib/util")
+
+local HUB_ACCUMULATOR_ENTITY_NAME = "warpage-hub-accumulator"
+local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
+local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
+
+---@param entity_type string
+---@param prototype_name string
+---@return table
+local function copy_entity_prototype(entity_type, prototype_name)
+  local prototypes_by_type = data.raw[entity_type]
+  if prototypes_by_type == nil then
+    error("Expected data.raw." .. entity_type .. " to exist.")
+  end
+
+  local prototype = prototypes_by_type[prototype_name]
+  if prototype == nil then
+    error("Expected data.raw." .. entity_type .. "." .. prototype_name .. " to exist.")
+  end
+
+  return util.table.deepcopy(prototype)
+end
+
+---@return table
+local function make_hub_accumulator_prototype()
+  local prototype = copy_entity_prototype("accumulator", "accumulator")
+
+  prototype.name = HUB_ACCUMULATOR_ENTITY_NAME
+  prototype.flags = { "placeable-neutral", "placeable-off-grid", "not-on-map" }
+  prototype.hidden = true
+  prototype.hidden_in_factoriopedia = true
+  prototype.selectable_in_game = false
+  prototype.minable = nil
+  prototype.fast_replaceable_group = nil
+  prototype.collision_box = { { 0, 0 }, { 0, 0 } }
+  prototype.selection_box = { { 0, 0 }, { 0, 0 } }
+  prototype.chargable_graphics = nil
+  prototype.water_reflection = nil
+  prototype.working_sound = nil
+  prototype.open_sound = nil
+  prototype.close_sound = nil
+  prototype.draw_copper_wires = false
+  prototype.draw_circuit_wires = false
+  prototype.order = "z[warpage]-a[hub-accumulator]"
+
+  return prototype
+end
+
+---@return table
+local function make_hub_power_pole_prototype()
+  local prototype = copy_entity_prototype("electric-pole", "small-electric-pole")
+
+  prototype.name = HUB_POWER_POLE_ENTITY_NAME
+  prototype.flags = { "placeable-neutral", "placeable-off-grid", "not-on-map" }
+  prototype.hidden = true
+  prototype.hidden_in_factoriopedia = true
+  prototype.selectable_in_game = false
+  prototype.minable = nil
+  prototype.fast_replaceable_group = nil
+  prototype.collision_box = { { 0, 0 }, { 0, 0 } }
+  prototype.selection_box = { { 0, 0 }, { 0, 0 } }
+  prototype.pictures = nil
+  prototype.water_reflection = nil
+  prototype.working_sound = nil
+  prototype.open_sound = nil
+  prototype.close_sound = nil
+  prototype.maximum_wire_distance = 0
+  prototype.supply_area_distance = 5
+  prototype.auto_connect_up_to_n_wires = 0
+  prototype.draw_copper_wires = false
+  prototype.draw_circuit_wires = false
+  prototype.order = "z[warpage]-b[hub-power-pole]"
+
+  return prototype
+end
+
+---@return table
+local function make_hub_fluid_pipe_prototype()
+  local prototype = copy_entity_prototype("storage-tank", "storage-tank")
+
+  prototype.name = HUB_FLUID_PIPE_ENTITY_NAME
+  prototype.icon = "__base__/graphics/icons/pipe.png"
+  prototype.flags = { "placeable-neutral", "placeable-player", "player-creation" }
+  prototype.hidden = true
+  prototype.hidden_in_factoriopedia = true
+  prototype.minable = nil
+  prototype.fast_replaceable_group = nil
+  prototype.collision_box = { { -0.29, -0.29 }, { 0.29, 0.29 } }
+  prototype.selection_box = { { -0.5, -0.5 }, { 0.5, 0.5 } }
+  prototype.two_direction_only = false
+  prototype.window_bounding_box = { { -0.25, -0.25 }, { 0.25, 0.25 } }
+  prototype.fluid_box.volume = 2000
+  prototype.fluid_box.pipe_connections = {
+    { direction = defines.direction.north, position = { 0, 0 } },
+    { direction = defines.direction.east, position = { 0, 0 } },
+    { direction = defines.direction.south, position = { 0, 0 } },
+    { direction = defines.direction.west, position = { 0, 0 } }
+  }
+  prototype.pictures = {
+    picture = {
+      filename = "__base__/graphics/entity/pipe/pipe-cross.png",
+      priority = "extra-high",
+      width = 128,
+      height = 128,
+      scale = 0.5
+    },
+    fluid_background = {
+      filename = "__base__/graphics/entity/pipe/fluid-background.png",
+      priority = "extra-high",
+      width = 64,
+      height = 40,
+      scale = 0.5
+    },
+    window_background = {
+      filename = "__base__/graphics/entity/pipe/pipe-horizontal-window-background.png",
+      priority = "extra-high",
+      width = 128,
+      height = 128,
+      scale = 0.5
+    },
+    flow_sprite = {
+      filename = "__base__/graphics/entity/pipe/fluid-flow-low-temperature.png",
+      priority = "extra-high",
+      width = 160,
+      height = 18
+    },
+    gas_flow = {
+      filename = "__base__/graphics/entity/pipe/steam.png",
+      priority = "extra-high",
+      line_length = 10,
+      width = 48,
+      height = 30,
+      frame_count = 60,
+      animation_speed = 0.25,
+      scale = 0.5
+    }
+  }
+  prototype.order = "z[warpage]-c[hub-fluid-pipe]"
+
+  return prototype
+end
+
+---@type WarpageStageRunner
+return function(_context)
+  data:extend({
+    make_hub_accumulator_prototype(),
+    make_hub_power_pole_prototype(),
+    make_hub_fluid_pipe_prototype()
+  })
+end

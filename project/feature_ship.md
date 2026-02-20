@@ -2,11 +2,17 @@ The ship is a set of modules connected by small doorways or hallways. All module
 
 The center of the ship is always "The Hub" (see below)
 
-At every warp, the ship is always placed centered at 0,0 and all its configuration is moved over from the previous warp. the player is also moved over from where they were
+At every warp, the ship is always placed centered at 0,0 and all its configuration is moved over from the previous warp. the player is also moved over from where they were. The ship will move with the player across many surfaces
 
 # The Hub
 
 The Hub is the center of the ship, it's invincible and not mineable and it's a custom compound entity, the main entity being a `cargo-landing-pad`. The hub will get more features, upgrades and functionality with research. The hub also has its own accumulator, electrical grid and power supply area but no electrical wire connection (still has circuit wire connectors).
+
+Hub entities currently used:
+- Main: `cargo-landing-pad`
+- Hidden centered power pole: `warpage-hub-power-pole`
+- Hidden centered accumulator: `warpage-hub-accumulator`
+- Fluid tank pipes (bottom-left and bottom-right): `warpage-hub-fluid-pipe`
 
 Note: at the very beginning of the game, the hub starts off destroyed and the first task is to rebuild it.
 

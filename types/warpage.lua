@@ -17,6 +17,34 @@
 ---@field x number
 ---@field y number
 
+---@class LuaFluidBox
+---@field get_capacity fun(index: integer): number
+
+---@class LuaWireConnector
+---@field valid boolean
+---@field is_connected_to fun(target: LuaWireConnector, origin?: integer): boolean
+---@field connect_to fun(target: LuaWireConnector, reach_check?: boolean, origin?: integer): boolean
+
+---@class LuaGuiElement
+---@field valid boolean
+---@field name string
+---@field style? table
+---@field caption? string|table
+---@field value? number
+---@field add? fun(options: table): LuaGuiElement
+---@field clear? fun()
+---@field destroy? fun()
+---@field [string] LuaGuiElement|unknown
+
+---@class LuaGui
+---@field screen LuaGuiElement
+---@field relative LuaGuiElement
+
+---@class LuaPlayer
+---@field valid boolean
+---@field index integer
+---@field gui LuaGui
+
 ---@class LuaForce
 ---@field name string
 
@@ -30,11 +58,16 @@
 ---@field force LuaForce
 ---@field surface LuaSurface
 ---@field position MapPosition
+---@field fluidbox LuaFluidBox
 ---@field minable? boolean
 ---@field destructible? boolean
 ---@field quality? QualityID
+---@field energy? number
+---@field electric_buffer_size? number
 ---@field destroy fun(): boolean
 ---@field teleport fun(position: MapPosition): boolean
+---@field get_fluid_contents fun(): table<string, number>
+---@field get_wire_connector fun(wire_connector_id: integer, or_create: boolean): LuaWireConnector|nil
 
 ---@class LuaSurface
 ---@field name string
@@ -44,6 +77,8 @@
 ---@class LuaGameScript
 ---@field surfaces table<integer|string, LuaSurface>
 ---@field forces table<string, LuaForce>
+---@field players table<integer, LuaPlayer>
+---@field get_player fun(player_index: integer): LuaPlayer|nil
 
 ---@class WarpageFeatureManifest
 ---@field id string
