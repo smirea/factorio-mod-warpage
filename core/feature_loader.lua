@@ -28,7 +28,7 @@ local function load_feature(feature_folder_name, seen_ids)
   common.ensure_non_empty_string(feature_folder_name, "feature index entry")
   ---@cast feature_folder_name string
 
-  local feature_module_path = "features." .. feature_folder_name .. ".feature"
+  local feature_module_path = "modules." .. feature_folder_name .. ".feature"
   local feature_manifest = require(feature_module_path)
   common.ensure_table(feature_manifest, feature_module_path)
   common.ensure_non_empty_string(feature_manifest.id, feature_module_path .. ".id")

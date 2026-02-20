@@ -20,7 +20,7 @@ When writing new functionality check ./core and especially ./core/utils first to
 - Run LuaLS checks before commit:
   - `/Users/stefan/.local/share/nvim/mason/packages/lua-language-server/lua-language-server --configpath .luarc.json --check . --checklevel=Warning`
 - Run luacheck before commit:
-  - `luacheck control.lua data.lua data-updates.lua data-final-fixes.lua settings.lua settings-updates.lua settings-final-fixes.lua feature_index.lua core features types`
+  - `luacheck control.lua data.lua data-updates.lua data-final-fixes.lua settings.lua settings-updates.lua settings-final-fixes.lua feature_index.lua core modules types`
 - Run lefthook before commit:
   - `lefthook run pre-commit`
 
@@ -41,7 +41,7 @@ This repository contains a Factorio 2.0-ready scaffold with strict stage routing
 - `data.lua`, `data-updates.lua`, `data-final-fixes.lua`: prototype stage entry points.
 - `control.lua`: runtime entry point.
 - `core`: shared framework utilities.
-- `features/<feature-name>`: all code for one feature.
+- `modules/<feature-name>`: all code for one feature.
 
 ### Core framework
 
@@ -86,7 +86,7 @@ Control-stage modules receive one context table with:
 
 ### Adding a new feature
 
-1. Create `features/<new_feature>/feature.lua` with `id` and `stages`.
+1. Create `modules/<new_feature>/feature.lua` with `id` and `stages`.
 2. Add any stage modules referenced by `stages`.
 3. Add `<new_feature>` to `feature_index.lua`.
 4. In control modules, register events through `context.events`.
