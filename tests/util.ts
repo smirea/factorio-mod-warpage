@@ -31,7 +31,7 @@ function clear_launch_root(launch_root: string): void {
     return;
   }
 
-  execFileSync("trash", ["-rf", launch_root], {
+  execFileSync("trash", [launch_root], {
     stdio: "inherit"
   });
 }

@@ -22,8 +22,20 @@ NEVER EVER use fallbacks. Things that should exist, should exist.
 - Run LuaLS checks before commit:
   - `/Users/stefan/.local/share/nvim/mason/packages/lua-language-server/lua-language-server --configpath .luarc.json --check . --checklevel=Warning`
 - Run luacheck before commit:
-  - `luacheck control.lua data.lua data-updates.lua data-final-fixes.lua settings.lua settings-updates.lua settings-final-fixes.lua core modules types`
+  - `luacheck control.lua data.lua data-updates.lua data-final-fixes.lua settings.lua settings-updates.lua settings-final-fixes.lua core modules tests types`
+- Run ship integration tests before commit on a dedicated test save with `warpage-enable-ship-tests=true`:
+  - `LAUNCH_ROOT=/Users/stefan/code/factorio-mod-warpage/.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=420 ./scripts/launch.sh warpage-ship-tests`
+  - Verify `/Users/stefan/code/factorio-mod-warpage/.tmp/factorio-test-headless/write-data/factorio-current.log` contains `[warpage] ship tests passed`.
 - Run `HEADLESS=1 ./scripts/launch.sh` to check game boots up
+
+## Running Ship Tests
+
+1. Create or load a dedicated save for tests (recommended name: `warpage-ship-tests`).
+2. In that save, open Mod settings and set runtime-global `warpage-enable-ship-tests` to `true`.
+3. Save and quit.
+4. Run headless:
+   - `LAUNCH_ROOT=/Users/stefan/code/factorio-mod-warpage/.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=420 ./scripts/launch.sh warpage-ship-tests`
+5. Confirm log output includes `[warpage] ship tests passed` and no non-recoverable errors.
 
 ## Git hooks
 

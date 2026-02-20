@@ -1,11 +1,24 @@
 local StorageSchema = require("core.storage_schema")
 local Ship = require("modules.ship")
-local ShipTests = require("tests.ship_tests")
 
 ---@return boolean
 local function is_debug_mode_enabled()
   local setting = settings.global["warpage-debug-mode"]
   return setting ~= nil and setting.value == true
+end
+
+---@return boolean
+local function is_ship_tests_enabled()
+  local setting = settings.global["warpage-enable-ship-tests"]
+  if setting == nil then
+    error("Missing runtime-global setting 'warpage-enable-ship-tests'.")
+  end
+
+  if type(setting.value) ~= "boolean" then
+    error("Runtime-global setting 'warpage-enable-ship-tests' must be a boolean.")
+  end
+
+  return setting.value == true
 end
 
 ---@param message string
@@ -54,6 +67,11 @@ return function(context)
     end
   })
 
-  ShipTests.bind(events)
+  if is_ship_tests_enabled() then
+    local ShipTests = require("tests.ship_tests")
+    ShipTests.bind(events)
+    debug_log("Ship tests enabled.")
+  end
+
   Ship.bind(events)
 end

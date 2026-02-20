@@ -7,6 +7,13 @@ return function(_context)
       setting_type = "runtime-global",
       default_value = false,
       order = "a"
+    },
+    {
+      type = "bool-setting",
+      name = "warpage-enable-ship-tests",
+      setting_type = "runtime-global",
+      default_value = false,
+      order = "b"
     }
   })
 end

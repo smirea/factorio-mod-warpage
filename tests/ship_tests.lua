@@ -15,7 +15,7 @@ local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
 
 local TEST_TILE_NAME = "stone-path"
 local TEST_TILE_RADIUS = 32
-local TEST_NTH_TICK = 1
+local TEST_NTH_TICK = 30
 local TEST_FEATURE_KEY = "ship_tests"
 
 ---@class WarpageShipTestsRepairRequirement
@@ -70,16 +70,6 @@ local function resolve_hub_force()
   end
 
   return force
-end
-
----@return boolean
-local function is_test_environment()
-  local runtime_game = require_game()
-  local player_count = 0
-  for _ in pairs(runtime_game.players) do
-    player_count = player_count + 1
-  end
-  return player_count == 0
 end
 
 ---@param main_entity LuaEntity
@@ -497,10 +487,6 @@ function ShipTests.bind(events)
 
   events:bind({
     on_init = function()
-      if not is_test_environment() then
-        return
-      end
-
       local state = ensure_test_state()
       state.enabled = true
       state.completed = false
@@ -508,10 +494,6 @@ function ShipTests.bind(events)
       prepare_test_environment()
     end,
     on_configuration_changed = function()
-      if not is_test_environment() then
-        return
-      end
-
       local state = ensure_test_state()
       state.enabled = true
       state.completed = false
