@@ -102,7 +102,7 @@ function EventBus.new()
     _on_configuration_changed = {},
     _events = {},
     _nth_tick = {}
-  }, EventBus)
+  }, EventBus --[[@as metatable]])
 end
 
 function EventBus:_assert_not_bound()
@@ -182,7 +182,7 @@ function EventBus:for_source(source)
   return setmetatable({
     _bus = self,
     _source = source
-  }, ScopedBinding)
+  }, ScopedBinding --[[@as metatable]])
 end
 
 function EventBus:bind()

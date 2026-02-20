@@ -105,7 +105,7 @@ function CompoundEntity.new(definition)
   return setmetatable({
     _definition = normalized_definition,
     _bound = false
-  }, CompoundEntity)
+  }, CompoundEntity --[[@as metatable]])
 end
 
 ---@param entity LuaEntity|nil

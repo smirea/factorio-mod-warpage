@@ -7,6 +7,7 @@ globals = {
   "game",
   "log",
   "mods",
+  "prototypes",
   "remote",
   "rendering",
   "script",

@@ -1,0 +1,5816 @@
+---@meta
+
+-- Generated from Factorio runtime JSON docs (2.0.73, api v6).
+
+---@alias Weight number
+---@alias CircularParticleCreationSpecification { name: string, direction: number, direction_deviation: number, speed: number, speed_deviation: number, starting_frame_speed: number, starting_frame_speed_deviation: number, height: number, height_deviation: number, vertical_speed: number, vertical_speed_deviation: number, center: Vector, creation_distance: number, creation_distance_orientation: number, use_source_position: boolean }
+---@alias BeltConnectionType "input"|"output"
+---@alias FlowStatisticsID ItemWithQualityID|FluidID|EntityWithQualityID|EntityID
+---@alias ItemStackIndex integer
+---@alias LogisticFilterIndex integer
+---@alias ItemCountType integer
+---@alias InventoryIndex integer
+---@alias ComparatorString "="|">"|"<"|"≥"|">="|"≤"|"<="|"≠"|"!="
+---@alias SpritePath string
+---@alias GameViewSettings { show_alert_gui: boolean, show_controller_gui: boolean, show_crafting_queue: boolean, show_entity_info: boolean, show_entity_tooltip: boolean, show_hotkey_suggestions: boolean, show_map_view_options: boolean, show_minimap: boolean, show_quickbar: boolean, show_rail_block_visualisation: boolean, show_research_info: boolean, show_shortcut_bar: boolean, show_side_menu: boolean, show_surface_list: boolean, show_tool_bar: boolean, update_entity_selection: boolean }
+---@alias HeatConnection { position: Vector, direction: integer }
+---@alias CollisionMask { layers: table<string, true>, not_colliding_with_itself?: boolean, consider_tile_transitions?: boolean, colliding_with_tiles_only?: boolean }
+---@alias Loot { item: string, probability: number, count_min: number, count_max: number }
+---@alias ModuleEffectValue number
+---@alias ModuleEffects { consumption?: ModuleEffectValue, speed?: ModuleEffectValue, productivity?: ModuleEffectValue, pollution?: ModuleEffectValue, quality?: ModuleEffectValue }
+---@alias MapTick integer
+---@alias BlueprintSignalIcon { signal: SignalID, index: integer }
+---@alias RenderLayer string|"zero"|"background-transitions"|"under-tiles"|"decals"|"above-tiles"|"ground-layer-1"|"ground-layer-2"|"ground-layer-3"|"ground-layer-4"|"ground-layer-5"|"lower-radius-visualization"|"radius-visualization"|"transport-belt-integration"|"resource"|"building-smoke"|"rail-stone-path-lower"|"rail-stone-path"|"rail-tie"|"decorative"|"ground-patch"|"ground-patch-higher"|"ground-patch-higher2"|"rail-chain-signal-metal"|"rail-screw"|"rail-metal"|"remnants"|"floor"|"transport-belt"|"transport-belt-endings"|"floor-mechanics-under-corpse"|"corpse"|"floor-mechanics"|"item"|"transport-belt-reader"|"lower-object"|"transport-belt-circuit-connector"|"lower-object-above-shadow"|"lower-object-overlay"|"object-under"|"object"|"cargo-hatch"|"higher-object-under"|"higher-object-above"|"train-stop-top"|"item-in-inserter-hand"|"above-inserters"|"wires"|"under-elevated"|"elevated-rail-stone-path-lower"|"elevated-rail-stone-path"|"elevated-rail-tie"|"elevated-rail-screw"|"elevated-rail-metal"|"elevated-lower-object"|"elevated-object"|"elevated-higher-object"|"fluid-visualization"|"wires-above"|"entity-info-icon"|"entity-info-icon-above"|"explosion"|"projectile"|"smoke"|"air-object"|"air-entity-info-icon"|"light-effect"|"selection-box"|"higher-selection-box"|"collision-selection-box"|"arrow"|"cursor"
+---@alias IconDrawSpecification { shift: Vector, scale: number, scale_for_many: number, render_layer: "entity-info-icon"|"entity-info-icon-above"|"air-entity-info-icon" }
+---@alias MapViewSettings table
+---@alias CursorBoxRenderType "entity"|"multiplayer-entity"|"electricity"|"copy"|"not-allowed"|"pair"|"logistics"|"train-visualization"|"blueprint-snap-rectangle"|"spidertron-remote-selected"|"spidertron-remote-to-be-selected"
+---@alias IconSequencePositioning { inventory_index: integer, max_icons_per_row: integer, max_icon_rows: integer, shift: Vector, scale: number, separation_multiplier: number, multi_row_initial_height_modifier: number }
+---@alias CollisionLayerID string
+---@alias ScrollPolicy "never"|"dont-show-but-allow-scrolling"|"always"|"auto"|"auto-and-reserve-space"
+---@alias MouseButtonFlags table<"left"|"right"|"middle"|"button-4"|"button-5"|"button-6"|"button-7"|"button-8"|"button-9", true>
+---@alias SwitchState "left"|"right"|"none"
+---@alias GuiElementType "button"|"sprite-button"|"checkbox"|"flow"|"frame"|"label"|"line"|"progressbar"|"table"|"textfield"|"radiobutton"|"sprite"|"scroll-pane"|"drop-down"|"list-box"|"camera"|"choose-elem-button"|"text-box"|"slider"|"minimap"|"entity-preview"|"empty-widget"|"tabbed-pane"|"tab"|"switch"
+---@alias PrototypeWithQuality { name: string, quality?: string }
+---@alias ElemType "achievement"|"decorative"|"entity"|"equipment"|"fluid"|"item"|"item-group"|"recipe"|"signal"|"technology"|"tile"|"asteroid-chunk"|"space-location"|"item-with-quality"|"entity-with-quality"|"recipe-with-quality"|"equipment-with-quality"
+---@alias ElemID { type: ElemType, name: string, quality?: string, signal_type?: SignalIDType }
+---@alias Vector { x: number, y: number }|table
+---@alias ChunkPosition { x: integer, y: integer }|table
+---@alias ItemStackLocation { inventory: integer, slot: integer }
+---@alias ItemWithQualityCount { name: string, quality: string, count: ItemCountType }
+---@alias ItemFilter { name?: ItemID, quality?: QualityID, comparator?: ComparatorString }|string
+---@alias Command { type: integer }
+---@alias GuiArrowSpecification { margin: integer, type: GuiArrowType }
+---@alias GuiArrowType "nowhere"|"goal"|"entity_info"|"active_window"|"entity"|"position"|"crafting_queue"|"item_stack"
+---@alias Vector3D { x: number, y: number, z: number }|table
+---@alias RidingState { acceleration: integer, direction: integer }
+---@alias ItemWithQualityCounts ItemWithQualityCount[]
+---@alias EquipmentWithQualityCounts { name: string, count: integer, quality: string }
+---@alias ItemToPlace { name: string, count: ItemCountType }
+---@alias TrainSchedule { current: integer, records: ScheduleRecord[] }
+---@alias PlatformSchedule { current: integer, records: ScheduleRecord[] }
+---@alias RailLocation { position: MapPosition, direction: integer, rail_layer: integer }
+---@alias EffectReceiver { base_effect: ModuleEffects, uses_module_effects: boolean, uses_beacon_effects: boolean, uses_surface_effects: boolean }
+---@alias RecipeIDAndQualityIDPair { name: RecipeID, quality: QualityID }
+---@alias WorkerRobotOrder { type: integer, target?: LuaEntity, item_to_place?: ItemWithQualityCount, secondary_target?: LuaEntity, cliff_explosive_id?: LuaItemPrototype, target_item?: ItemIDAndQualityIDPair, target_count?: ItemCountType }
+---@alias SegmentEngineSpecification { segments: SegmentSpecification[], max_body_nodes: integer }
+---@alias SegmentSpecification { segment: LuaEntityPrototype, distance_from_head: number }
+---@alias TileBuildabilityRule { area: BoundingBox, colliding_tiles: CollisionMask, required_tiles: CollisionMask, remove_on_collision: boolean }
+---@alias CustomTooltipField { name: LocalisedString, value: LocalisedString, quality_header: string, quality_values: table<string, LocalisedString>, order: integer, show_in_factoriopedia: boolean, show_in_tooltip: boolean }
+---@alias ForceID string|integer|LuaForce
+---@alias FluidID string|LuaFluidPrototype|Fluid
+---@alias EntityWithQualityID LuaEntity|LuaEntityPrototype|string|EntityIDAndQualityIDPair
+---@alias EntityIDAndQualityIDPair { name: EntityID, quality?: QualityID }
+---@alias ItemWithQualityID LuaItemStack|LuaItemPrototype|string|ItemIDAndQualityIDPair
+---@alias ItemIDAndQualityIDPair { name: ItemID, quality?: QualityID }
+---@alias ItemID LuaItemPrototype|LuaItemStack|LuaItem|string
+---@alias EntityID LuaEntityPrototype|LuaEntity|string
+---@alias VirtualSignalID LuaVirtualSignalPrototype|string
+---@alias TechnologyID LuaTechnologyPrototype|LuaTechnology|string
+---@alias ParticleID LuaParticlePrototype|string
+---@alias DamageTypeID LuaDamagePrototype|string
+---@alias TrivialSmokeID LuaTrivialSmokePrototype|string
+---@alias TextAlign "left"|"right"|"center"
+---@alias VerticalTextAlign "top"|"middle"|"baseline"|"bottom"
+---@alias QualityID LuaQualityPrototype|string
+---@alias RecipeCategoryID LuaRecipeCategoryPrototype|string
+---@alias RecipeID LuaRecipePrototype|LuaRecipe|string
+---@alias TileID LuaTilePrototype|LuaTile|string
+---@alias Fluid { name: string, amount: number, temperature?: number }
+---@alias EquipmentID LuaEquipmentPrototype|LuaEquipment|string
+---@alias EquipmentWithQualityID LuaEquipmentPrototype|LuaEquipment|string|EquipmentIDAndQualityIDPair
+---@alias EquipmentIDAndQualityIDPair { name: EquipmentID, quality?: QualityID }
+---@alias PathfinderFlags { allow_destroy_friendly_entities?: boolean, allow_paths_through_own_entities?: boolean, cache?: boolean, prefer_straight_paths?: boolean, low_priority?: boolean, no_break?: boolean }
+---@alias BoundingBox { left_top: MapPosition, right_bottom: MapPosition, orientation?: RealOrientation }|table
+---@alias PlaySoundSpecification { path: SoundPath, position?: MapPosition, volume_modifier?: number, override_sound_type?: SoundType }
+---@alias SurfaceIdentification integer|string|LuaSurface
+---@alias PlayerIdentification integer|string|LuaPlayer
+---@alias ForceSet ForceID[]|ForceID
+---@alias DecorativeID LuaDecorativePrototype|string
+---@alias AsteroidChunkID LuaAsteroidChunkPrototype|string
+---@alias SpaceConnectionID LuaSpaceConnectionPrototype|string
+---@alias SpaceLocationID LuaSpaceLocationPrototype|string
+---@alias SignalFilter { type?: SignalIDType, name: string, quality?: QualityID, comparator?: ComparatorString }|string
+---@alias LogisticFilter { value?: SignalFilter, min?: integer, max?: ItemCountType, minimum_delivery_count?: ItemCountType, import_from?: SpaceLocationID }
+---@alias WireConnection { target: LuaWireConnector, origin?: integer }
+---@alias PrintSettings { color?: Color, sound?: integer, skip?: integer, sound_path?: SoundPath, volume_modifier?: number, game_state?: boolean }
+---@alias SurfacePropertyID LuaSurfacePropertyPrototype|string
+---@alias ScriptRenderTarget LuaEntity|MapPosition|ScriptRenderTargetTable
+---@alias ScriptRenderTargetTable { entity?: LuaEntity, offset?: Vector, position?: MapPosition }
+---@alias ItemStackIdentification string|ItemStackDefinition|LuaItemStack
+---@alias QualityCondition { quality?: string, comparator?: ComparatorString }|string
+---@alias CargoDestination { type: integer, station?: LuaEntity, hatch?: LuaCargoHatch, transform_launch_products?: boolean, surface?: SurfaceIdentification, position?: MapPosition, land_at_exact_position?: boolean, space_platform?: LuaSpacePlatform }
+---@alias ScheduleRecordPosition { schedule_index?: integer, interrupt_index?: integer }
+---@alias ZoomLimits { closest?: ZoomSpecification, furthest?: ZoomSpecification, furthest_game_view?: ZoomSpecification }
+---@alias ZoomSpecification { zoom?: number, distance?: number, max_distance?: number }
+---@alias ScriptRenderMode "game"|"chart"
+---@alias LuaEventType LuaCustomEventPrototype|LuaCustomInputPrototype|integer|string
+---@alias TilePosition { x: integer, y: integer }|table
+---@alias RealOrientation number
+---@alias MapLocation { position: MapLocation, direction: integer }
+---@alias LocalisedString string|number|boolean|LuaObject|nil|LocalisedString[]
+---@alias MapPosition { x: number, y: number }|table
+---@alias Color { r?: number, g?: number, b?: number, a?: number }|table
+---@alias RangeMode "center-to-center"|"bounding-box-to-bounding-box"|"center-to-bounding-box"
+---@alias PowerSwitchBlueprintControlBehavior { circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias BlueprintEntity { entity_number: integer, name: string, position: MapPosition, direction?: integer, mirror?: boolean, quality?: string, items?: BlueprintInsertPlan[], tags?: Tags, wires?: BlueprintWire[], burner_fuel_inventory?: BlueprintInventoryWithFilters }
+---@alias BlueprintWire table
+---@alias MathExpression string
+---@alias UndoRedoAction { type: "built-entity"|"built-tile"|"copy-entity-settings"|"removed-entity"|"removed-tile"|"upgraded-entity"|"upgraded-modules"|"wire-added"|"wire-removed"|"rotated-entity", tags?: Tags }
+---@alias BlueprintWireEnd { entity: BlueprintEntity, surface_index?: integer, connector: integer }
+---@alias LinkedGameControl "move-up"|"move-down"|"move-left"|"move-right"|"alternative-gui-move-up"|"alternative-gui-move-down"|"alternative-gui-move-left"|"alternative-gui-move-right"|"open-character-gui"|"open-gui"|"confirm-gui"|"toggle-free-cursor"|"mine"|"build"|"build-ghost"|"super-forced-build"|"clear-cursor"|"pipette"|"rotate"|"reverse-rotate"|"flip-horizontal"|"flip-vertical"|"pick-items"|"drop-cursor"|"show-info"|"shoot-enemy"|"shoot-selected"|"next-weapon"|"toggle-driving"|"zoom-in"|"zoom-out"|"use-item"|"alternative-use-item"|"toggle-console"|"copy-entity-settings"|"paste-entity-settings"|"controller-gui-logistics-tab"|"controller-gui-character-tab"|"controller-gui-crafting-tab"|"toggle-rail-layer"|"select-for-blueprint"|"select-for-cancel-deconstruct"|"select-for-super-forced-deconstruct"|"reverse-select"|"alt-reverse-select"|"deselect"|"cycle-blueprint-forwards"|"cycle-blueprint-backwards"|"focus-search"|"larger-terrain-building-area"|"smaller-terrain-building-area"|"remove-pole-cables"|"build-with-obstacle-avoidance"|"add-station"|"add-temporary-station"|"rename-all"|"fast-wait-condition"|"drag-map"|"move-tag"|"place-in-chat"|"place-ping"|"pin"|"activate-tooltip"|"next-surface"|"previous-surface"|"cycle-quality-up"|"cycle-quality-down"|"scroll-tooltip-up"|"scroll-tooltip-down"|"craft"|"craft-5"|"craft-all"|"cancel-craft"|"cancel-craft-5"|"cancel-craft-all"|"pick-item"|"stack-transfer"|"inventory-transfer"|"fast-entity-transfer"|"cursor-split"|"stack-split"|"inventory-split"|"fast-entity-split"|"toggle-filter"|"open-item"|"copy-inventory-filter"|"paste-inventory-filter"|"show-quick-panel"|"next-quick-panel-page"|"previous-quick-panel-page"|"next-quick-panel-tab"|"previous-quick-panel-tab"|"rotate-active-quick-bars"|"next-active-quick-bar"|"previous-active-quick-bar"|"quick-bar-button-1"|"quick-bar-button-2"|"quick-bar-button-3"|"quick-bar-button-4"|"quick-bar-button-5"|"quick-bar-button-6"|"quick-bar-button-7"|"quick-bar-button-8"|"quick-bar-button-9"|"quick-bar-button-10"|"quick-bar-button-1-secondary"|"quick-bar-button-2-secondary"|"quick-bar-button-3-secondary"|"quick-bar-button-4-secondary"|"quick-bar-button-5-secondary"|"quick-bar-button-6-secondary"|"quick-bar-button-7-secondary"|"quick-bar-button-8-secondary"|"quick-bar-button-9-secondary"|"quick-bar-button-10-secondary"|"action-bar-select-page-1"|"action-bar-select-page-2"|"action-bar-select-page-3"|"action-bar-select-page-4"|"action-bar-select-page-5"|"action-bar-select-page-6"|"action-bar-select-page-7"|"action-bar-select-page-8"|"action-bar-select-page-9"|"action-bar-select-page-10"|"copy"|"cut"|"paste"|"cycle-clipboard-forwards"|"cycle-clipboard-backwards"|"undo"|"redo"|"toggle-menu"|"toggle-map"|"close-menu"|"open-technology-gui"|"production-statistics"|"logistic-networks"|"toggle-blueprint-library"|"open-trains-gui"|"open-factoriopedia"|"back"|"forward"|"pause-game"|"confirm-message"|"previous-mod"|"connect-train"|"disconnect-train"|"submit-feedback"|"editor-next-variation"|"editor-previous-variation"|"editor-clone-item"|"editor-delete-item"|"editor-toggle-pause"|"editor-tick-once"|"editor-speed-up"|"editor-speed-down"|"editor-reset-speed"|"editor-set-clone-brush-source"|"editor-set-clone-brush-destination"|"editor-switch-to-surface"|"editor-remove-scripting-object"|"debug-toggle-atlas-gui"|"debug-toggle-gui-visibility"|"debug-toggle-debug-settings"|"debug-toggle-basic"|"debug-reset-zoom"|"debug-reset-zoom-2x"|"toggle-gui-debug"|"toggle-gui-style-view"|"toggle-gui-shadows"|"toggle-gui-glows"|"open-prototypes-gui"|"open-prototype-explorer-gui"|"increase-ui-scale"|"decrease-ui-scale"|"reset-ui-scale"|"slash-editor"|"toggle-entity"|"next-player-in-replay"|"move-blueprint-absolute-grid-up"|"move-blueprint-absolute-grid-down"|"move-blueprint-absolute-grid-left"|"move-blueprint-absolute-grid-right"|"move-blueprint-entities-up"|"move-blueprint-entities-down"|"move-blueprint-entities-left"|"move-blueprint-entities-right"|"play-next-track"|"play-previous-track"|"pause-resume-music"|""
+---@alias PipetteID LuaEntityPrototype|LuaEquipmentPrototype|LuaFluidPrototype|LuaItemPrototype|LuaRecipePrototype|LuaSpaceLocationPrototype|LuaTilePrototype|LuaVirtualSignalPrototype
+---@alias ForceCondition "all"|"enemy"|"ally"|"friend"|"not-friend"|"same"|"not-same"
+---@alias FluidFlowDirection "input-output"|"input"|"output"
+---@alias PipeConnectionType "normal"|"underground"|"linked"
+---@alias PipeConnectionDefinition { connection_type: PipeConnectionType, positions: MapPosition[], max_underground_distance?: integer, flow_direction: FluidFlowDirection, direction: integer, connection_category: string[], linked_connection_id?: integer }
+---@alias FluidAmount number
+---@alias ProductionType "none"|"input"|"input-output"|"output"
+---@alias SurfaceCondition { property: string, min: number, max: number }
+---@alias ItemPrototypeFlags table<ItemPrototypeFlag, true>
+---@alias ItemPrototypeFlag "draw-logistic-overlay"|"excluded-from-trash-unrequested"|"always-show"|"hide-from-bonus-gui"|"hide-from-fuel-tooltip"|"not-stackable"|"primary-place-result"|"mod-openable"|"only-in-cursor"|"spawnable"|"spoil-result"|"ignore-spoil-time-modifier"
+---@alias UpgradeMapperSource { type: "item"|"entity", name?: string, quality?: string, comparator?: ComparatorString, module_filter?: EntityIDFilter }
+---@alias ItemStackDefinition { name: string, count?: ItemCountType, quality?: string, health?: number, durability?: number, ammo?: number, tags?: string[], custom_description?: LocalisedString, spoil_percent?: number }
+---@alias SelectionModeFlags table<"blueprint"|"deconstruct"|"cancel-deconstruct"|"items"|"trees"|"buildable-type"|"nothing"|"items-to-place"|"any-entity"|"any-tile"|"same-force"|"not-same-force"|"friend"|"enemy"|"upgrade"|"cancel-upgrade"|"downgrade"|"entity-with-health"|"is-military-target"|"entity-with-owner"|"avoid-rolling-stock"|"avoid-vehicle"|"controllable"|"controllable-add"|"controllable-remove"|"entity-ghost"|"tile-ghost", true>
+---@alias CapsuleAction { type: "throw"|"equipment-remote"|"use-on-self"|"artillery-remote"|"destroy-cliffs" }
+---@alias PrototypeFilterMode "none"|"whitelist"|"blacklist"
+---@alias SpoilToTriggerResult { trigger: TriggerItem[], items_per_trigger: integer }
+---@alias UpgradeMapperDestination { type: "item"|"entity", name?: string, quality?: string, module_limit?: integer, module_slots?: BlueprintItemIDAndQualityIDPair[] }
+---@alias TargetType "entity"|"position"|"direction"
+---@alias AmmoType { action?: TriggerItem[], target_type: TargetType, clamp_position?: boolean, energy_consumption?: number, range_modifier?: number, cooldown_modifier?: number, consumption_modifier?: number, target_filter?: string[] }
+---@alias BlueprintItemFilter { index: integer, name?: ItemID, quality?: QualityID, comparator?: ComparatorString }
+---@alias BlueprintInventoryWithFilters { bar?: ItemStackIndex, filters?: BlueprintItemFilter[] }
+---@alias BlueprintInventory table
+---@alias SpacePlatformTileDefinition { tile: LuaTilePrototype, position: TilePosition }
+---@alias MineableProperties { minable: boolean, mining_time: number, transfer_entity_health_to_products: boolean, mining_particle?: string, products?: Product[], fluid_amount?: number, required_fluid?: string, mining_trigger?: TriggerItem[] }
+---@alias BlueprintEquipment { equipment: EquipmentWithQualityID, position: EquipmentPosition }
+---@alias EquipmentPosition { x: integer, y: integer }|table
+---@alias ModSetting { value: integer|number|boolean|string|Color }
+---@alias Signal { signal: SignalID, count: integer }
+---@alias DisplayPanelMessageDefinition { text: string, icon: SignalID, condition: CircuitConditionDefinition }
+---@alias CircuitNetworkSelection { red?: boolean, green?: boolean }
+---@alias CircuitCondition { comparator?: ComparatorString, first_signal?: SignalID, second_signal?: SignalID, constant?: integer }
+---@alias SignalID { type?: SignalIDType, name?: string, quality?: QualityID }
+---@alias SignalIDBase { type?: SignalIDType, name?: string }
+---@alias SignalIDType "item"|"fluid"|"virtual"|"entity"|"recipe"|"space-location"|"asteroid-chunk"|"quality"
+---@alias DeciderCombinatorParameters { conditions: DeciderCombinatorCondition[], outputs: DeciderCombinatorOutput[] }
+---@alias DeciderCombinatorCondition { first_signal?: SignalID, first_signal_networks?: CircuitNetworkSelection, second_signal?: SignalID, second_signal_networks?: CircuitNetworkSelection, constant?: integer, comparator?: ComparatorString, compare_type?: "and"|"or" }
+---@alias DeciderCombinatorOutput { signal: SignalID, copy_count_from_input?: boolean, constant?: integer, networks?: CircuitNetworkSelection }
+---@alias ArithmeticCombinatorParameters { first_signal?: SignalID, first_signal_networks?: CircuitNetworkSelection, first_constant?: integer, operation?: ArithmeticCombinatorParameterOperation, second_signal?: SignalID, second_signal_networks?: CircuitNetworkSelection, second_constant?: integer, output_signal?: SignalID }
+---@alias ArithmeticCombinatorParameterOperation "*"|"/"|"+"|"-"|"%"|"^"|"<<"|">>"|"AND"|"OR"|"XOR"
+---@alias SelectorCombinatorParameters { operation?: SelectorCombinatorParameterOperation }
+---@alias SelectorCombinatorParameterOperation "select"|"count"|"random"|"quality-transfer"|"rocket-capacity"|"stack-size"|"quality-filter"
+---@alias DeciderCombinatorBlueprintControlBehavior { decider_conditions: DeciderCombinatorParameters }
+---@alias RocketSiloBlueprintControlBehavior { read_items_mode?: integer }
+---@alias SpacePlatformHubBlueprintControlBehavior { read_contents?: boolean, send_to_platform?: boolean, read_moving_from?: boolean, read_moving_to?: boolean, read_speed?: boolean, speed_signal?: SignalID, read_damage_taken?: boolean, damage_taken_signal?: SignalID }
+---@alias RailSignalBaseBlueprintControlBehavior { circuit_close_signal: boolean, circuit_read_signal: boolean, red_output_signal?: SignalID, orange_output_signal?: SignalID, green_output_signal?: SignalID, blue_output_signal?: SignalID, circuit_condition: CircuitCondition }
+---@alias FurnaceBlueprintControlBehavior { read_contents?: boolean, include_in_crafting?: boolean, include_fuel?: boolean, read_recipe_finished?: boolean, read_ingredients?: boolean, read_working?: boolean, recipe_finished_signal?: SignalID, working_signal?: SignalID, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias ArithmeticCombinatorBlueprintControlBehavior { arithmetic_conditions: ArithmeticCombinatorParameters }
+---@alias CargoLandingPadBlueprintControlBehavior { circuit_mode_of_operation?: integer }
+---@alias LampBlueprintControlBehavior { use_colors?: boolean, red_signal?: SignalID, green_signal?: SignalID, blue_signal?: SignalID, rgb_signal?: SignalID, color_mode?: integer, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias ProxyContainerBlueprintControlBehavior { read_contents?: boolean }
+---@alias MiningDrillBlueprintControlBehavior { circuit_read_resources: boolean, circuit_resource_read_mode: integer, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias LoaderBlueprintControlBehavior { circuit_set_filters?: boolean, circuit_read_transfers?: boolean, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias WallBlueprintControlBehavior { circuit_open_gate: boolean, circuit_read_sensor: boolean, output_signal?: SignalID, circuit_condition: CircuitCondition }
+---@alias ContainerBlueprintControlBehavior { read_contents?: boolean }
+---@alias PumpBlueprintControlBehavior { set_filter?: boolean, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias TrainStopBlueprintControlBehavior { send_to_train?: boolean, read_from_train?: boolean, read_stopped_train?: boolean, train_stopped_signal: SignalID, set_trains_limit?: boolean, trains_limit_signal?: SignalID, read_trains_count?: boolean, trains_count_signal?: SignalID, set_priority?: boolean, priority_signal?: SignalID, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias ProgrammableSpeakerBlueprintControlBehavior { circuit_condition: CircuitCondition, circuit_parameters: ProgrammableSpeakerCircuitParameters }
+---@alias SplitterBlueprintControlBehavior { set_input_side?: boolean, input_left_condition?: CircuitCondition, input_right_condition?: CircuitCondition, set_output_side?: boolean, output_left_condition?: CircuitCondition, output_right_condition?: CircuitCondition, set_filter?: boolean }
+---@alias TransportBeltBlueprintControlBehavior { circuit_read_hand_contents: boolean, circuit_contents_read_mode: integer, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias LogisticContainerBlueprintControlBehavior { circuit_mode_of_operation?: integer, circuit_condition_enabled: boolean, circuit_condition?: CircuitCondition }
+---@alias ReactorBlueprintControlBehavior { read_burner_fuel?: boolean, read_temperature?: boolean, temperature_signal: SignalID }
+---@alias ConstantCombinatorBlueprintControlBehavior { sections: LogisticSections, is_on?: boolean }
+---@alias ArtilleryTurretBlueprintControlBehavior { read_ammo?: boolean, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias AccumulatorBlueprintControlBehavior { output_signal: SignalID, read_charge?: boolean }
+---@alias TurretBlueprintControlBehavior { set_priority_list?: boolean, set_ignore_unlisted_targets?: boolean, read_ammo?: boolean, ignore_unlisted_targets_condition?: CircuitCondition, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias AsteroidCollectorBlueprintControlBehavior { circuit_set_filters?: boolean, circuit_read_contents?: boolean, include_hands?: boolean, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias StorageTankBlueprintControlBehavior { read_contents?: boolean }
+---@alias InserterBlueprintControlBehavior { circuit_set_filters?: boolean, circuit_read_hand_contents?: boolean, circuit_hand_read_mode?: integer, circuit_set_stack_size?: boolean, stack_control_input_signal?: SignalID, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias DisplayPanelBlueprintControlBehavior { parameters?: DisplayPanelMessageDefinition[] }
+---@alias RoboportBlueprintControlBehavior { read_items_mode?: boolean, read_robot_stats?: boolean, available_logistic_output_signal?: SignalID, total_logistic_output_signal?: SignalID, available_construction_output_signal?: SignalID, total_construction_output_signal?: SignalID, roboport_count_output_signal?: SignalID }
+---@alias AssemblingMachineBlueprintControlBehavior { set_recipe?: boolean, read_contents?: boolean, include_in_crafting?: boolean, include_fuel?: boolean, read_recipe_finished?: boolean, read_ingredients?: boolean, read_working?: boolean, recipe_finished_signal?: SignalID, working_signal?: SignalID, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias AgriculturalTowerBlueprintControlBehavior { read_contents?: boolean, circuit_enabled?: boolean, circuit_condition?: CircuitCondition, connect_to_logistic_network?: boolean, logistic_condition?: CircuitCondition }
+---@alias SpaceConnectionAsteroidSpawnDefinition { type: string, asteroid: string, spawn_points: SpaceConnectionAsteroidSpawnPoint[] }
+---@alias SpaceConnectionAsteroidSpawnPoint { probability: number, speed: number, distance: number }
+---@alias SpaceLocationAsteroidSpawnDefinition { type: string, asteroid: string, probability: number, speed: number, angle_when_stopped: number }
+---@alias Product ItemProduct|FluidProduct
+---@alias ItemProduct { type: "item", name: string, amount?: integer, amount_min?: integer, amount_max?: integer, probability: number, ignored_by_stats?: integer, ignored_by_productivity?: integer, extra_count_fraction?: number, percent_spoiled?: number }
+---@alias FluidProduct { type: "fluid", name: string, amount?: number, amount_min?: number, amount_max?: number, probability: number, ignored_by_stats?: number, ignored_by_productivity?: number, temperature?: number, fluidbox_index?: integer }
+---@alias BlueprintScheduleRecord { station?: string, wait_conditions?: WaitCondition[], temporary?: boolean, created_by_interrupt?: boolean, allows_unloading?: boolean }
+---@alias ScheduleRecord { station?: string, rail?: LuaEntity, rail_direction?: integer, wait_conditions?: WaitCondition[], temporary?: boolean, created_by_interrupt?: boolean, allows_unloading?: boolean }
+---@alias BlueprintScheduleInterrupt { name?: string, conditions?: WaitCondition[], targets?: BlueprintScheduleRecord[], inside_interrupt?: boolean }
+---@alias ScheduleInterrupt { name?: string, conditions?: WaitCondition[], targets?: ScheduleRecord[], inside_interrupt?: boolean }
+---@alias WaitCondition { type: WaitConditionType, compare_type?: "and"|"or", ticks?: integer, condition?: CircuitCondition|BlueprintItemIDAndQualityIDPair, planet?: string, station?: string, damage?: integer }
+---@alias WaitConditionType "time"|"full"|"empty"|"not_empty"|"item_count"|"circuit"|"inactivity"|"robots_inactive"|"fluid_count"|"passenger_present"|"passenger_not_present"|"fuel_item_count_all"|"fuel_item_count_any"|"fuel_full"|"destination_full_or_no_path"|"request_satisfied"|"request_not_satisfied"|"all_requests_satisfied"|"any_request_not_satisfied"|"any_request_zero"|"any_planet_import_zero"|"specific_destination_full"|"specific_destination_not_full"|"at_station"|"not_at_station"|"damage_taken"
+---@alias BlueprintSchedule { records?: BlueprintScheduleRecord[], group?: string, interrupts?: BlueprintScheduleInterrupt[] }
+---@alias ResearchIngredient { name: string, amount: integer }
+---@alias ModifierType "inserter-stack-size-bonus"|"bulk-inserter-capacity-bonus"|"laboratory-speed"|"character-logistic-trash-slots"|"maximum-following-robots-count"|"worker-robot-speed"|"worker-robot-storage"|"turret-attack"|"ammo-damage"|"give-item"|"gun-speed"|"unlock-recipe"|"character-crafting-speed"|"character-mining-speed"|"character-running-speed"|"character-build-distance"|"character-item-drop-distance"|"character-reach-distance"|"character-resource-reach-distance"|"character-item-pickup-distance"|"character-loot-pickup-distance"|"character-inventory-slots-bonus"|"deconstruction-time-to-live"|"max-failed-attempts-per-tick-per-construction-queue"|"max-successful-attempts-per-tick-per-construction-queue"|"character-health-bonus"|"mining-drill-productivity-bonus"|"train-braking-force-bonus"|"worker-robot-battery"|"laboratory-productivity"|"follower-robot-lifetime"|"artillery-range"|"nothing"|"character-logistic-requests"|"unlock-space-location"|"unlock-quality"|"unlock-space-platforms"|"unlock-circuit-network"|"cargo-landing-pad-count"|"change-recipe-productivity"|"cliff-deconstruction-enabled"|"mining-with-fluid"|"rail-support-on-deep-oil-ocean"|"rail-planner-allow-elevated-rails"|"beacon-distribution"|"create-ghost-on-entity-death"|"belt-stack-size-bonus"|"vehicle-logistics"
+---@alias TechnologyModifier { type: ModifierType }
+---@alias ResearchTrigger { type: "craft-item"|"mine-entity"|"craft-fluid"|"send-item-to-orbit"|"capture-spawner"|"build-entity"|"create-space-platform"|"scripted" }
+---@alias Ingredient { type: "item"|"fluid", name: string, amount: number, ignored_by_stats?: integer|number }
+---@alias EnemyExpansionMapSettings { enabled: boolean, max_expansion_distance: integer, friendly_base_influence_radius: integer, enemy_building_influence_radius: integer, building_coefficient: number, other_base_coefficient: number, neighbouring_chunk_coefficient: number, neighbouring_base_chunk_coefficient: number, max_colliding_tiles_coefficient: number, settler_group_min_size: integer, settler_group_max_size: integer, min_expansion_cooldown: integer, max_expansion_cooldown: integer }
+---@alias AsteroidMapSettings { spawning_rate: number, max_ray_portals_expanded_per_tick: integer }
+---@alias SteeringMapSetting { radius: number, separation_factor: number, separation_force: number, force_unit_fuzzy_goto_behavior: boolean }
+---@alias SteeringMapSettings { default: SteeringMapSetting, moving: SteeringMapSetting }
+---@alias UnitGroupMapSettings { min_group_gathering_time: integer, max_group_gathering_time: integer, max_wait_time_for_late_members: integer, min_group_radius: number, max_group_radius: number, max_member_speedup_when_behind: number, max_member_slowdown_when_ahead: number, max_group_slowdown_factor: number, max_group_member_fallback_factor: number, member_disown_distance: number, tick_tolerance_when_member_arrives: integer, max_gathering_unit_groups: integer, max_unit_group_size: integer }
+---@alias PathFinderMapSettings { fwd2bwd_ratio: integer, goal_pressure_ratio: number, use_path_cache: boolean, max_steps_worked_per_tick: number, max_work_done_per_tick: integer, short_cache_size: integer, long_cache_size: integer, short_cache_min_cacheable_distance: number, short_cache_min_algo_steps_to_cache: integer, long_cache_min_cacheable_distance: number, cache_max_connect_to_cache_steps_multiplier: integer, cache_accept_path_start_distance_ratio: number, cache_accept_path_end_distance_ratio: number, negative_cache_accept_path_start_distance_ratio: number, negative_cache_accept_path_end_distance_ratio: number, cache_path_start_distance_rating_multiplier: number, cache_path_end_distance_rating_multiplier: number, stale_enemy_with_same_destination_collision_penalty: number, ignore_moving_enemy_collision_distance: number, enemy_with_different_destination_collision_penalty: number, general_entity_collision_penalty: number, general_entity_subsequent_collision_penalty: number, extended_collision_penalty: number, max_clients_to_accept_any_new_request: integer, max_clients_to_accept_short_new_request: integer, direct_distance_to_consider_short_request: integer, short_request_max_steps: integer, short_request_ratio: number, min_steps_to_check_path_find_termination: integer, start_to_goal_cost_multiplier_to_terminate_path_find: number, overload_levels: integer[], overload_multipliers: number[], negative_path_cache_delay_interval: integer }
+---@alias MapDifficultySettings { technology_price_multiplier: number, spoil_time_modifier: number }
+---@alias MapAndDifficultySettings { pollution: PollutionMapSettings, enemy_evolution: EnemyEvolutionMapSettings, enemy_expansion: EnemyExpansionMapSettings, unit_group: UnitGroupMapSettings, steering: SteeringMapSettings, path_finder: PathFinderMapSettings, asteroids: AsteroidMapSettings, max_failed_behavior_count: integer, difficulty_settings: MapDifficultySettings }
+---@alias MapSettings { asteroids: AsteroidMapSettings, enemy_evolution: EnemyEvolutionMapSettings, enemy_expansion: EnemyExpansionMapSettings, max_failed_behavior_count: integer, path_finder: PathFinderMapSettings, pollution: PollutionMapSettings, steering: SteeringMapSetting, unit_group: UnitGroupMapSettings }
+---@alias MapGenSize number|"none"|"very-low"|"very-small"|"very-poor"|"low"|"small"|"poor"|"normal"|"medium"|"regular"|"high"|"big"|"good"|"very-high"|"very-big"|"very-good"
+---@alias PollutionMapSettings { enabled: boolean, diffusion_ratio: number, min_to_diffuse: number, ageing: number, expected_max_per_chunk: number, min_to_show_per_chunk: number, min_pollution_to_damage_trees: number, pollution_with_max_forest_damage: number, pollution_per_tree_damage: number, pollution_restored_per_tree_damage: number, max_pollution_to_restore_trees: number, enemy_attack_pollution_consumption_modifier: number }
+---@alias EnemyEvolutionMapSettings { enabled: boolean, time_factor: number, destroy_factor: number, pollution_factor: number }
+---@alias AutoplaceControl { frequency: MapGenSize, size: MapGenSize, richness: MapGenSize }
+---@alias CliffPlacementSettings { name: string, control: string, cliff_elevation_0: number, cliff_elevation_interval: number, cliff_smoothing: number, richness: MapGenSize }
+---@alias AutoplaceSettings { treat_missing_as_default?: boolean, settings?: table<string, AutoplaceControl> }
+---@alias TerritorySettings { units: string[], territory_index_expression: string, territory_variation_expression: string, minimum_territory_size: integer }
+---@alias MapGenSettings { autoplace_controls: table<string, AutoplaceControl>, default_enable_all_autoplace_controls: boolean, autoplace_settings: table<"entity"|"tile"|"decorative", AutoplaceSettings>, seed: integer, width: integer, height: integer, starting_area: MapGenSize, starting_points: MapPosition[], peaceful_mode: boolean, no_enemies_mode: boolean, property_expression_names: PropertyExpressionNames, cliff_settings: CliffPlacementSettings, territory_settings: TerritorySettings }
+---@alias MapGenPreset { order: string, default?: boolean, basic_settings?: MapGenSettings, advanced_settings?: AdvancedMapGenSettings }
+---@alias AdvancedMapGenSettings { asteroids: AsteroidMapSettings, pollution: PollutionMapSettings, enemy_evolution: EnemyEvolutionMapSettings, enemy_expansion: EnemyExpansionMapSettings, difficulty_settings: DifficultySettings }
+---@alias AutoplaceSpecificationRestriction { first?: string, second?: string }
+---@alias NoiseExpressionSourceString string
+---@alias AutoplaceSpecification { placement_density: integer, control?: string, probability_expression: NoiseExpressionSourceString, richness_expression?: NoiseExpressionSourceString, order: string, default_enabled: boolean, tile_restriction?: AutoplaceSpecificationRestriction[], force: string }
+---@alias RailExtensionData { name: string, position: MapPosition, direction: integer, goal: RailLocation }
+---@alias CraftingQueueItem { index: integer, recipe: string, count: integer, prerequisite: boolean }
+---@alias NthTickEventData { tick: integer, nth_tick: integer }
+---@alias EventData { name: integer, tick: integer, mod_name?: string }
+---@alias PostSegmentDiedData { position?: MapPosition, orientation?: RealOrientation }
+---@alias OldTileAndPosition { old_tile: LuaTilePrototype, position: TilePosition }
+---@alias PathfinderWaypoint { position: MapPosition, needs_destroy_to_reach: boolean }
+---@alias SelectedPrototypeData { base_type: IDType, derived_type: string, name: string, quality?: string }
+---@alias ModChangeData { old_version?: string, new_version?: string }
+---@alias ConfigurationChangedData { old_version?: string, new_version?: string, mod_changes: table<string, ModChangeData>, mod_startup_settings_changed: boolean, migration_applied: boolean, migrations: table<IDType, table<string, string>> }
+---@alias DifficultySettings { spoil_time_modifier: number, technology_price_multiplier: number }
+---@alias PipeConnection { flow_direction: FluidFlowDirection, connection_type: PipeConnectionType, position: MapPosition, target_position: MapPosition, target?: LuaFluidBox, target_fluidbox_index?: integer, target_pipe_connection_index?: integer }
+---@alias FluidBoxFilter { name: string, minimum_temperature: number, maximum_temperature: number }
+---@alias FluidBoxFilterSpec { name: string, minimum_temperature?: number, maximum_temperature?: number, force?: boolean }
+---@alias FluidBoxConnectionRecord { this_linked_connection_id: integer, other_entity: LuaEntity, other_linked_connection_id: integer }
+---@alias AsteroidChunk { name: string, position: MapPosition, movement: Vector }
+---@alias EjectedItem { item: ItemIDAndQualityIDPair, position: MapPosition, movement: Vector, platform_speed_at_creation: number, creation_tick: integer, expiration_tick: integer }
+---@alias MapExchangeStringData { map_settings: MapAndDifficultySettings, map_gen_settings: MapGenSettings }
+---@alias DetailedItemOnLine { stack: LuaItemStack, position: number, unique_id: integer }
+---@alias ItemLocationData { surface: LuaSurface, entity?: LuaEntity, player?: LuaPlayer, position: MapPosition, force: LuaForce }
+---@alias ChunkPositionAndArea { x: integer, y: integer, area: BoundingBox }
+---@alias CustomCommandData { name: string, tick: integer, player_index?: integer, parameter?: string }
+---@alias SimulationWidgetType "signal-id"|"signal-id-base"|"signal-or-number"|"simple-slot"|"simple-item-slot"|"recipe-slot"|"quickbar-slot"|"logistics-button"|"logistics-button-space"|"text-button-localised-substring"|"text-button"|"text-button-substring"|"inventory-limit-slot-button"|"train-schedule-action-button"|"choose-button"|"textfield"|"item-group-tab"|"drop-down"|"check-box"|"switch"|"label"
+---@alias SegmentedUnitAIState { type: integer }
+---@alias LogisticsNetworkSupplyCounts table
+---@alias LogisticsNetworkSupplyPoints table
+---@alias PlaceAsTileResult { result: LuaTilePrototype, condition_size: integer, condition: CollisionMask, invert: boolean, tile_condition: LuaTilePrototype[] }
+---@alias AddRecordData { station?: string, rail?: LuaEntity, rail_direction?: integer, temporary?: boolean, created_by_interrupt?: boolean, allows_unloading?: boolean, wait_conditions?: WaitCondition[], index?: ScheduleRecordPosition }
+---@alias EntitySearchFilters { area?: BoundingBox, position?: MapPosition, radius?: number, name?: EntityID|EntityID[], type?: string|string[], ghost_name?: EntityID|EntityID[], ghost_type?: string|string[], direction?: integer|integer[], collision_mask?: CollisionLayerID|CollisionLayerID[]|table<CollisionLayerID, true>, force?: ForceSet, to_be_deconstructed?: boolean, to_be_upgraded?: boolean, limit?: integer, is_military_target?: boolean, has_item_inside?: ItemWithQualityID, quality?: QualityCondition, invert?: boolean }
+---@alias TileSearchFilters { area?: BoundingBox, position?: MapPosition, radius?: number, name?: TileID|TileID[], limit?: integer, has_hidden_tile?: boolean, has_double_hidden_tile?: boolean, has_tile_ghost?: boolean, to_be_deconstructed?: boolean, collision_mask?: CollisionLayerID|CollisionLayerID[]|table<CollisionLayerID, true>, force?: ForceSet, invert?: boolean }
+---@alias ColorModifier { r?: number, g?: number, b?: number, a?: number }|table
+---@alias Decorative { name: string, position: TilePosition, amount: integer }
+---@alias DecorativeResult { position: TilePosition, decorative: LuaDecorativePrototype, amount: integer }
+---@alias ScriptArea { area: BoundingBox, name: string, color: Color, id: integer }
+---@alias ScriptPosition { position: MapPosition, name: string, color: Color, id: integer }
+---@alias EquipmentPoint { x: integer, y: integer }
+---@alias GuiLocation { x: integer, y: integer }|table
+---@alias TabAndContent { tab: LuaGuiElement, content: LuaGuiElement }
+---@alias GuiAnchor { gui: integer, position: integer, type?: string, name?: string, names?: string[], ghost_mode?: "both"|"only_ghosts"|"only_real" }
+---@alias ChartTagSpec { position: MapPosition, icon?: SignalID, text?: string, last_user?: PlayerIdentification }
+---@alias PrototypeHistory { created: string, changed: string[] }
+---@alias SpawnPointDefinition { evolution_factor: number, weight: number }
+---@alias UnitSpawnDefinition { unit: string, spawn_points: SpawnPointDefinition[] }
+---@alias InventoryWithCustomStackSizeSpecification { stack_size_multiplier: number, stack_size_min: ItemCountType, stack_size_max: ItemCountType, stack_size_override: table<string, ItemCountType>, with_bar: boolean }
+---@alias TrainFilter { train_id?: integer, surface?: SurfaceIdentification, force?: ForceID, stock?: EntityID|EntityID[], min_stocks?: integer, max_stocks?: integer, is_moving?: boolean, has_passenger?: boolean, is_manual?: boolean, group?: string }
+---@alias TrainStopFilter { surface?: SurfaceIdentification, force?: ForceID, is_full?: boolean, is_connected_to_rail?: boolean, type?: EntityID|EntityID[], station_name?: string|string[], limit_set_by_control_behavior?: boolean, is_disabled?: boolean }
+---@alias TrainPathRequestType "path"|"any-goal-accessible"|"all-goals-accessible"|"all-goals-penalties"
+---@alias TrainPathFinderGoal TrainStopGoal|RailEndGoal|LuaRailEnd|LuaEntity
+---@alias TrainStopGoal { train_stop: LuaEntity, priority?: integer }
+---@alias RailEndGoal { rail: LuaEntity, direction: integer, priority?: integer }
+---@alias RailEndStart { rail: LuaEntity, direction: integer, allow_path_within_segment?: boolean, is_front?: boolean, priority?: integer }
+---@alias TrainPathFinderOneGoalResult { found_path: boolean, goal_index?: integer, start_index?: integer, penalty?: number, is_front?: boolean, total_length?: number, path?: LuaEntity[], steps_count: integer }
+---@alias TrainPathAllGoalsResult { amount_accessible: integer, accessible: boolean[], penalties?: number[], steps_count: integer }
+---@alias CutsceneWaypoint { position?: MapPosition, target?: LuaEntity|LuaCommandable, transition_time: integer, time_to_wait: integer, zoom?: number }
+---@alias Alert { tick: integer, target?: LuaEntity, prototype?: LuaEntityPrototype, position?: MapPosition, icon?: SignalID, message?: LocalisedString }
+---@alias DragTarget { target_entity: LuaEntity, wire_connector_id: integer }
+---@alias DisplayResolution { width: integer, height: integer }
+---@alias BeamTarget { entity?: LuaEntity, position?: MapPosition }
+---@alias RollingStockDrawData { position: MapPosition, orientation: RealOrientation, slope: number, height: number }
+---@alias EventFilter (LuaSegmentedUnitDiedEventFilter|LuaScriptRaisedTeleportedEventFilter|LuaPreRobotMinedEntityEventFilter|LuaScriptRaisedBuiltEventFilter|LuaPlatformMinedEntityEventFilter|LuaRobotBuiltEntityEventFilter|LuaPrePlayerMinedEntityEventFilter|LuaEntityDeconstructionCancelledEventFilter|LuaPreGhostUpgradedEventFilter|LuaPlatformBuiltEntityEventFilter|LuaPrePlatformMinedEntityEventFilter|LuaEntityClonedEventFilter|LuaPlayerRepairedEntityEventFilter|LuaPostEntityDiedEventFilter|LuaScriptRaisedDestroySegmentedUnitEventFilter|LuaSegmentedUnitDamagedEventFilter|LuaPreGhostDeconstructedEventFilter|LuaPlayerMinedEntityEventFilter|LuaSectorScannedEventFilter|LuaRobotMinedEntityEventFilter|LuaEntityMarkedForDeconstructionEventFilter|LuaPostSegmentedUnitDiedEventFilter|LuaScriptRaisedReviveEventFilter|LuaPlayerBuiltEntityEventFilter|LuaUpgradeCancelledEventFilter|LuaEntityDamagedEventFilter|LuaEntityDiedEventFilter|LuaEntityMarkedForUpgradeEventFilter|LuaSegmentedUnitCreatedEventFilter|LuaScriptRaisedDestroyEventFilter)[]
+---@alias CircuitConditionDefinition { comparator?: ComparatorString, first_signal?: SignalID, second_signal?: SignalID, constant?: integer, fulfilled?: boolean }
+---@alias RegistrationTarget LuaEntity|LuaEquipment|LuaEquipmentGrid|LuaItem|LuaLogisticCell|LuaLogisticNetwork|LuaLogisticSection|LuaPermissionGroup|LuaPlanet|LuaPlayer|LuaRailPath|LuaRenderObject|LuaSpacePlatform|LuaSurface|LuaTrain|LuaCommandable|LuaCustomChartTag|LuaGuiElement|LuaCargoHatch|LuaSchedule|LuaTerritory|LuaSegmentedUnit
+---@alias IDType "custom-input"|"equipment-grid"|"entity"|"particle"|"item"|"collision-layer"|"airborne-pollutant"|"tile"|"decorative"|"recipe-category"|"item-group"|"item-subgroup"|"recipe"|"fluid"|"ammo-category"|"fuel-category"|"resource-category"|"technology"|"noise-function"|"noise-expression"|"autoplace-control"|"equipment"|"damage-type"|"virtual-signal"|"achievement"|"module-category"|"equipment-category"|"mod-setting"|"trivial-smoke"|"asteroid-chunk"|"quality"|"surface-property"|"procession-layer-inheritance-group"|"procession"|"space-location"|"space-connection"|"active-trigger"|"shortcut"|"burner-usage"|"surface"|"mod-data"|"custom-event"
+---@alias BlueprintQualityID { name?: string }
+---@alias BlueprintItemIDAndQualityIDPair { name: string, quality?: string }
+---@alias ItemIDFilter { name: string, quality?: string, comparator?: ComparatorString }
+---@alias EntityIDFilter { name: string, quality?: string, comparator?: ComparatorString }
+---@alias PrototypeFilter (ModSettingPrototypeFilter|SpaceLocationPrototypeFilter|DecorativePrototypeFilter|TilePrototypeFilter|AsteroidChunkPrototypeFilter|ItemPrototypeFilter|TechnologyPrototypeFilter|RecipePrototypeFilter|AchievementPrototypeFilter|EquipmentPrototypeFilter|FluidPrototypeFilter|EntityPrototypeFilter)[]
+---@alias EntityPrototypeFlags table<EntityPrototypeFlag, true>
+---@alias EntityPrototypeFlag "not-rotatable"|"placeable-neutral"|"placeable-player"|"placeable-enemy"|"placeable-off-grid"|"player-creation"|"building-direction-8-way"|"filter-directions"|"get-by-unit-number"|"breaths-air"|"not-repairable"|"not-on-map"|"not-deconstructable"|"not-blueprintable"|"hide-alt-info"|"not-flammable"|"no-automated-item-removal"|"no-automated-item-insertion"|"no-copy-paste"|"not-selectable-in-game"|"not-upgradable"|"not-in-kill-statistics"|"building-direction-16-way"|"snap-to-rail-support-spot"|"not-in-made-in"
+---@alias InfinityPipeFilter { name: string, percentage?: number, temperature?: number, mode?: "at-least"|"at-most"|"exactly"|"add"|"remove" }
+---@alias ProgrammableSpeakerInstrument { name: string, notes: string[] }
+---@alias ExplosionDefinition { name: LuaEntityPrototype, offset: Vector }
+---@alias ProgrammableSpeakerParameters { playback_volume: number, playback_mode: ProgrammableSpeakerPlaybackMode, allow_polyphony: boolean, volume_controlled_by_signal: boolean, volume_signal_id: SignalID }
+---@alias ProgrammableSpeakerPlaybackMode "local"|"surface"|"global"
+---@alias ProgrammableSpeakerAlertParameters { show_alert: boolean, show_on_map: boolean, icon_signal_id: SignalID, alert_message: string }
+---@alias ProgrammableSpeakerCircuitParameters { signal_value_is_pitch: boolean, stop_playing_sounds: boolean, instrument_id: integer, note_id: integer }
+---@alias BlueprintMiningDrillFilter { filters?: SlotFilter[], mode?: "whitelist"|"blacklist" }
+---@alias HeatSettingMode "at-least"|"at-most"|"exactly"|"add"|"remove"
+---@alias HeatSetting { temperature?: number, mode?: HeatSettingMode }
+---@alias CliffOrientation "west-to-east"|"north-to-south"|"east-to-west"|"south-to-north"|"west-to-north"|"north-to-east"|"east-to-south"|"south-to-west"|"west-to-south"|"north-to-west"|"east-to-north"|"south-to-east"|"west-to-none"|"none-to-east"|"east-to-none"|"none-to-west"|"north-to-none"|"none-to-south"|"south-to-none"|"none-to-north"
+---@alias ValveMode "one-way"|"overflow"|"top-up"
+---@alias SpoilPriority "fresh_first"|"none"|"spoiled_first"
+---@alias SpiderLegSpecification { leg: string, mount_position: Vector, ground_position: Vector, leg_hit_the_ground_trigger?: TriggerEffectItem[], leg_hit_the_ground_when_attacking_trigger?: TriggerEffectItem[], walking_group: integer }
+---@alias SpiderEngineSpecification { legs: SpiderLegSpecification[], walking_group_overlap: number }
+---@alias BlueprintInfinityInventorySettings { filters?: InfinityInventoryFilter[], remove_unfiltered_items?: boolean }
+---@alias VehicleAutomaticTargetingParameters { auto_target_without_gunner: boolean, auto_target_with_gunner: boolean }
+---@alias ItemInventoryPositions { in_inventory?: InventoryPosition[], grid_count?: ItemCountType }
+---@alias InventoryPosition { inventory: integer, stack: ItemStackIndex, count?: ItemCountType }
+---@alias ThrusterPerformancePoint { fluid_volume: number, fluid_usage: number, effectivity: number }
+---@alias BlueprintInsertPlan { id: BlueprintItemIDAndQualityIDPair, items: ItemInventoryPositions }
+---@alias NeighbourConnectableConnectionDefinition { location: MapLocation, category: string, neighbour_category: string[] }
+---@alias NeighbourConnectable { affected_by_direction: boolean, neighbour_search_distance: number, connections: NeighbourConnectableConnectionDefinition[] }
+---@alias MarketIngredient { name: string, quality?: string, count: ItemCountType }
+---@alias Offer { price?: MarketIngredient[], offer: TechnologyModifier }
+---@alias CustomEntityStatus { diode: integer, label: LocalisedString }
+---@alias SmokeSource { name: string, frequency: number, offset: number, position?: Vector, north_position?: Vector, north_east_position?: Vector, east_position?: Vector, south_east_position?: Vector, south_position?: Vector, south_west_position?: Vector, west_position?: Vector, north_west_position?: Vector, deviation?: MapPosition, starting_frame: integer, starting_frame_deviation: integer, height: number, height_deviation: number, starting_vertical_speed: number, starting_vertical_speed_deviation: number, vertical_speed_slowdown: number }
+---@alias PerceivedPerformance { minimum: number, maximum: number, performance_to_activity_rate: number }
+---@alias InfinityInventoryFilter { name: ItemID, quality?: QualityID, count?: ItemCountType, mode?: "at-least"|"at-most"|"exactly", index?: integer }
+---@alias RadiusVisualisationSpecification { distance: number, offset: Vector, draw_in_cursor: boolean, draw_on_selection: boolean }
+---@alias Resistance { decrease: number, percent: number }
+---@alias SoundPath string
+---@alias SoundType "game-effect"|"gui-effect"|"ambient"|"environment"|"walking"|"alert"|"wind"|"world-ambient"|"weapon"|"explosion"|"enemy"
+---@alias CompiledLogisticFilter { index: LogisticFilterIndex, type?: SignalIDType, name?: string, quality?: string, comparator?: ComparatorString, count: integer, max_count?: ItemCountType, minimum_delivery_count?: ItemCountType }
+---@alias BlueprintLogisticFilter { index: LogisticFilterIndex, type?: SignalIDType, name?: string, quality?: string, comparator?: ComparatorString, count: integer, max_count?: ItemCountType, minimum_delivery_count?: ItemCountType, import_from?: string }
+---@alias BlueprintLogisticSections { sections?: LogisticSection[], trash_not_requested?: boolean, request_from_buffers?: boolean }
+---@alias LogisticSection { index: integer, filters?: BlueprintLogisticFilter[], group?: string, multiplier?: number, active?: boolean }
+---@alias LogisticGroup { members: LuaLogisticSection[], filters: LogisticFilter[] }
+---@alias LogisticSections { sections?: LogisticSection[], trash_not_requested?: boolean }
+---@alias FactoriopediaID LuaItemPrototype|LuaFluidPrototype|LuaRecipePrototype|LuaEntityPrototype|LuaTilePrototype|LuaSpaceLocationPrototype|LuaTechnologyPrototype|LuaAmmoCategoryPrototype|LuaSpaceConnectionPrototype|LuaAsteroidChunkPrototype|LuaVirtualSignalPrototype|LuaSurfacePrototype
+---@alias GuiDirection "horizontal"|"vertical"
+---@alias Alignment "top-left"|"middle-left"|"left"|"bottom-left"|"top-center"|"middle-center"|"center"|"bottom-center"|"top-right"|"middle-right"|"right"|"bottom-right"
+---@alias AttackParameterFluid { type: string, damage_modifier: number }
+---@alias GunShift4Way { north: Vector, east: Vector, south: Vector, west: Vector }
+---@alias TriggerItem { type: "direct"|"area"|"line"|"cluster", action_delivery?: TriggerDelivery[], entity_flags?: EntityPrototypeFlags, ignore_collision_condition: boolean, collision_mask: CollisionMask, trigger_target_mask: TriggerTargetMask, force: ForceCondition, repeat_count: integer, probability: number }
+---@alias CircularProjectileCreationSpecification table[]
+---@alias TriggerModifierData { damage_modifier?: number, damage_addition?: number, radius_modifier?: number }
+---@alias TriggerTargetMask table<string, true>
+---@alias AttackReactionItem { range: number, action?: TriggerItem, reaction_modifier: number, damage_type?: LuaDamagePrototype }
+---@alias TriggerDelivery { type: "instant"|"projectile"|"beam"|"stream"|"artillery"|"chain"|"delayed", source_effects: TriggerEffectItem[], target_effects: TriggerEffectItem[] }
+---@alias TriggerEffectWithCooldown { distance_cooldown: number, initial_distance_cooldown: number, time_cooldown: integer, initial_time_cooldown: integer, effect: TriggerEffectItem[] }
+---@alias DamageTypeFilters { whitelist: boolean, types: table<string, true> }
+---@alias TriggerEffectItemType "damage"|"damage-tile"|"create-entity"|"create-explosion"|"create-fire"|"create-smoke"|"create-trivial-smoke"|"create-asteroid-chunk"|"create-particle"|"create-sticker"|"create-decorative"|"nested-result"|"play-sound"|"push-back"|"destroy-cliffs"|"show-explosion-on-chart"|"insert-item"|"script"|"set-tile"|"invoke-tile-trigger"|"destroy-decoratives"|"camera-effect"|"activate-impact"
+---@alias TriggerEffectItem { type: TriggerEffectItemType, repeat_count: integer, repeat_count_deviation: integer, probability: number, affects_target: boolean, show_in_tooltip: boolean, damage_type_filters?: DamageTypeFilters }
+---@alias AttackParameters { type: "projectile"|"stream"|"beam", range: number, min_range: number, range_mode: RangeMode, fire_penalty: number, rotate_penalty: number, health_penalty: number, min_attack_distance: number, turn_range: number, damage_modifier: number, ammo_consumption_modifier: number, cooldown: number, warmup: integer, movement_slow_down_factor: number, movement_slow_down_cooldown: number, ammo_type?: AmmoType, ammo_categories?: string[] }
+---@alias SplitterPriority "left"|"none"|"right"
+---@alias Tags table<string, any>
+---@alias Tile { position: TilePosition, name: string }
+---@alias SlotFilter { index: integer, name: string }
+---@alias float table
+---@alias double table
+---@alias uint8 table
+---@alias int8 table
+---@alias uint16 table
+---@alias int16 table
+---@alias uint32 table
+---@alias int32 table
+---@alias uint64 table
+---@alias number table
+---@alias string table
+---@alias boolean table
+---@alias nil table
+---@alias table table
+---@alias LuaObject table
+---@alias AnyBasic string|boolean|number|table
+---@alias Any string|boolean|number|table|LuaObject
+---@alias PropertyExpressionNames table<string, string>
+---@alias ModSettingPrototypeFilter { filter: "type"|"mod"|"setting-type", mode?: "or"|"and", invert?: boolean }
+---@alias SpaceLocationPrototypeFilter { filter: "fly-condition"|"type"|"solar-power-in-space", mode?: "or"|"and", invert?: boolean }
+---@alias DecorativePrototypeFilter { filter: "decal"|"autoplace"|"collision-mask", mode?: "or"|"and", invert?: boolean }
+---@alias TilePrototypeFilter { filter: "minable"|"autoplace"|"blueprintable"|"item-to-place"|"collision-mask"|"walking-speed-modifier"|"vehicle-friction-modifier"|"decorative-removal-probability"|"absorptions-per-second", mode?: "or"|"and", invert?: boolean }
+---@alias AsteroidChunkPrototypeFilter { filter: "minable", mode?: "or"|"and", invert?: boolean }
+---@alias ItemPrototypeFilter { filter: "tool"|"mergeable"|"hidden"|"hidden-in-factoriopedia"|"is-parameter"|"item-with-inventory"|"selection-tool"|"item-with-label"|"has-rocket-launch-products"|"fuel"|"place-result"|"burnt-result"|"place-as-tile"|"placed-as-equipment-result"|"plant-result"|"spoil-result"|"name"|"type"|"flag"|"subgroup"|"fuel-category"|"stack-size"|"fuel-value"|"fuel-acceleration-multiplier"|"fuel-top-speed-multiplier"|"fuel-emissions-multiplier", mode?: "or"|"and", invert?: boolean }
+---@alias TechnologyPrototypeFilter { filter: "enabled"|"hidden"|"upgrade"|"visible-when-disabled"|"has-effects"|"has-prerequisites"|"research-unit-ingredient"|"unlocks-recipe"|"level"|"max-level"|"time", mode?: "or"|"and", invert?: boolean }
+---@alias RecipePrototypeFilter { filter: "enabled"|"hidden"|"hidden-from-flow-stats"|"hidden-from-player-crafting"|"allow-as-intermediate"|"allow-intermediates"|"allow-decomposition"|"always-show-made-in"|"always-show-products"|"show-amount-in-title"|"has-ingredients"|"has-products"|"has-ingredient-item"|"has-ingredient-fluid"|"has-product-item"|"has-product-fluid"|"subgroup"|"category"|"energy"|"emissions-multiplier"|"request-paste-multiplier"|"overload-multiplier", mode?: "or"|"and", invert?: boolean }
+---@alias AchievementPrototypeFilter { filter: "allowed-without-fight"|"type", mode?: "or"|"and", invert?: boolean }
+---@alias EquipmentPrototypeFilter { filter: "item-to-place"|"type", mode?: "or"|"and", invert?: boolean }
+---@alias FluidPrototypeFilter { filter: "hidden"|"name"|"subgroup"|"default-temperature"|"max-temperature"|"heat-capacity"|"fuel-value"|"emissions-multiplier"|"gas-temperature", mode?: "or"|"and", invert?: boolean }
+---@alias EntityPrototypeFilter { filter: "flying-robot"|"robot-with-logistics-interface"|"rail"|"ghost"|"explosion"|"vehicle"|"crafting-machine"|"rolling-stock"|"turret"|"transport-belt-connectable"|"wall-connectable"|"buildable"|"placable-in-editor"|"clonable"|"selectable"|"hidden"|"entity-with-health"|"building"|"fast-replaceable"|"uses-direction"|"minable"|"circuit-connectable"|"autoplace"|"blueprintable"|"item-to-place"|"name"|"type"|"collision-mask"|"flag"|"build-base-evolution-requirement"|"selection-priority"|"emissions-per-second"|"crafting-category", mode?: "or"|"and", invert?: boolean }
+---@alias LuaSegmentedUnitDiedEventFilter { filter: "name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaScriptRaisedTeleportedEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPreRobotMinedEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaScriptRaisedBuiltEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPlatformMinedEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaRobotBuiltEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name"|"force", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPrePlayerMinedEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaEntityDeconstructionCancelledEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPreGhostUpgradedEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPlatformBuiltEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name"|"force", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPrePlatformMinedEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaEntityClonedEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPlayerRepairedEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPostEntityDiedEventFilter { filter: "type", mode?: "or"|"and", invert?: boolean }
+---@alias LuaScriptRaisedDestroySegmentedUnitEventFilter { filter: "name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaSegmentedUnitDamagedEventFilter { filter: "name"|"original-damage-amount"|"final-damage-amount"|"damage-type"|"final-health", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPreGhostDeconstructedEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPlayerMinedEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaSectorScannedEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaRobotMinedEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaEntityMarkedForDeconstructionEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPostSegmentedUnitDiedEventFilter { filter: "name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaScriptRaisedReviveEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaPlayerBuiltEntityEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name"|"force", mode?: "or"|"and", invert?: boolean }
+---@alias LuaUpgradeCancelledEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaEntityDamagedEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name"|"original-damage-amount"|"final-damage-amount"|"damage-type"|"final-health", mode?: "or"|"and", invert?: boolean }
+---@alias LuaEntityDiedEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name"|"force", mode?: "or"|"and", invert?: boolean }
+---@alias LuaEntityMarkedForUpgradeEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+---@alias LuaSegmentedUnitCreatedEventFilter { filter: "name"|"cause", mode?: "or"|"and", invert?: boolean }
+---@alias LuaScriptRaisedDestroyEventFilter { filter: "ghost"|"rail"|"rail-signal"|"rolling-stock"|"robot-with-logistics-interface"|"vehicle"|"turret"|"crafting-machine"|"wall-connectable"|"transport-belt-connectable"|"circuit-network-connectable"|"type"|"name"|"ghost_type"|"ghost_name", mode?: "or"|"and", invert?: boolean }
+
+---@class LuaAISettings
+---@field allow_destroy_when_commands_fail boolean
+---@field allow_try_return_to_spawner boolean
+---@field do_separation boolean
+---@field path_resolution_modifier integer
+---@field size_in_group number
+---@field join_attacks boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaAccumulatorControlBehavior: LuaControlBehavior
+---@field read_charge boolean
+---@field output_signal SignalID|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaAchievementPrototype: LuaPrototypeBase
+---@field allowed_without_fight boolean
+---@field objective_condition string|nil
+---@field amount integer|nil
+---@field limited_to_one_game boolean|nil
+---@field within integer|nil
+---@field to_build LuaEntityPrototype|nil
+---@field surface string|nil
+---@field count integer|nil
+---@field more_than_manually boolean|nil
+---@field dont_build LuaEntityPrototype[]|nil
+---@field excluded LuaEntityPrototype[]|nil
+---@field included LuaEntityPrototype[]|nil
+---@field dont_research LuaItemPrototype[]|nil
+---@field research_with LuaItemPrototype[]|nil
+---@field last_hour_only boolean|nil
+---@field minimum_energy_produced number|nil
+---@field armor LuaItemPrototype|nil
+---@field alternative_armor LuaItemPrototype|nil
+---@field limit_quality LuaQualityPrototype|nil
+---@field damage_type LuaDamagePrototype|nil
+---@field damage_dealer LuaEntityPrototype[]|nil
+---@field to_kill LuaEntityPrototype[]|nil
+---@field personally boolean|nil
+---@field in_vehicle boolean|nil
+---@field type_to_kill string|nil
+---@field not_to_kill LuaEntityPrototype|nil
+---@field type_not_to_kill string|nil
+---@field module LuaItemPrototype[]|nil
+---@field limit_equip_quality LuaQualityPrototype|nil
+---@field minimum_damage number|nil
+---@field should_survive boolean|nil
+---@field type_of_dealer string|nil
+---@field item_product LuaItemPrototype|nil
+---@field quality LuaQualityPrototype|nil
+---@field fluid_product LuaFluidPrototype|nil
+---@field technology LuaTechnologyPrototype|nil
+---@field research_all boolean|nil
+---@field science_pack LuaItemPrototype|nil
+---@field ammo_type LuaItemPrototype|nil
+---@field minimum_distance number|nil
+---@field to_use LuaItemPrototype|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaActiveTriggerPrototype: LuaPrototypeBase
+---@field max_jumps integer
+---@field max_range_per_jump number
+---@field max_range number
+---@field jump_delay_ticks integer
+---@field fork_chance number
+---@field max_forks_per_jump integer
+---@field max_forks integer
+---@field valid boolean
+---@field object_name string
+
+---@class LuaAgriculturalTowerControlBehavior: LuaGenericOnOffControlBehavior
+---@field read_contents boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaAirbornePollutantPrototype: LuaPrototypeBase
+---@field chart_color Color
+---@field affects_evolution boolean
+---@field damages_trees boolean
+---@field localised_name_with_amount_key string
+---@field valid boolean
+---@field object_name string
+
+---@class LuaAmmoCategoryPrototype: LuaPrototypeBase
+---@field bonus_gui_order string
+---@field factoriopedia_alternative LuaAmmoCategoryPrototype|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaArithmeticCombinatorControlBehavior: LuaCombinatorControlBehavior
+---@field parameters ArithmeticCombinatorParameters|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaArtilleryTurretControlBehavior: LuaGenericOnOffControlBehavior
+---@field read_ammo boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaAssemblingMachineControlBehavior: LuaGenericOnOffControlBehavior
+---@field circuit_set_recipe boolean
+---@field circuit_read_contents boolean
+---@field include_in_crafting boolean
+---@field include_fuel boolean
+---@field circuit_read_ingredients boolean
+---@field circuit_read_recipe_finished boolean
+---@field circuit_recipe_finished_signal SignalID|nil
+---@field circuit_read_working boolean
+---@field circuit_working_signal SignalID|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaAsteroidChunkPrototype: LuaPrototypeBase
+---@field mineable_properties MineableProperties
+---@field hide_from_signal_gui boolean
+---@field item_signal_alias LuaItemPrototype|nil
+---@field factoriopedia_alternative LuaAsteroidChunkPrototype|nil
+---@field dying_trigger_effect TriggerEffectItem[]|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaAsteroidCollectorControlBehavior: LuaGenericOnOffControlBehavior
+---@field set_filter boolean
+---@field read_content boolean
+---@field include_hands boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaAutoplaceControlPrototype: LuaPrototypeBase
+---@field richness boolean
+---@field can_be_disabled boolean
+---@field category "resource"|"terrain"|"cliff"|"enemy"
+---@field valid boolean
+---@field object_name string
+
+---@class LuaBootstrap
+---@field mod_name string
+---@field level { is_simulation?: boolean, is_tutorial?: boolean, campaign_name?: string, level_name: string, mod_name?: string }
+---@field active_mods table<string, string>
+---@field feature_flags { quality: boolean, rail_bridges: boolean, space_travel: boolean, spoiling: boolean, freezing: boolean, segmented_units: boolean, expansion_shaders: boolean }
+---@field object_name string
+---@field on_init fun(handler: fun()|nil)
+---@field on_load fun(handler: fun()|nil)
+---@field on_configuration_changed fun(handler: fun(p1: ConfigurationChangedData)|nil)
+---@field on_event fun(event: LuaEventType|LuaEventType[], handler: fun(p1: EventData)|nil, filters: EventFilter|nil)
+---@field on_nth_tick fun(tick: integer|integer[]|nil, handler: fun(p1: NthTickEventData)|nil)
+---@field register_on_object_destroyed fun(object: RegistrationTarget): integer, integer, integer
+---@field register_metatable fun(name: string, metatable: table)
+---@field generate_event_name fun(): integer
+---@field get_event_id fun(event: LuaEventType): integer
+---@field get_event_handler fun(event: LuaEventType): fun(p1: EventData)|nil
+---@field get_event_order fun(): string
+---@field set_event_filter fun(event: LuaEventType, filters: EventFilter|nil)
+---@field get_event_filter fun(event: LuaEventType): EventFilter|nil
+---@field raise_event fun(event: LuaEventType, data: table)
+---@field raise_console_chat fun(params: { player_index: integer, message: string })
+---@field raise_player_crafted_item fun(params: { item_stack: LuaItemStack, player_index: integer, recipe: RecipeID })
+---@field raise_player_fast_transferred fun(params: { player_index: integer, entity: LuaEntity, from_player: boolean, is_split: boolean })
+---@field raise_biter_base_built fun(params: { entity: LuaEntity })
+---@field raise_market_item_purchased fun(params: { player_index: integer, market: LuaEntity, offer_index: integer, count: integer })
+---@field raise_script_built fun(params: { entity: LuaEntity })
+---@field raise_script_destroy fun(params: { entity: LuaEntity })
+---@field raise_script_revive fun(params: { entity: LuaEntity, tags?: Tags })
+---@field raise_script_teleported fun(params: { entity: LuaEntity, old_surface_index: integer, old_position: MapPosition })
+---@field raise_script_set_tiles fun(params: { surface_index: integer, tiles: Tile[] })
+---@field raise_script_destroy_segmented_unit fun(params: { segmented_unit: LuaSegmentedUnit })
+
+---@class LuaBurner
+---@field owner LuaEntity|LuaEquipment
+---@field inventory LuaInventory
+---@field burnt_result_inventory LuaInventory
+---@field heat number
+---@field heat_capacity number
+---@field remaining_burning_fuel number
+---@field currently_burning ItemIDAndQualityIDPair|nil
+---@field fuel_categories table<string, true>
+---@field valid boolean
+---@field object_name string
+
+---@class LuaBurnerPrototype
+---@field emissions_per_joule table<string, number>
+---@field render_no_network_icon boolean
+---@field render_no_power_icon boolean
+---@field effectivity number
+---@field fuel_inventory_size integer
+---@field burnt_inventory_size integer
+---@field smoke SmokeSource[]|nil
+---@field light_flicker { minimum_intensity: number, maximum_intensity: number, derivation_change_frequency: number, derivation_change_deviation: number, border_fix_speed: number, minimum_light_size: number, light_intensity_to_size_coefficient: number, color: Color }|nil
+---@field fuel_categories table<string, true>
+---@field initial_fuel LuaItemPrototype|nil
+---@field initial_fuel_percent number
+---@field valid boolean
+---@field object_name string
+
+---@class LuaBurnerUsagePrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaCargoHatch
+---@field owner LuaEntity
+---@field busy boolean
+---@field reserved boolean
+---@field is_input_compatible boolean
+---@field is_output_compatible boolean
+---@field valid boolean
+---@field object_name string
+---@field create_cargo_pod fun(): LuaEntity
+
+---@class LuaCargoLandingPadControlBehavior: LuaControlBehavior
+---@field circuit_exclusive_mode_of_operation integer
+---@field valid boolean
+---@field object_name string
+
+---@class LuaChunkIterator
+---@field valid boolean
+---@field object_name string
+
+---@class LuaCircuitNetwork
+---@field entity LuaEntity
+---@field wire_type integer
+---@field wire_connector_id integer
+---@field signals Signal[]|nil
+---@field network_id integer
+---@field connected_circuit_count integer
+---@field valid boolean
+---@field object_name string
+---@field get_signal fun(signal: SignalID): integer
+
+---@class LuaCollisionLayerPrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaCombinatorControlBehavior: LuaControlBehavior
+---@field signals_last_tick Signal[]
+---@field get_signal_last_tick fun(signal: SignalID): integer|nil
+
+---@class LuaCommandProcessor
+---@field commands table<string, LocalisedString>
+---@field game_commands table<string, LocalisedString>
+---@field object_name string
+---@field add_command fun(name: string, help: LocalisedString, function: fun(p1: CustomCommandData))
+---@field remove_command fun(name: string): boolean
+
+---@class LuaCommandable
+---@field is_unit_group boolean
+---@field is_entity boolean
+---@field surface LuaSurface
+---@field position MapPosition
+---@field force LuaForce
+---@field unique_id integer
+---@field has_command boolean
+---@field command Command|nil
+---@field distraction_command Command|nil
+---@field parent_group LuaCommandable|nil
+---@field spawner LuaEntity|nil
+---@field moving_state integer
+---@field state integer
+---@field members LuaEntity[]
+---@field commandable_members LuaCommandable[]
+---@field is_script_driven boolean
+---@field entity LuaEntity
+---@field valid boolean
+---@field object_name string
+---@field destroy fun()
+---@field set_command fun(command: Command)
+---@field set_distraction_command fun(command: Command)
+---@field release_from_spawner fun()
+---@field add_member fun(member: LuaCommandable|LuaEntity)
+---@field set_autonomous fun()
+---@field start_moving fun()
+
+---@class LuaConstantCombinatorControlBehavior: LuaControlBehavior
+---@field enabled boolean
+---@field sections LuaLogisticSection[]
+---@field sections_count integer
+---@field valid boolean
+---@field object_name string
+---@field add_section fun(group: string|nil): LuaLogisticSection|nil
+---@field remove_section fun(section_index: integer): boolean
+---@field get_section fun(section_index: integer): LuaLogisticSection|nil
+
+---@class LuaContainerControlBehavior: LuaControlBehavior
+---@field read_contents boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaControl
+---@field surface LuaSurface
+---@field surface_index integer
+---@field position MapPosition
+---@field render_position MapPosition
+---@field is_flying boolean
+---@field flight_height number
+---@field vehicle LuaEntity|nil
+---@field cargo_pod LuaEntity|nil
+---@field hub LuaEntity|nil
+---@field force LuaForce
+---@field force_index integer
+---@field selected LuaEntity|nil
+---@field opened LuaEntity|LuaItemStack|LuaEquipment|LuaEquipmentGrid|LuaPlayer|LuaGuiElement|LuaInventory|LuaLogisticNetwork|integer|nil
+---@field crafting_queue_size integer
+---@field crafting_queue_progress number
+---@field walking_state { walking: boolean, direction: integer }
+---@field riding_state RidingState
+---@field mining_state { mining: boolean, position?: MapPosition }
+---@field shooting_state { state: integer, position: MapPosition }
+---@field picking_state boolean
+---@field repair_state { repairing: boolean, position: MapPosition }
+---@field cursor_stack LuaItemStack|nil
+---@field cursor_ghost ItemIDAndQualityIDPair|nil
+---@field cursor_record LuaRecord|nil
+---@field driving boolean
+---@field crafting_queue CraftingQueueItem[]
+---@field following_robots LuaEntity[]
+---@field cheat_mode boolean
+---@field character_crafting_speed_modifier number
+---@field character_mining_speed_modifier number
+---@field character_additional_mining_categories string[]
+---@field character_running_speed_modifier number
+---@field character_build_distance_bonus integer
+---@field character_item_drop_distance_bonus integer
+---@field character_reach_distance_bonus integer
+---@field character_resource_reach_distance_bonus integer
+---@field character_item_pickup_distance_bonus integer
+---@field character_loot_pickup_distance_bonus integer
+---@field character_inventory_slots_bonus integer
+---@field character_trash_slot_count_bonus integer
+---@field character_maximum_following_robot_count_bonus integer
+---@field character_health_bonus number
+---@field opened_gui_type integer|nil
+---@field build_distance integer
+---@field drop_item_distance integer
+---@field reach_distance integer
+---@field item_pickup_distance number
+---@field loot_pickup_distance number
+---@field resource_reach_distance number
+---@field in_combat boolean
+---@field character_running_speed number
+---@field character_mining_progress number
+---@field get_inventory fun(inventory: integer): LuaInventory|nil
+---@field get_inventory_name fun(inventory: integer): string|nil
+---@field get_max_inventory_index fun(): integer
+---@field get_main_inventory fun(): LuaInventory|nil
+---@field can_insert fun(items: ItemStackIdentification): boolean
+---@field insert fun(items: ItemStackIdentification): integer
+---@field set_gui_arrow fun(params: { margin: integer, type: GuiArrowType })
+---@field clear_gui_arrow fun()
+---@field get_item_count fun(item: ItemFilter|nil): integer
+---@field has_items_inside fun(): boolean
+---@field can_reach_entity fun(entity: LuaEntity): boolean
+---@field clear_items_inside fun()
+---@field remove_item fun(items: ItemStackIdentification): integer
+---@field teleport fun(position: MapPosition, surface: SurfaceIdentification|nil, raise_teleported: boolean|nil, snap_to_grid: boolean|nil, build_check_type: integer|nil): boolean
+---@field update_selected_entity fun(position: MapPosition)
+---@field clear_selected_entity fun()
+---@field disable_flashlight fun()
+---@field enable_flashlight fun()
+---@field is_flashlight_enabled fun(): boolean
+---@field get_craftable_count fun(recipe: RecipeID): integer
+---@field begin_crafting fun(params: { count: integer, recipe: RecipeID, silent?: boolean }): integer
+---@field cancel_crafting fun(params: { index: integer, count: integer })
+---@field mine_entity fun(entity: LuaEntity, force: boolean|nil): boolean
+---@field mine_tile fun(tile: LuaTile): boolean
+---@field is_player fun(): boolean
+---@field open_technology_gui fun(technology: TechnologyID|nil)
+---@field open_factoriopedia_gui fun(prototype: FactoriopediaID|nil)
+---@field close_factoriopedia_gui fun()
+---@field is_cursor_blueprint fun(): boolean
+---@field is_cursor_empty fun(): boolean
+---@field get_requester_point fun(): LuaLogisticPoint|nil
+---@field set_driving fun(driving: boolean, force: boolean|nil)
+---@field can_place_entity fun(params: { name: EntityID, position: MapPosition, direction?: integer }): boolean
+
+---@class LuaControlBehavior
+---@field type integer
+---@field entity LuaEntity
+---@field get_circuit_network fun(wire_connector_id: integer): LuaCircuitNetwork|nil
+
+---@class LuaCustomChartTag
+---@field icon SignalID|nil
+---@field last_user LuaPlayer|nil
+---@field position MapPosition
+---@field text string
+---@field tag_number integer
+---@field force LuaForce
+---@field surface LuaSurface
+---@field valid boolean
+---@field object_name string
+---@field destroy fun()
+
+---@class LuaCustomEventPrototype: LuaPrototypeBase
+---@field event_id integer
+---@field valid boolean
+---@field object_name string
+
+---@class LuaCustomInputPrototype: LuaPrototypeBase
+---@field event_id integer
+---@field key_sequence string
+---@field alternative_key_sequence string|nil
+---@field controller_key_sequence string|nil
+---@field controller_alternative_key_sequence string|nil
+---@field linked_game_control LinkedGameControl|nil
+---@field consuming "none"|"game-only"
+---@field action string
+---@field enabled boolean
+---@field enabled_while_spectating boolean
+---@field enabled_while_in_cutscene boolean
+---@field include_selected_prototype boolean
+---@field item_to_spawn LuaItemPrototype|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaCustomTable
+---@field valid boolean
+---@field object_name string
+
+---@class LuaDamagePrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaDeciderCombinatorControlBehavior: LuaCombinatorControlBehavior
+---@field parameters DeciderCombinatorParameters|nil
+---@field valid boolean
+---@field object_name string
+---@field get_condition fun(index: integer): DeciderCombinatorCondition
+---@field set_condition fun(index: integer, condition: DeciderCombinatorCondition)
+---@field add_condition fun(condition: DeciderCombinatorCondition, index: integer|nil)
+---@field remove_condition fun(index: integer)
+---@field get_output fun(index: integer): DeciderCombinatorOutput
+---@field set_output fun(index: integer, output: DeciderCombinatorOutput)
+---@field add_output fun(output: DeciderCombinatorOutput, index: integer|nil)
+---@field remove_output fun(index: integer)
+
+---@class LuaDecorativePrototype: LuaPrototypeBase
+---@field collision_box BoundingBox
+---@field collision_mask CollisionMask
+---@field autoplace_specification AutoplaceSpecification|nil
+---@field render_layer RenderLayer
+---@field decal boolean
+---@field grows_through_rail_path boolean
+---@field trigger_effect TriggerEffectItem[]|nil
+---@field placed_effect TriggerEffectItem[]|nil
+---@field minimal_separation number
+---@field target_count integer
+---@field valid boolean
+---@field object_name string
+
+---@class LuaDisplayPanelControlBehavior: LuaControlBehavior
+---@field messages DisplayPanelMessageDefinition[]
+---@field valid boolean
+---@field object_name string
+---@field get_message fun(index: integer): DisplayPanelMessageDefinition
+---@field set_message fun(index: integer, message: DisplayPanelMessageDefinition|nil)
+
+---@class LuaElectricEnergySourcePrototype
+---@field buffer_capacity number
+---@field usage_priority string
+---@field drain number
+---@field emissions_per_joule table<string, number>
+---@field render_no_network_icon boolean
+---@field render_no_power_icon boolean
+---@field valid boolean
+---@field object_name string
+---@field get_input_flow_limit fun(quality: QualityID|nil): number
+---@field get_output_flow_limit fun(quality: QualityID|nil): number
+
+---@class LuaEntity: LuaControl
+---@field rail_length number
+---@field name string
+---@field ghost_name string
+---@field localised_name LocalisedString
+---@field localised_description LocalisedString
+---@field ghost_localised_name LocalisedString
+---@field ghost_localised_description LocalisedString
+---@field type string
+---@field ghost_type string
+---@field use_filters boolean
+---@field active boolean
+---@field destructible boolean
+---@field minable boolean
+---@field minable_flag boolean
+---@field rotatable boolean
+---@field operable boolean
+---@field health number|nil
+---@field max_health number
+---@field direction integer
+---@field mirroring boolean
+---@field supports_direction boolean
+---@field orientation RealOrientation
+---@field cliff_orientation CliffOrientation
+---@field relative_turret_orientation RealOrientation|nil
+---@field torso_orientation RealOrientation
+---@field amount integer
+---@field initial_amount integer|nil
+---@field effectivity_modifier number
+---@field consumption_modifier number
+---@field friction_modifier number
+---@field driver_is_gunner boolean|nil
+---@field vehicle_automatic_targeting_parameters VehicleAutomaticTargetingParameters
+---@field speed number|nil
+---@field effective_speed number|nil
+---@field stack LuaItemStack
+---@field prototype LuaEntityPrototype
+---@field ghost_prototype LuaEntityPrototype|LuaTilePrototype
+---@field drop_position MapPosition
+---@field pickup_position MapPosition
+---@field drop_target LuaEntity|nil
+---@field pickup_target LuaEntity|nil
+---@field selected_gun_index integer|nil
+---@field energy number
+---@field temperature number|nil
+---@field previous_recipe RecipeIDAndQualityIDPair|nil
+---@field held_stack LuaItemStack
+---@field held_stack_position MapPosition
+---@field train LuaTrain|nil
+---@field neighbours table<string, LuaEntity>|LuaEntity[][]|LuaEntity|nil
+---@field belt_neighbours { inputs: LuaEntity[], outputs: LuaEntity[] }
+---@field heat_neighbours LuaEntity[]
+---@field fluidbox LuaFluidBox
+---@field backer_name string|nil
+---@field entity_label string|nil
+---@field time_to_live integer
+---@field color Color|nil
+---@field signal_state integer
+---@field chain_signal_state integer
+---@field to_be_looted boolean
+---@field crafting_speed number
+---@field crafting_progress number
+---@field bonus_progress number
+---@field result_quality LuaQualityPrototype|nil
+---@field productivity_bonus number
+---@field pollution_bonus number
+---@field speed_bonus number
+---@field consumption_bonus number
+---@field belt_to_ground_type BeltConnectionType
+---@field loader_type BeltConnectionType
+---@field use_transitional_requests boolean
+---@field transitional_request_target LuaSpacePlatform|nil
+---@field rocket_parts integer
+---@field send_to_orbit_automatically boolean
+---@field logistic_network LuaLogisticNetwork
+---@field logistic_cell LuaLogisticCell
+---@field item_requests ItemWithQualityCounts
+---@field insert_plan BlueprintInsertPlan[]
+---@field removal_plan BlueprintInsertPlan[]
+---@field player LuaPlayer|nil
+---@field damage_dealt number
+---@field kills integer
+---@field ignore_unprioritised_targets boolean
+---@field last_user LuaPlayer|nil
+---@field electric_buffer_size number|nil
+---@field electric_drain number|nil
+---@field electric_emissions_per_joule table<string, number>|nil
+---@field unit_number integer|nil
+---@field ghost_unit_number integer|nil
+---@field mining_progress number|nil
+---@field bonus_mining_progress number|nil
+---@field mining_area BoundingBox
+---@field power_production number
+---@field power_usage number
+---@field bounding_box BoundingBox
+---@field secondary_bounding_box BoundingBox|nil
+---@field selection_box BoundingBox
+---@field secondary_selection_box BoundingBox|nil
+---@field mining_target LuaEntity|nil
+---@field filter_slot_count integer
+---@field loader_container LuaEntity|nil
+---@field grid LuaEquipmentGrid|nil
+---@field graphics_variation integer|nil
+---@field tree_color_index integer
+---@field tree_color_index_max integer
+---@field tree_stage_index integer
+---@field tree_stage_index_max integer
+---@field tree_gray_stage_index integer
+---@field tree_gray_stage_index_max integer
+---@field burner LuaBurner|nil
+---@field shooting_target LuaEntity|nil
+---@field proxy_target LuaEntity|nil
+---@field stickers LuaEntity[]|nil
+---@field sticked_to LuaEntity
+---@field sticker_vehicle_modifiers { speed_modifier: number, speed_max: number, friction_modifier: number }|nil
+---@field parameters ProgrammableSpeakerParameters
+---@field alert_parameters ProgrammableSpeakerAlertParameters
+---@field electric_network_statistics LuaFlowStatistics
+---@field inserter_target_pickup_count integer
+---@field inserter_stack_size_override integer
+---@field products_finished integer
+---@field spawning_cooldown number
+---@field absorbed_pollution number
+---@field spawn_shift number
+---@field units LuaEntity[]
+---@field power_switch_state boolean
+---@field combinator_description string
+---@field effects ModuleEffects|nil
+---@field beacons_count integer|nil
+---@field infinity_container_filters InfinityInventoryFilter[]
+---@field remove_unfiltered_items boolean
+---@field character_corpse_player_index integer
+---@field character_corpse_tick_of_death integer
+---@field character_corpse_death_cause LocalisedString
+---@field associated_player LuaPlayer|nil
+---@field tick_of_last_attack integer
+---@field tick_of_last_damage integer
+---@field splitter_filter ItemFilter|nil
+---@field inserter_filter_mode "whitelist"|"blacklist"|nil
+---@field loader_filter_mode PrototypeFilterMode|nil
+---@field loader_belt_stack_size_override integer
+---@field mining_drill_filter_mode "whitelist"|"blacklist"|nil
+---@field splitter_input_priority "left"|"none"|"right"
+---@field splitter_output_priority "left"|"none"|"right"
+---@field inserter_spoil_priority SpoilPriority
+---@field armed boolean
+---@field recipe_locked boolean
+---@field connected_rail LuaEntity|nil
+---@field connected_rail_direction integer
+---@field trains_in_block integer
+---@field timeout integer
+---@field neighbour_bonus number
+---@field ai_settings LuaAISettings
+---@field highlight_box_type CursorBoxRenderType
+---@field highlight_box_blink_interval integer
+---@field status integer|nil
+---@field custom_status CustomEntityStatus|nil
+---@field enable_logistics_while_moving boolean
+---@field render_player LuaPlayer|nil
+---@field render_to_forces ForceSet|nil
+---@field pump_rail_target LuaEntity|nil
+---@field valve_threshold_override number|nil
+---@field electric_network_id integer|nil
+---@field allow_dispatching_robots boolean
+---@field energy_generated_last_tick number
+---@field storage_filter ItemIDAndQualityIDPair|nil
+---@field request_from_buffers boolean
+---@field corpse_expires boolean
+---@field corpse_immune_to_entity_placement boolean
+---@field tags Tags|nil
+---@field time_to_next_effect integer
+---@field autopilot_destination MapPosition|nil
+---@field autopilot_destinations MapPosition[]
+---@field trains_count integer
+---@field trains_limit integer
+---@field is_military_target boolean
+---@field is_entity_with_owner boolean
+---@field is_entity_with_health boolean
+---@field combat_robot_owner LuaEntity|nil
+---@field link_id integer
+---@field follow_target LuaEntity|nil
+---@field follow_offset Vector|nil
+---@field linked_belt_type BeltConnectionType
+---@field linked_belt_neighbour LuaEntity|nil
+---@field quality LuaQualityPrototype
+---@field rail_layer integer
+---@field radar_scan_progress number
+---@field name_tag string
+---@field rocket_silo_status integer
+---@field tile_width integer
+---@field tile_height integer
+---@field crane_end_position_3d Vector3D
+---@field crane_destination MapPosition
+---@field crane_destination_3d Vector3D
+---@field crane_grappler_destination MapPosition
+---@field crane_grappler_destination_3d Vector3D
+---@field owned_plants LuaEntity[]
+---@field copy_color_from_train_stop boolean
+---@field is_headed_to_trains_front boolean
+---@field draw_data RollingStockDrawData
+---@field train_stop_priority integer
+---@field belt_shape "straight"|"left"|"right"
+---@field gps_tag string
+---@field commandable LuaCommandable|nil
+---@field fluids_count integer
+---@field tick_grown integer
+---@field always_on boolean
+---@field artillery_auto_targeting boolean
+---@field robot_order_queue WorkerRobotOrder[]
+---@field procession_tick integer
+---@field is_updatable boolean
+---@field disabled_by_script boolean
+---@field disabled_by_control_behavior boolean
+---@field disabled_by_recipe boolean
+---@field is_freezable boolean
+---@field frozen boolean
+---@field cargo_hatches LuaCargoHatch[]
+---@field cargo_pod_state "awaiting_launch"|"ascending"|"surface_transition"|"descending"|"parking"
+---@field cargo_pod_destination CargoDestination
+---@field cargo_pod_origin LuaEntity|nil
+---@field attached_cargo_pod LuaEntity|nil
+---@field rocket LuaEntity|nil
+---@field item_request_proxy LuaEntity|nil
+---@field base_damage_modifiers TriggerModifierData
+---@field bonus_damage_modifiers TriggerModifierData
+---@field cargo_bay_connection_owner LuaEntity|nil
+---@field pickup_from_left_lane boolean
+---@field pickup_from_right_lane boolean
+---@field segmented_unit LuaSegmentedUnit|nil
+---@field pumped_last_tick number
+---@field created_by_corpse LuaEntity|nil
+---@field priority_targets LuaEntityPrototype[]
+---@field proxy_target_entity LuaEntity|nil
+---@field proxy_target_inventory integer
+---@field display_panel_text LocalisedString
+---@field display_panel_icon SignalID|nil
+---@field display_panel_always_show boolean
+---@field display_panel_show_in_chart boolean
+---@field valid boolean
+---@field object_name string
+---@field get_output_inventory fun(): LuaInventory|nil
+---@field get_module_inventory fun(): LuaInventory|nil
+---@field get_fuel_inventory fun(): LuaInventory|nil
+---@field get_burnt_result_inventory fun(): LuaInventory|nil
+---@field damage fun(damage: number, force: ForceID, type: DamageTypeID|nil, source: LuaEntity|nil, cause: LuaEntity|nil): number
+---@field can_be_destroyed fun(): boolean
+---@field destroy fun(params: { do_cliff_correction?: boolean, raise_destroy?: boolean, player?: PlayerIdentification, undo_index?: integer }|nil): boolean
+---@field die fun(force: ForceID|nil, cause: LuaEntity|nil): boolean
+---@field has_flag fun(flag: EntityPrototypeFlag): boolean
+---@field ghost_has_flag fun(flag: EntityPrototypeFlag): boolean
+---@field add_market_item fun(offer: Offer)
+---@field remove_market_item fun(offer: integer): boolean
+---@field get_market_items fun(): Offer[]
+---@field clear_market_items fun()
+---@field order_deconstruction fun(force: ForceID, player: PlayerIdentification|nil, undo_index: integer|nil): boolean
+---@field cancel_deconstruction fun(force: ForceID, player: PlayerIdentification|nil)
+---@field to_be_deconstructed fun(): boolean
+---@field order_upgrade fun(params: { target: EntityWithQualityID, force: ForceID, player?: PlayerIdentification, undo_index?: integer }): boolean
+---@field cancel_upgrade fun(force: ForceID, player: PlayerIdentification|nil): boolean
+---@field to_be_upgraded fun(): boolean
+---@field apply_upgrade fun(): LuaEntity|nil, LuaEntity|nil
+---@field is_crafting fun(): boolean
+---@field is_opened fun(): boolean
+---@field is_opening fun(): boolean
+---@field is_closed fun(): boolean
+---@field is_closing fun(): boolean
+---@field request_to_open fun(force: ForceID, extra_time: integer|nil)
+---@field request_to_close fun(force: ForceID)
+---@field get_transport_line fun(index: integer): LuaTransportLine
+---@field get_item_insert_specification fun(position: MapPosition): integer, number
+---@field get_line_item_position fun(index: integer, position: number): MapPosition
+---@field get_max_transport_line_index fun(): integer
+---@field launch_rocket fun(destination: CargoDestination|nil, character: LuaEntity|nil): boolean
+---@field revive fun(params: { raise_revive?: boolean, overflow?: LuaInventory }|nil): table<string, integer>|nil, LuaEntity|nil, LuaEntity|nil
+---@field silent_revive fun(params: { raise_revive?: boolean, overflow?: LuaInventory }|nil): ItemWithQualityCounts, LuaEntity|nil, LuaEntity|nil
+---@field get_connected_rail fun(params: { rail_direction: integer, rail_connection_direction: integer }): LuaEntity|nil, integer|nil, integer|nil
+---@field get_connected_rails fun(): LuaEntity[]
+---@field get_rail_segment_signal fun(direction: integer, in_else_out: boolean): LuaEntity|nil
+---@field get_rail_segment_stop fun(direction: integer): LuaEntity|nil
+---@field get_rail_segment_end fun(direction: integer): LuaEntity, integer
+---@field get_rail_segment_rails fun(direction: integer): LuaEntity[]
+---@field get_rail_segment_length fun(): number
+---@field get_rail_segment_overlaps fun(): LuaEntity[]
+---@field is_rail_in_same_rail_segment_as fun(other_rail: LuaEntity): boolean
+---@field is_rail_in_same_rail_block_as fun(other_rail: LuaEntity): boolean
+---@field get_parent_signals fun(): LuaEntity[]
+---@field get_child_signals fun(): LuaEntity[]
+---@field get_inbound_signals fun(): LuaEntity[]
+---@field get_outbound_signals fun(): LuaEntity[]
+---@field get_filter fun(slot_index: integer): ItemFilter|EntityID|AsteroidChunkID|nil
+---@field set_filter fun(index: integer, filter: ItemFilter|ItemWithQualityID|EntityID|AsteroidChunkID|nil)
+---@field get_infinity_container_filter fun(index: integer): InfinityInventoryFilter|nil
+---@field set_infinity_container_filter fun(index: integer, filter: InfinityInventoryFilter|nil)
+---@field get_infinity_pipe_filter fun(): InfinityPipeFilter|nil
+---@field set_infinity_pipe_filter fun(filter: InfinityPipeFilter|nil)
+---@field get_heat_setting fun(): HeatSetting
+---@field set_heat_setting fun(filter: HeatSetting)
+---@field get_control_behavior fun(): LuaControlBehavior|nil
+---@field get_or_create_control_behavior fun(): LuaControlBehavior|nil
+---@field get_circuit_network fun(wire_connector_id: integer): LuaCircuitNetwork|nil
+---@field get_signal fun(signal: SignalID, wire_connector_id: integer, extra_wire_connector_id: integer|nil): integer
+---@field get_signals fun(wire_connector_id: integer, extra_wire_connector_id: integer|nil): Signal[]|nil
+---@field supports_backer_name fun(): boolean
+---@field copy_settings fun(entity: LuaEntity, by_player: PlayerIdentification|nil): ItemWithQualityCounts
+---@field get_logistic_point fun(index: integer|nil): LuaLogisticPoint|LuaLogisticPoint[]|nil
+---@field play_note fun(instrument: integer, note: integer, stop_playing_sounds: boolean|nil): boolean
+---@field connect_rolling_stock fun(direction: integer): boolean
+---@field disconnect_rolling_stock fun(direction: integer): boolean
+---@field update_connections fun()
+---@field get_recipe fun(): LuaRecipe|nil, LuaQualityPrototype|nil
+---@field set_recipe fun(recipe: RecipeID|nil, quality: QualityID|nil): ItemWithQualityCounts
+---@field rotate fun(params: { reverse?: boolean, by_player?: PlayerIdentification }|nil): boolean
+---@field get_driver fun(): LuaEntity|LuaPlayer|nil
+---@field set_driver fun(driver: LuaEntity|PlayerIdentification|nil)
+---@field get_passenger fun(): LuaEntity|LuaPlayer|nil
+---@field set_passenger fun(passenger: LuaEntity|PlayerIdentification|nil)
+---@field is_connected_to_electric_network fun(): boolean
+---@field get_train_stop_trains fun(): LuaTrain[]
+---@field get_stopped_train fun(): LuaTrain|nil
+---@field clone fun(params: { position: MapPosition, surface?: LuaSurface, force?: ForceID, create_build_effect_smoke?: boolean }): LuaEntity|nil
+---@field get_fluid_count fun(fluid: string|nil): number
+---@field get_fluid_contents fun(): table<string, FluidAmount>
+---@field remove_fluid fun(params: { name: string, amount: number, minimum_temperature?: number, maximum_temperature?: number, temperature?: number }): number
+---@field insert_fluid fun(fluid: Fluid): number
+---@field clear_fluid_inside fun()
+---@field get_beam_source fun(): BeamTarget|nil
+---@field set_beam_source fun(source: LuaEntity|MapPosition)
+---@field get_beam_target fun(): BeamTarget|nil
+---@field set_beam_target fun(target: LuaEntity|MapPosition)
+---@field get_radius fun(): number
+---@field get_health_ratio fun(): number|nil
+---@field create_build_effect_smoke fun()
+---@field release_from_spawner fun()
+---@field toggle_equipment_movement_bonus fun()
+---@field can_shoot fun(target: LuaEntity, position: MapPosition): boolean
+---@field start_fading_out fun()
+---@field get_upgrade_target fun(): LuaEntityPrototype|nil, LuaQualityPrototype|nil
+---@field get_damage_to_be_taken fun(): number|nil
+---@field deplete fun()
+---@field mine fun(params: { inventory?: LuaInventory, force?: boolean, raise_destroyed?: boolean, ignore_minable?: boolean }|nil): boolean
+---@field spawn_decorations fun()
+---@field get_priority_target fun(index: integer): LuaEntityPrototype|nil
+---@field set_priority_target fun(index: integer, entity_id: EntityID|nil)
+---@field can_wires_reach fun(entity: LuaEntity): boolean
+---@field get_connected_rolling_stock fun(direction: integer): LuaEntity|nil, integer|nil
+---@field is_registered_for_construction fun(): boolean
+---@field is_registered_for_deconstruction fun(force: ForceID): boolean
+---@field is_registered_for_upgrade fun(): boolean
+---@field is_registered_for_repair fun(): boolean
+---@field add_autopilot_destination fun(position: MapPosition)
+---@field connect_linked_belts fun(neighbour: LuaEntity|nil)
+---@field disconnect_linked_belts fun()
+---@field get_spider_legs fun(): LuaEntity[]
+---@field stop_spider fun()
+---@field get_wire_connector fun(wire_connector_id: integer, or_create: boolean): LuaWireConnector|nil
+---@field get_wire_connectors fun(or_create: boolean): table<integer, LuaWireConnector>
+---@field get_rail_end fun(direction: integer): LuaRailEnd
+---@field get_electric_input_flow_limit fun(quality: QualityID|nil): number|nil
+---@field get_electric_output_flow_limit fun(quality: QualityID|nil): number|nil
+---@field get_beacons fun(): LuaEntity[]|nil
+---@field get_beacon_effect_receivers fun(): LuaEntity[]
+---@field force_finish_ascending fun()
+---@field force_finish_descending fun()
+---@field create_cargo_pod fun(cargo_hatch: LuaCargoHatch|nil): LuaEntity|nil
+---@field get_cargo_bays fun(): LuaEntity[]
+---@field inventory_supports_bar fun(inventory_index: integer): boolean
+---@field get_inventory_bar fun(inventory_index: integer): integer
+---@field set_inventory_bar fun(inventory_index: integer, bar: integer|nil)
+---@field inventory_supports_filters fun(inventory_index: integer): boolean
+---@field is_inventory_filtered fun(inventory_index: integer): boolean
+---@field can_set_inventory_filter fun(inventory_index: integer, index: integer, filter: ItemFilter): boolean
+---@field get_inventory_filter fun(inventory_index: integer, index: integer): ItemFilter|nil
+---@field set_inventory_filter fun(inventory_index: integer, index: integer, filter: ItemFilter|nil): boolean
+---@field register_tree fun(tree: LuaEntity): boolean
+---@field get_movement fun(): Vector
+---@field set_movement fun(direction: Vector, speed: number)
+---@field get_fluid fun(index: integer): Fluid|nil
+---@field set_fluid fun(index: integer, fluid: Fluid|nil): Fluid|nil
+---@field get_logistic_sections fun(): LuaLogisticSections|nil
+---@field set_inventory_size_override fun(inventory_index: integer, size_override: integer|nil, overflow: LuaInventory|nil)
+---@field get_inventory_size_override fun(inventory_index: integer): integer|nil
+---@field get_fluid_source_tile fun(): TilePosition
+---@field get_fluid_source_fluid fun(): string|nil
+
+---@class LuaEntityPrototype: LuaPrototypeBase
+---@field infinite_resource boolean|nil
+---@field minimum_resource_amount integer|nil
+---@field normal_resource_amount integer|nil
+---@field infinite_depletion_resource_amount integer|nil
+---@field resource_category string|nil
+---@field mineable_properties MineableProperties
+---@field items_to_place_this ItemToPlace[]|nil
+---@field collision_box BoundingBox
+---@field secondary_collision_box BoundingBox|nil
+---@field map_generator_bounding_box BoundingBox
+---@field selection_box BoundingBox
+---@field drawing_box_vertical_extension number
+---@field sticker_box BoundingBox
+---@field collision_mask CollisionMask
+---@field trigger_target_mask table<string, boolean>
+---@field healing_per_tick number|nil
+---@field emissions_per_second table<string, number>
+---@field corpses table<string, LuaEntityPrototype>|nil
+---@field selectable_in_game boolean
+---@field selection_priority integer
+---@field weight number|nil
+---@field resistances table<string, Resistance>|nil
+---@field fast_replaceable_group string|nil
+---@field next_upgrade LuaEntityPrototype|nil
+---@field icons_positioning IconSequencePositioning[]|nil
+---@field icon_draw_specification IconDrawSpecification
+---@field loot Loot[]|nil
+---@field repair_speed_modifier number|nil
+---@field turret_range integer|nil
+---@field autoplace_specification AutoplaceSpecification|nil
+---@field belt_speed number|nil
+---@field result_units UnitSpawnDefinition[]|nil
+---@field attack_result TriggerItem[]|nil
+---@field final_attack_result TriggerItem[]|nil
+---@field attack_parameters AttackParameters|nil
+---@field revenge_attack_parameters AttackParameters|nil
+---@field spawn_cooldown { min: number, max: number }|nil
+---@field mining_drill_radius number|nil
+---@field quality_affects_mining_radius boolean|nil
+---@field mining_speed number|nil
+---@field resource_drain_rate_percent integer|nil
+---@field uses_force_mining_productivity_bonus boolean|nil
+---@field logistic_mode "requester"|"active-provider"|"passive-provider"|"buffer"|"storage"|"none"|nil
+---@field max_underground_distance integer|nil
+---@field flags EntityPrototypeFlags
+---@field remains_when_mined LuaEntityPrototype[]
+---@field additional_pastable_entities LuaEntityPrototype[]
+---@field allow_copy_paste boolean
+---@field shooting_cursor_size number
+---@field created_smoke { smoke_name: string, offsets: Vector[], offset_deviation: BoundingBox, initial_height: number, max_radius?: number, speed: Vector, speed_multiplier: number, speed_multiplier_deviation: number, starting_frame: number, starting_frame_deviation: number, speed_from_center: number, speed_from_center_deviation: number }|nil
+---@field created_effect TriggerItem[]|nil
+---@field update_effects TriggerEffectWithCooldown[]|nil
+---@field update_effects_while_enraged TriggerEffectWithCooldown[]|nil
+---@field map_color Color|nil
+---@field friendly_map_color Color
+---@field enemy_map_color Color
+---@field build_base_evolution_requirement number
+---@field instruments ProgrammableSpeakerInstrument[]|nil
+---@field max_polyphony integer|nil
+---@field module_inventory_size integer|nil
+---@field quality_affects_module_slots boolean|nil
+---@field inventory_type "normal"|"with_bar"|"with_filters"|"with_filters_and_bar"|"with_weight_limit"|"with_custom_stack_size"|nil
+---@field inventory_weight_limit Weight|nil
+---@field inventory_properties InventoryWithCustomStackSizeSpecification|nil
+---@field ingredient_count integer|nil
+---@field max_item_product_count integer|nil
+---@field crafting_categories table<string, true>|nil
+---@field resource_categories table<string, true>|nil
+---@field energy_usage number|nil
+---@field effectivity number|nil
+---@field consumption number|nil
+---@field friction_force number|nil
+---@field braking_force number|nil
+---@field air_resistance number|nil
+---@field tank_driving boolean|nil
+---@field rotation_speed number|nil
+---@field rotation_snap_angle number|nil
+---@field turret_rotation_speed number|nil
+---@field guns table<string, LuaItemPrototype>|nil
+---@field indexed_guns LuaItemPrototype[]|nil
+---@field speed number|nil
+---@field speed_multiplier_when_out_of_energy number|nil
+---@field max_payload_size integer|nil
+---@field max_payload_size_after_bonus integer|nil
+---@field draw_cargo boolean|nil
+---@field energy_per_move number|nil
+---@field energy_per_tick number|nil
+---@field min_to_charge number|nil
+---@field max_to_charge number|nil
+---@field burner_prototype LuaBurnerPrototype|nil
+---@field electric_energy_source_prototype LuaElectricEnergySourcePrototype|nil
+---@field heat_energy_source_prototype LuaHeatEnergySourcePrototype|nil
+---@field fluid_energy_source_prototype LuaFluidEnergySourcePrototype|nil
+---@field void_energy_source_prototype LuaVoidEnergySourcePrototype|nil
+---@field heat_buffer_prototype LuaHeatBufferPrototype|nil
+---@field building_grid_bit_shift integer
+---@field fluid_usage_per_tick number|nil
+---@field maximum_temperature number|nil
+---@field burns_fluid boolean|nil
+---@field scale_fluid_usage boolean|nil
+---@field destroy_non_fuel_fluid boolean|nil
+---@field max_power_output number|nil
+---@field target_temperature number|nil
+---@field boiler_mode "heat-fluid-inside"|"output-to-separate-pipe"|nil
+---@field fluid_capacity number
+---@field pumping_speed number|nil
+---@field valve_mode ValveMode|nil
+---@field valve_threshold number|nil
+---@field bulk boolean|nil
+---@field uses_inserter_stack_size_bonus boolean|nil
+---@field fluid_source_offset Vector|nil
+---@field flow_scaling boolean|nil
+---@field allow_custom_vectors boolean|nil
+---@field allow_burner_leech boolean|nil
+---@field inserter_pickup_position Vector|nil
+---@field inserter_drop_position Vector|nil
+---@field inserter_chases_belt_items boolean|nil
+---@field loader_max_belt_stack_size integer|nil
+---@field loader_adjustable_belt_stack_size boolean|nil
+---@field loader_wait_for_full_stack boolean|nil
+---@field loader_respect_insert_limits boolean|nil
+---@field count_as_rock_for_filtered_deconstruction boolean|nil
+---@field filter_count integer|nil
+---@field time_to_live integer
+---@field distribution_effectivity number|nil
+---@field distribution_effectivity_bonus_per_quality_level number|nil
+---@field profile number[]|nil
+---@field beacon_counter "total"|"same_type"|nil
+---@field explosion_beam number|nil
+---@field explosion_rotate number|nil
+---@field tree_color_count integer|nil
+---@field alert_when_damaged boolean|nil
+---@field alert_when_attacking boolean|nil
+---@field color Color|nil
+---@field collision_mask_collides_with_self boolean
+---@field collision_mask_collides_with_tiles_only boolean
+---@field collision_mask_considers_tile_transitions boolean
+---@field allowed_effects table<string, boolean>|nil
+---@field allowed_module_categories table<string, true>|nil
+---@field rocket_parts_required integer|nil
+---@field rocket_rising_delay integer|nil
+---@field launch_wait_time integer|nil
+---@field light_blinking_speed number|nil
+---@field door_opening_speed number|nil
+---@field launch_to_space_platforms boolean|nil
+---@field rising_speed number|nil
+---@field engine_starting_speed number|nil
+---@field flying_speed number|nil
+---@field flying_acceleration number|nil
+---@field fixed_recipe string|nil
+---@field construction_radius number|nil
+---@field logistic_radius number|nil
+---@field energy_per_hit_point number|nil
+---@field create_ghost_on_death boolean
+---@field ammo_category string|nil
+---@field timeout integer|nil
+---@field trigger_collision_mask CollisionMask|nil
+---@field fluidbox_prototypes LuaFluidBoxPrototype[]
+---@field neighbour_bonus number|nil
+---@field container_distance number|nil
+---@field belt_distance number|nil
+---@field belt_length number|nil
+---@field per_lane_filters boolean|nil
+---@field is_building boolean
+---@field automated_ammo_count integer|nil
+---@field max_speed number|nil
+---@field darkness_for_all_lamps_on number|nil
+---@field darkness_for_all_lamps_off number|nil
+---@field always_on boolean|nil
+---@field min_darkness_to_spawn number|nil
+---@field max_darkness_to_spawn number|nil
+---@field call_for_help_radius number|nil
+---@field max_count_of_owned_units number|nil
+---@field max_count_of_owned_defensive_units number|nil
+---@field max_friends_around_to_spawn number|nil
+---@field max_defensive_friends_around_to_spawn number|nil
+---@field spawning_radius number|nil
+---@field spawning_spacing number|nil
+---@field radius number
+---@field cliff_explosive_prototype string|nil
+---@field rocket_entity_prototype LuaEntityPrototype|nil
+---@field has_belt_immunity boolean|nil
+---@field vision_distance number|nil
+---@field absorptions_to_join_attack table<string, number>|nil
+---@field min_pursue_time integer|nil
+---@field max_pursue_distance number|nil
+---@field radar_range integer|nil
+---@field move_while_shooting boolean|nil
+---@field can_open_gates boolean|nil
+---@field affected_by_tiles boolean|nil
+---@field distraction_cooldown integer|nil
+---@field spawning_time_modifier number|nil
+---@field alert_icon_shift Vector
+---@field alert_icon_scale number
+---@field lab_inputs string[]|nil
+---@field science_pack_drain_rate_percent integer
+---@field effect_receiver EffectReceiver|nil
+---@field allow_access_to_all_forces boolean|nil
+---@field supports_direction boolean
+---@field terrain_friction_modifier number|nil
+---@field allow_passengers boolean|nil
+---@field grid_prototype LuaEquipmentGridPrototype|nil
+---@field remove_decoratives "automatic"|"true"|"false"
+---@field related_underground_belt LuaEntityPrototype|nil
+---@field inserter_stack_size_bonus integer|nil
+---@field protected_from_tile_building boolean
+---@field is_entity_with_owner boolean
+---@field is_military_target boolean|nil
+---@field allow_run_time_change_of_is_military_target boolean|nil
+---@field logistic_parameters { spawn_and_station_height: number, spawn_and_station_shadow_height_offset: number, stationing_render_layer_swap_height: number, charge_approach_distance: number, logistic_radius: number, construction_radius: number, charging_station_count: integer, charging_distance: number, charging_station_shift: Vector, charging_energy: number, charging_threshold_distance: number, robot_vertical_acceleration: number, stationing_offset: Vector, robot_limit: integer, logistics_connection_distance: number, robots_shrink_when_entering_and_exiting: boolean }|nil
+---@field height number|nil
+---@field torso_rotation_speed number|nil
+---@field torso_bob_speed number|nil
+---@field automatic_weapon_cycling boolean|nil
+---@field chain_shooting_cooldown_modifier number|nil
+---@field spider_engine SpiderEngineSpecification|nil
+---@field chunk_exploration_radius number|nil
+---@field animation_speed_coefficient number|nil
+---@field manual_range_modifier number|nil
+---@field dying_speed number|nil
+---@field active_energy_usage number|nil
+---@field lamp_energy_usage number|nil
+---@field crane_energy_usage number|nil
+---@field use_exact_mode boolean|nil
+---@field tile_width integer
+---@field tile_height integer
+---@field vertical_selection_shift number|nil
+---@field spawn_decoration TriggerEffectItem[]|nil
+---@field spawn_decorations_on_expansion boolean|nil
+---@field connection_distance number|nil
+---@field joint_distance number|nil
+---@field radius_visualisation_specification RadiusVisualisationSpecification|nil
+---@field growth_ticks integer|nil
+---@field harvest_emissions table<string, number>|nil
+---@field agricultural_tower_radius number|nil
+---@field growth_area_radius number|nil
+---@field growth_grid_tile_size integer|nil
+---@field vector_to_place_result Vector|nil
+---@field surface_conditions SurfaceCondition[]|nil
+---@field heating_energy number
+---@field auto_setup_collision_box boolean
+---@field factoriopedia_alternative LuaEntityPrototype|nil
+---@field rewire_neighbours_when_destroying boolean
+---@field solar_panel_performance_at_day number
+---@field solar_panel_performance_at_night number
+---@field solar_panel_solar_coefficient_property LuaSurfacePropertyPrototype
+---@field accepted_seeds string[]|nil
+---@field captured_spawner_entity LuaEntityPrototype|nil
+---@field min_performance ThrusterPerformancePoint|nil
+---@field max_performance ThrusterPerformancePoint|nil
+---@field two_direction_only boolean|nil
+---@field perceived_performance PerceivedPerformance|nil
+---@field overkill_fraction number|nil
+---@field dying_explosion ExplosionDefinition[]|nil
+---@field dying_trigger_effect TriggerEffectItem[]|nil
+---@field damaged_trigger_effect TriggerEffectItem[]|nil
+---@field attack_reaction AttackReactionItem[]|nil
+---@field hide_resistances boolean|nil
+---@field random_corpse_variation boolean|nil
+---@field neighbour_connectable NeighbourConnectable|nil
+---@field tile_buildability_rules TileBuildabilityRule[]|nil
+---@field support_range number|nil
+---@field territory_radius integer|nil
+---@field enraged_duration integer|nil
+---@field patrolling_speed number|nil
+---@field investigating_speed number|nil
+---@field attacking_speed number|nil
+---@field enraged_speed number
+---@field acceleration_rate number
+---@field turn_radius number|nil
+---@field patrolling_turn_radius number|nil
+---@field turn_smoothing number|nil
+---@field ticks_per_scan integer|nil
+---@field segment_engine SegmentEngineSpecification|nil
+---@field running_speed number|nil
+---@field maximum_corner_sliding_distance number|nil
+---@field build_distance integer|nil
+---@field drop_item_distance integer|nil
+---@field reach_distance integer|nil
+---@field reach_resource_distance number|nil
+---@field item_pickup_distance number|nil
+---@field loot_pickup_distance number|nil
+---@field enter_vehicle_distance number|nil
+---@field ticks_to_keep_gun integer|nil
+---@field ticks_to_keep_aiming_direction integer|nil
+---@field ticks_to_stay_in_combat integer|nil
+---@field respawn_time integer|nil
+---@field damage_hit_tint Color|nil
+---@field character_corpse LuaEntityPrototype|nil
+---@field arm_inventory_size_quality_increase integer|nil
+---@field inventory_size_quality_increase integer|nil
+---@field passive_energy_usage number|nil
+---@field arm_energy_usage number|nil
+---@field arm_slow_energy_usage number|nil
+---@field energy_usage_quality_scaling number|nil
+---@field arm_count_base integer|nil
+---@field arm_count_quality_scaling integer|nil
+---@field head_collection_radius number|nil
+---@field collection_box_offset number|nil
+---@field deposit_radius number|nil
+---@field arm_speed_base number|nil
+---@field arm_speed_quality_scaling number|nil
+---@field arm_angular_speed_cap_base number|nil
+---@field arm_angular_speed_cap_quality_scaling number|nil
+---@field tether_size number|nil
+---@field unpowered_arm_speed_scale number|nil
+---@field minimal_arm_swing_segment_retraction integer|nil
+---@field held_items_offset number|nil
+---@field held_items_spread number|nil
+---@field held_items_display_count integer|nil
+---@field arm_color_gradient Color[]|nil
+---@field fluid_buffer_size FluidAmount|nil
+---@field activation_buffer_ratio FluidAmount|nil
+---@field fluid_buffer_input_flow FluidAmount|nil
+---@field range_from_player number|nil
+---@field combat_robot_friction number|nil
+---@field destroy_action TriggerItem[]|nil
+---@field follows_player boolean|nil
+---@field strike_effect TriggerItem[]|nil
+---@field attractor_hit_effect TriggerItem[]|nil
+---@field damage number|nil
+---@field energy number|nil
+---@field connection_category string[]
+---@field valid boolean
+---@field object_name string
+---@field has_flag fun(flag: EntityPrototypeFlag): boolean
+---@field get_inventory_size fun(index: integer, quality: QualityID|nil): integer|nil
+---@field get_crafting_speed fun(quality: QualityID|nil): number
+---@field get_supply_area_distance fun(quality: QualityID|nil): number
+---@field get_max_wire_distance fun(quality: QualityID|nil): number
+---@field get_max_circuit_wire_distance fun(quality: QualityID|nil): number
+---@field get_max_energy_usage fun(quality: QualityID|nil): number
+---@field get_max_energy_production fun(quality: QualityID|nil): number
+---@field get_max_energy fun(quality: QualityID|nil): number|nil
+---@field get_inserter_extension_speed fun(quality: QualityID|nil): number|nil
+---@field get_inserter_rotation_speed fun(quality: QualityID|nil): number|nil
+---@field get_researching_speed fun(quality: QualityID|nil): number|nil
+---@field get_max_distance_of_sector_revealed fun(quality: QualityID|nil): integer|nil
+---@field get_max_distance_of_nearby_sector_revealed fun(quality: QualityID|nil): integer|nil
+---@field get_max_health fun(quality: QualityID|nil): number
+---@field get_fluid_usage_per_tick fun(quality: QualityID|nil): number|nil
+---@field get_max_power_output fun(quality: QualityID|nil): number|nil
+---@field get_pumping_speed fun(quality: QualityID|nil): number
+---@field get_valve_flow_rate fun(quality: QualityID|nil): number
+---@field get_mining_drill_radius fun(quality: QualityID|nil): number|nil
+---@field get_fluid_capacity fun(quality: QualityID|nil): number
+---@field get_attraction_range_elongation fun(quality: QualityID|nil): number|nil
+---@field get_energy_distribution_efficiency fun(quality: QualityID|nil): number|nil
+
+---@class LuaEquipment
+---@field name string
+---@field ghost_name string
+---@field type string
+---@field ghost_type string
+---@field quality LuaQualityPrototype
+---@field position EquipmentPosition
+---@field shape { width: integer, height: integer }
+---@field shield number
+---@field max_shield number
+---@field max_solar_power number
+---@field inventory_bonus integer
+---@field movement_bonus number
+---@field generator_power number
+---@field energy number
+---@field max_energy number
+---@field prototype LuaEquipmentPrototype
+---@field ghost_prototype LuaEquipmentPrototype
+---@field burner LuaBurner|nil
+---@field to_be_removed boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaEquipmentCategoryPrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaEquipmentGrid
+---@field prototype LuaEquipmentGridPrototype
+---@field width integer
+---@field height integer
+---@field equipment LuaEquipment[]
+---@field max_solar_energy number
+---@field available_in_batteries number
+---@field battery_capacity number
+---@field shield number
+---@field max_shield number
+---@field inventory_bonus integer
+---@field movement_bonus number
+---@field inhibit_movement_bonus boolean
+---@field unique_id integer
+---@field entity_owner LuaEntity|nil
+---@field player_owner LuaPlayer|nil
+---@field itemstack_owner LuaItemStack|nil
+---@field valid boolean
+---@field object_name string
+---@field take fun(params: { position?: EquipmentPosition, equipment?: LuaEquipment, by_player?: PlayerIdentification }): ItemWithQualityCount|nil
+---@field take_all fun(by_player: PlayerIdentification|nil): ItemWithQualityCounts
+---@field clear fun(by_player: PlayerIdentification|nil)
+---@field put fun(params: { name: EquipmentID, quality?: QualityID, position?: EquipmentPosition, by_player?: PlayerIdentification, ghost?: boolean }): LuaEquipment|nil
+---@field can_move fun(params: { equipment: LuaEquipment, position: EquipmentPosition }): boolean
+---@field move fun(params: { equipment: LuaEquipment, position: EquipmentPosition }): boolean
+---@field get fun(position: EquipmentPosition): LuaEquipment|nil
+---@field get_contents fun(): EquipmentWithQualityCounts[]
+---@field get_generator_energy fun(quality: QualityID|nil): number
+---@field find fun(equipment: EquipmentWithQualityID, search_ghosts: boolean|nil): LuaEquipment|nil
+---@field count fun(equipment: EquipmentWithQualityID|nil): integer
+---@field revive fun(equipment: LuaEquipment): LuaEquipment
+---@field order_removal fun(equipment: LuaEquipment): boolean
+---@field cancel_removal fun(equipment: LuaEquipment): boolean
+
+---@class LuaEquipmentGridPrototype: LuaPrototypeBase
+---@field equipment_categories string[]
+---@field width integer
+---@field height integer
+---@field locked boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaEquipmentPrototype: LuaPrototypeBase
+---@field shape { width: integer, height: integer, points?: EquipmentPoint[] }
+---@field take_result LuaItemPrototype|nil
+---@field energy_production number
+---@field energy_per_shield number
+---@field logistic_parameters { spawn_and_station_height: number, spawn_and_station_shadow_height_offset: number, stationing_render_layer_swap_height: number, charge_approach_distance: number, logistic_radius: number, construction_radius: number, charging_station_count: integer, charging_distance: number, charging_station_shift: Vector, charging_energy: number, charging_threshold_distance: number, robot_vertical_acceleration: number, stationing_offset: Vector, robot_limit: integer, logistics_connection_distance: number, robots_shrink_when_entering_and_exiting: boolean }|nil
+---@field energy_source LuaElectricEnergySourcePrototype
+---@field equipment_categories string[]
+---@field burner_prototype LuaBurnerPrototype|nil
+---@field electric_energy_source_prototype LuaElectricEnergySourcePrototype|nil
+---@field background_color Color
+---@field attack_parameters AttackParameters|nil
+---@field automatic boolean
+---@field solar_panel_performance_at_day number
+---@field solar_panel_performance_at_night number
+---@field solar_panel_solar_coefficient_property LuaSurfacePropertyPrototype
+---@field valid boolean
+---@field object_name string
+---@field get_shield fun(quality: QualityID|nil): number
+---@field get_energy_consumption fun(quality: QualityID|nil): number
+---@field get_inventory_bonus fun(quality: QualityID|nil): integer|nil
+---@field get_movement_bonus fun(quality: QualityID|nil): number|nil
+
+---@class LuaFlowStatistics
+---@field input_counts table<string, integer|number>
+---@field output_counts table<string, integer|number>
+---@field storage_counts table<string, integer|number>
+---@field force LuaForce|nil
+---@field valid boolean
+---@field object_name string
+---@field get_input_count fun(id: FlowStatisticsID): integer|number
+---@field set_input_count fun(id: FlowStatisticsID, count: integer|number)
+---@field get_output_count fun(id: FlowStatisticsID): integer|number
+---@field set_output_count fun(id: FlowStatisticsID, count: integer|number)
+---@field get_storage_count fun(id: FlowStatisticsID): integer|number
+---@field set_storage_count fun(id: FlowStatisticsID, count: integer|number)
+---@field get_flow_count fun(params: { name: FlowStatisticsID, category: string, precision_index: integer, sample_index?: integer, count?: boolean }): number
+---@field on_flow fun(id: FlowStatisticsID, count: number)
+---@field clear fun()
+
+---@class LuaFluidBox
+---@field owner LuaEntity
+---@field valid boolean
+---@field object_name string
+---@field get_prototype fun(index: integer): LuaFluidBoxPrototype|LuaFluidBoxPrototype[]
+---@field get_capacity fun(index: integer): number
+---@field get_connections fun(index: integer): LuaFluidBox[]
+---@field get_pipe_connections fun(index: integer): PipeConnection[]
+---@field get_filter fun(index: integer): FluidBoxFilter|nil
+---@field set_filter fun(index: integer, filter: FluidBoxFilterSpec|nil): boolean
+---@field get_locked_fluid fun(index: integer): string|nil
+---@field get_fluid_segment_id fun(index: integer): integer|nil
+---@field get_fluid_segment_contents fun(index: integer): table<string, integer>|nil
+---@field get_fluid_segment_extent_bounding_box fun(index: integer): BoundingBox|nil
+---@field flush fun(index: integer, fluid: FluidID|nil): table<string, FluidAmount>
+---@field add_linked_connection fun(this_linked_connection_id: integer, other_entity: LuaEntity, other_linked_connection_id: integer)
+---@field remove_linked_connection fun(this_linked_connection_id: integer)
+---@field get_linked_connection fun(this_linked_connection_id: integer): LuaEntity|nil, integer|nil
+---@field get_linked_connections fun(): FluidBoxConnectionRecord[]
+
+---@class LuaFluidBoxPrototype
+---@field entity LuaEntityPrototype
+---@field index integer
+---@field pipe_connections PipeConnectionDefinition[]
+---@field production_type ProductionType
+---@field volume number
+---@field filter LuaFluidPrototype|nil
+---@field minimum_temperature number|nil
+---@field maximum_temperature number|nil
+---@field secondary_draw_orders integer[]
+---@field render_layer RenderLayer
+---@field valid boolean
+---@field object_name string
+
+---@class LuaFluidEnergySourcePrototype
+---@field emissions_per_joule table<string, number>
+---@field render_no_network_icon boolean
+---@field render_no_power_icon boolean
+---@field effectivity number
+---@field burns_fluid boolean
+---@field scale_fluid_usage boolean
+---@field destroy_non_fuel_fluid boolean
+---@field fluid_usage_per_tick number
+---@field smoke SmokeSource[]
+---@field maximum_temperature number
+---@field fluid_box LuaFluidBoxPrototype
+---@field valid boolean
+---@field object_name string
+
+---@class LuaFluidPrototype: LuaPrototypeBase
+---@field default_temperature number
+---@field max_temperature number
+---@field heat_capacity number
+---@field base_color Color
+---@field flow_color Color
+---@field gas_temperature number
+---@field emissions_multiplier number
+---@field fuel_value number
+---@field factoriopedia_alternative LuaFluidPrototype|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaFontPrototype
+---@field name string
+---@field from string
+---@field size integer
+---@field spacing number
+---@field border boolean
+---@field filtered boolean
+---@field border_color Color|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaForce
+---@field name string
+---@field technologies table<string, LuaTechnology>
+---@field recipes table<string, LuaRecipe>
+---@field manual_mining_speed_modifier number
+---@field manual_crafting_speed_modifier number
+---@field laboratory_speed_modifier number
+---@field laboratory_productivity_bonus number
+---@field worker_robots_speed_modifier number
+---@field worker_robots_battery_modifier number
+---@field worker_robots_storage_bonus number
+---@field current_research LuaTechnology|nil
+---@field research_progress number
+---@field previous_research LuaTechnology|nil
+---@field inserter_stack_size_bonus number
+---@field bulk_inserter_capacity_bonus integer
+---@field belt_stack_size_bonus integer
+---@field character_trash_slot_count number
+---@field maximum_following_robot_count integer
+---@field following_robots_lifetime_modifier number
+---@field create_ghost_on_entity_death boolean
+---@field circuit_network_enabled boolean
+---@field cliff_deconstruction_enabled boolean
+---@field mining_with_fluid boolean
+---@field rail_support_on_deep_oil_ocean boolean
+---@field rail_planner_allow_elevated_rails boolean
+---@field vehicle_logistics boolean
+---@field players LuaPlayer[]
+---@field ai_controllable boolean
+---@field logistic_networks table<string, LuaLogisticNetwork[]>
+---@field character_running_speed_modifier number
+---@field artillery_range_modifier number
+---@field beacon_distribution_modifier number
+---@field character_build_distance_bonus integer
+---@field character_item_drop_distance_bonus integer
+---@field character_reach_distance_bonus integer
+---@field character_resource_reach_distance_bonus number
+---@field character_item_pickup_distance_bonus number
+---@field character_loot_pickup_distance_bonus number
+---@field character_inventory_slots_bonus integer
+---@field deconstruction_time_to_live integer
+---@field character_health_bonus number
+---@field max_successful_attempts_per_tick_per_construction_queue integer
+---@field max_failed_attempts_per_tick_per_construction_queue integer
+---@field character_logistic_requests boolean
+---@field rockets_launched integer
+---@field items_launched table<string, ItemCountType>
+---@field connected_players LuaPlayer[]
+---@field mining_drill_productivity_bonus number
+---@field train_braking_force_bonus number
+---@field friendly_fire boolean
+---@field share_chart boolean
+---@field index integer
+---@field research_queue TechnologyID[]
+---@field research_enabled boolean
+---@field platforms table<integer, LuaSpacePlatform>
+---@field custom_color Color|nil
+---@field color Color
+---@field valid boolean
+---@field object_name string
+---@field get_entity_count fun(name: EntityID): integer
+---@field disable_research fun()
+---@field enable_research fun()
+---@field disable_all_prototypes fun()
+---@field enable_all_prototypes fun()
+---@field reset_recipes fun()
+---@field enable_all_recipes fun()
+---@field enable_all_technologies fun()
+---@field research_all_technologies fun(include_disabled_prototypes: boolean|nil)
+---@field reset_technologies fun()
+---@field reset fun()
+---@field reset_technology_effects fun()
+---@field chart fun(surface: SurfaceIdentification, area: BoundingBox)
+---@field clear_chart fun(surface: SurfaceIdentification|nil)
+---@field rechart fun(surface: SurfaceIdentification|nil)
+---@field chart_all fun(surface: SurfaceIdentification|nil)
+---@field copy_from fun(force: ForceID)
+---@field copy_chart fun(source_force: ForceID, source_surface: SurfaceIdentification, destination_surface: SurfaceIdentification)
+---@field is_chunk_charted fun(surface: SurfaceIdentification, chunk_position: ChunkPosition): boolean
+---@field is_chunk_visible fun(surface: SurfaceIdentification, chunk_position: ChunkPosition): boolean
+---@field is_chunk_requested_for_charting fun(surface: SurfaceIdentification, chunk_position: ChunkPosition): boolean
+---@field cancel_charting fun(surface: SurfaceIdentification|nil)
+---@field get_ammo_damage_modifier fun(ammo: string): number
+---@field set_ammo_damage_modifier fun(ammo: string, modifier: number)
+---@field get_gun_speed_modifier fun(ammo: string): number
+---@field set_gun_speed_modifier fun(ammo: string, modifier: number)
+---@field get_turret_attack_modifier fun(turret: EntityID): number
+---@field set_turret_attack_modifier fun(turret: EntityID, modifier: number)
+---@field set_cease_fire fun(other: ForceID, cease_fire: boolean)
+---@field get_cease_fire fun(other: ForceID): boolean
+---@field set_friend fun(other: ForceID, friend: boolean)
+---@field get_friend fun(other: ForceID): boolean
+---@field is_pathfinder_busy fun(): boolean
+---@field kill_all_units fun()
+---@field find_logistic_network_by_position fun(position: MapPosition, surface: SurfaceIdentification): LuaLogisticNetwork|nil
+---@field set_spawn_position fun(position: MapPosition, surface: SurfaceIdentification)
+---@field get_spawn_position fun(surface: SurfaceIdentification): MapPosition
+---@field set_surface_hidden fun(surface: SurfaceIdentification, hidden: boolean)
+---@field get_surface_hidden fun(surface: SurfaceIdentification): boolean
+---@field unchart_chunk fun(chunk_position: ChunkPosition, surface: SurfaceIdentification)
+---@field get_item_launched fun(item: ItemID): integer
+---@field set_item_launched fun(item: ItemID, count: integer)
+---@field print fun(message: LocalisedString, print_settings: PrintSettings|nil)
+---@field add_chart_tag fun(surface: SurfaceIdentification, tag: ChartTagSpec): LuaCustomChartTag|nil
+---@field find_chart_tags fun(surface: SurfaceIdentification, area: BoundingBox|nil): LuaCustomChartTag[]
+---@field reset_evolution fun()
+---@field play_sound fun(sound_specification: PlaySoundSpecification)
+---@field get_hand_crafting_disabled_for_recipe fun(recipe: RecipeID): boolean
+---@field set_hand_crafting_disabled_for_recipe fun(recipe: RecipeID, hand_crafting_disabled: boolean)
+---@field add_research fun(technology: TechnologyID): boolean
+---@field cancel_current_research fun()
+---@field get_linked_inventory fun(prototype: EntityID, link_id: integer): LuaInventory|nil
+---@field is_friend fun(other: ForceID): boolean
+---@field is_enemy fun(other: ForceID): boolean
+---@field lock_space_location fun(name: SpaceLocationID)
+---@field unlock_space_location fun(name: SpaceLocationID)
+---@field is_space_location_unlocked fun(name: SpaceLocationID)
+---@field lock_quality fun(quality: QualityID)
+---@field unlock_quality fun(quality: QualityID)
+---@field is_quality_unlocked fun(quality: QualityID)
+---@field lock_space_platforms fun()
+---@field unlock_space_platforms fun()
+---@field is_space_platforms_unlocked fun(): boolean
+---@field create_space_platform fun(params: { name?: string, planet: SpaceLocationID, starter_pack: ItemWithQualityID }): LuaSpacePlatform|nil
+---@field get_evolution_factor fun(surface: SurfaceIdentification|nil): number
+---@field get_evolution_factor_by_pollution fun(surface: SurfaceIdentification|nil): number
+---@field get_evolution_factor_by_time fun(surface: SurfaceIdentification|nil): number
+---@field get_evolution_factor_by_killing_spawners fun(surface: SurfaceIdentification|nil): number
+---@field set_evolution_factor fun(factor: number, surface: SurfaceIdentification|nil)
+---@field set_evolution_factor_by_pollution fun(factor: number, surface: SurfaceIdentification|nil)
+---@field set_evolution_factor_by_time fun(factor: number, surface: SurfaceIdentification|nil)
+---@field set_evolution_factor_by_killing_spawners fun(factor: number, surface: SurfaceIdentification|nil)
+---@field get_item_production_statistics fun(surface: SurfaceIdentification): LuaFlowStatistics
+---@field get_fluid_production_statistics fun(surface: SurfaceIdentification): LuaFlowStatistics
+---@field get_kill_count_statistics fun(surface: SurfaceIdentification): LuaFlowStatistics
+---@field get_entity_build_count_statistics fun(surface: SurfaceIdentification): LuaFlowStatistics
+---@field get_logistic_groups fun(type: integer|nil): string[]
+---@field get_logistic_group fun(name: string, type: integer|nil): LogisticGroup|nil
+---@field create_logistic_group fun(name: string, type: integer|nil)
+---@field delete_logistic_group fun(name: string, type: integer|nil)
+---@field get_chunk_chart fun(surface: SurfaceIdentification, chunk_position: ChunkPosition): string|nil
+---@field script_trigger_research fun(technology: TechnologyID)
+
+---@class LuaFuelCategoryPrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaFurnaceControlBehavior: LuaGenericOnOffControlBehavior
+---@field circuit_read_contents boolean
+---@field include_in_crafting boolean
+---@field include_fuel boolean
+---@field circuit_read_ingredients boolean
+---@field circuit_read_recipe_finished boolean
+---@field circuit_recipe_finished_signal SignalID|nil
+---@field circuit_read_working boolean
+---@field circuit_working_signal SignalID|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaGameScript
+---@field allow_debug_settings boolean
+---@field object_name string
+---@field player LuaPlayer|nil
+---@field players table<integer|string, LuaPlayer>
+---@field map_settings MapSettings
+---@field difficulty_settings DifficultySettings
+---@field difficulty integer
+---@field forces table<integer|string, LuaForce>
+---@field console_command_used boolean
+---@field simulation LuaSimulation
+---@field tick integer
+---@field ticks_played integer
+---@field tick_paused boolean
+---@field ticks_to_run integer
+---@field finished boolean
+---@field finished_but_continuing boolean
+---@field speed number
+---@field surfaces table<integer|string, LuaSurface>
+---@field planets table<string, LuaPlanet>
+---@field connected_players LuaPlayer[]
+---@field permissions LuaPermissionGroups
+---@field backer_names table<integer, string>
+---@field default_map_gen_settings MapGenSettings
+---@field enemy_has_vision_on_land_mines boolean
+---@field autosave_enabled boolean
+---@field draw_resource_selection boolean
+---@field train_manager LuaTrainManager
+---@field blueprints LuaRecord[]
+---@field technology_notifications_enabled boolean
+---@field allow_tip_activation boolean
+---@field set_game_state fun(params: { game_finished?: boolean, player_won?: boolean, next_level?: string, can_continue?: boolean })
+---@field reset_game_state fun()
+---@field set_win_ending_info fun(params: { title: LocalisedString, message?: LocalisedString, bullet_points?: LocalisedString[], final_message?: LocalisedString, image_path?: string })
+---@field set_lose_ending_info fun(params: { title: LocalisedString, message?: LocalisedString, bullet_points?: LocalisedString[], final_message?: LocalisedString, image_path?: string })
+---@field get_entity_by_tag fun(tag: string): LuaEntity|nil
+---@field show_message_dialog fun(params: { text: LocalisedString, image?: string, point_to?: GuiArrowSpecification, style?: string, wrapper_frame_style?: string })
+---@field is_demo fun(): boolean
+---@field reload_script fun()
+---@field reload_mods fun()
+---@field save_atlas fun()
+---@field check_consistency fun()
+---@field regenerate_entity fun(entities: string|string[])
+---@field take_screenshot fun(params: { player?: PlayerIdentification, by_player?: PlayerIdentification, surface?: SurfaceIdentification, position?: MapPosition, resolution?: TilePosition, zoom?: number, path?: string, show_gui?: boolean, show_entity_info?: boolean, show_cursor_building_preview?: boolean, anti_alias?: boolean, hide_clouds?: boolean, hide_fog?: boolean, quality?: integer, allow_in_replay?: boolean, daytime?: number, water_tick?: integer, force_render?: boolean })
+---@field set_wait_for_screenshots_to_finish fun()
+---@field take_technology_screenshot fun(params: { path?: string, player: PlayerIdentification, selected_technology?: TechnologyID, skip_disabled?: boolean, quality?: integer })
+---@field remove_offline_players fun(players: PlayerIdentification[]|nil)
+---@field force_crc fun()
+---@field create_force fun(force: string): LuaForce
+---@field merge_forces fun(source: ForceID, destination: ForceID)
+---@field create_surface fun(name: string, settings: MapGenSettings|nil): LuaSurface
+---@field server_save fun(name: string|nil)
+---@field auto_save fun(name: string|nil)
+---@field delete_surface fun(surface: SurfaceIdentification): boolean
+---@field disable_replay fun()
+---@field print fun(message: LocalisedString, print_settings: PrintSettings|nil)
+---@field create_random_generator fun(seed: integer|nil): LuaRandomGenerator
+---@field play_sound fun(sound_specification: PlaySoundSpecification)
+---@field kick_player fun(player: PlayerIdentification, reason: string|nil)
+---@field ban_player fun(player: PlayerIdentification|string, reason: string|nil)
+---@field unban_player fun(player: PlayerIdentification|string)
+---@field purge_player fun(player: PlayerIdentification)
+---@field mute_player fun(player: PlayerIdentification)
+---@field unmute_player fun(player: PlayerIdentification)
+---@field is_multiplayer fun(): boolean
+---@field get_map_exchange_string fun(): string
+---@field get_player fun(player: integer|string): LuaPlayer|nil
+---@field get_surface fun(surface: integer|string): LuaSurface|nil
+---@field create_profiler fun(stopped: boolean|nil): LuaProfiler
+---@field create_inventory fun(size: integer, gui_title: LocalisedString|nil): LuaInventory
+---@field get_script_inventories fun(mod: string|nil): table<string, LuaInventory[]>
+---@field reset_time_played fun()
+---@field get_pollution_statistics fun(surface: SurfaceIdentification): LuaFlowStatistics
+---@field get_vehicles fun(params: { unit_number?: integer, force?: ForceID, surface?: SurfaceIdentification, type?: EntityID|EntityID[], is_moving?: boolean, has_passenger?: boolean }): LuaEntity[]
+---@field get_entity_by_unit_number fun(unit_number: integer): LuaEntity|nil
+
+---@class LuaGenericOnOffControlBehavior: LuaControlBehavior
+---@field disabled boolean
+---@field circuit_enable_disable boolean
+---@field circuit_condition CircuitConditionDefinition|nil
+---@field connect_to_logistic_network boolean
+---@field logistic_condition CircuitConditionDefinition|nil
+
+---@class LuaGroup
+---@field name string
+---@field localised_name LocalisedString
+---@field type string
+---@field group LuaGroup
+---@field subgroups LuaGroup[]
+---@field order_in_recipe string
+---@field order string
+---@field valid boolean
+---@field object_name string
+
+---@class LuaGui
+---@field player LuaPlayer
+---@field children table<string, LuaGuiElement>
+---@field top LuaGuiElement
+---@field left LuaGuiElement
+---@field center LuaGuiElement
+---@field goal LuaGuiElement
+---@field screen LuaGuiElement
+---@field relative LuaGuiElement
+---@field valid boolean
+---@field object_name string
+
+---@class LuaGuiElement
+---@field index integer
+---@field gui LuaGui
+---@field parent LuaGuiElement|nil
+---@field name string
+---@field caption LocalisedString
+---@field value number
+---@field direction GuiDirection
+---@field style LuaStyle|string
+---@field visible boolean
+---@field text string
+---@field children_names string[]
+---@field state boolean
+---@field player_index integer
+---@field sprite SpritePath
+---@field resize_to_sprite boolean
+---@field hovered_sprite SpritePath
+---@field clicked_sprite SpritePath
+---@field tooltip LocalisedString
+---@field elem_tooltip ElemID|nil
+---@field horizontal_scroll_policy ScrollPolicy
+---@field vertical_scroll_policy ScrollPolicy
+---@field type GuiElementType
+---@field children LuaGuiElement[]
+---@field items LocalisedString[]
+---@field selected_index integer
+---@field quality LuaQualityPrototype|nil
+---@field number number|nil
+---@field show_percent_for_small_numbers boolean
+---@field location GuiLocation|nil
+---@field auto_center boolean
+---@field badge_text LocalisedString
+---@field auto_toggle boolean
+---@field toggled boolean
+---@field game_controller_interaction integer
+---@field position MapPosition
+---@field surface_index integer
+---@field zoom number
+---@field minimap_player_index integer
+---@field force string|nil
+---@field elem_type ElemType
+---@field elem_value string|SignalID|PrototypeWithQuality|nil
+---@field elem_filters PrototypeFilter|nil
+---@field selectable boolean
+---@field word_wrap boolean
+---@field read_only boolean
+---@field enabled boolean
+---@field ignored_by_interaction boolean
+---@field locked boolean
+---@field draw_vertical_lines boolean
+---@field draw_horizontal_lines boolean
+---@field draw_horizontal_line_after_headers boolean
+---@field column_count integer
+---@field vertical_centering boolean
+---@field slider_value number
+---@field mouse_button_filter MouseButtonFlags
+---@field numeric boolean
+---@field allow_decimal boolean
+---@field allow_negative boolean
+---@field is_password boolean
+---@field lose_focus_on_confirm boolean
+---@field icon_selector boolean
+---@field drag_target LuaGuiElement|nil
+---@field selected_tab_index integer|nil
+---@field tabs TabAndContent[]
+---@field entity LuaEntity|nil
+---@field anchor GuiAnchor|nil
+---@field tags Tags
+---@field raise_hover_events boolean
+---@field switch_state SwitchState
+---@field allow_none_state boolean
+---@field left_label_caption LocalisedString
+---@field left_label_tooltip LocalisedString
+---@field right_label_caption LocalisedString
+---@field right_label_tooltip LocalisedString
+---@field valid boolean
+---@field object_name string
+---@field add fun(params: { type: GuiElementType, name?: string, caption?: LocalisedString, tooltip?: LocalisedString, elem_tooltip?: ElemID, enabled?: boolean, visible?: boolean, locked?: boolean, ignored_by_interaction?: boolean, style?: string, tags?: Tags, index?: integer, anchor?: GuiAnchor, game_controller_interaction?: integer, raise_hover_events?: boolean }): LuaGuiElement
+---@field clear fun()
+---@field destroy fun()
+---@field get_mod fun(): string|nil
+---@field get_index_in_parent fun(): integer
+---@field swap_children fun(index_1: integer, index_2: integer)
+---@field clear_items fun()
+---@field get_item fun(index: integer): LocalisedString
+---@field set_item fun(index: integer, string: LocalisedString)
+---@field add_item fun(string: LocalisedString, index: integer|nil)
+---@field remove_item fun(index: integer)
+---@field get_slider_minimum fun(): number
+---@field get_slider_maximum fun(): number
+---@field set_slider_minimum_maximum fun(minimum: number, maximum: number)
+---@field get_slider_value_step fun(): number
+---@field get_slider_discrete_values fun(): boolean
+---@field set_slider_value_step fun(value: number)
+---@field set_slider_discrete_values fun(value: boolean)
+---@field focus fun()
+---@field scroll_to_top fun()
+---@field scroll_to_bottom fun()
+---@field scroll_to_left fun()
+---@field scroll_to_right fun()
+---@field scroll_to_element fun(element: LuaGuiElement, scroll_mode: "in-view"|"top-third"|nil)
+---@field select_all fun()
+---@field select fun(start_index: integer, end_index: integer)
+---@field add_tab fun(tab: LuaGuiElement, content: LuaGuiElement)
+---@field remove_tab fun(tab: LuaGuiElement|nil)
+---@field force_auto_center fun()
+---@field scroll_to_item fun(index: integer, scroll_mode: "in-view"|"top-third"|nil)
+---@field bring_to_front fun()
+---@field close_dropdown fun()
+
+---@class LuaHeatBufferPrototype
+---@field max_temperature number
+---@field default_temperature number
+---@field specific_heat number
+---@field max_transfer number
+---@field min_temperature_gradient number
+---@field min_working_temperature number
+---@field minimum_glow_temperature number
+---@field connections HeatConnection[]
+---@field valid boolean
+---@field object_name string
+
+---@class LuaHeatEnergySourcePrototype
+---@field emissions_per_joule table<string, number>
+---@field render_no_network_icon boolean
+---@field render_no_power_icon boolean
+---@field max_temperature number
+---@field default_temperature number
+---@field specific_heat number
+---@field max_transfer number
+---@field min_temperature_gradient number
+---@field min_working_temperature number
+---@field minimum_glow_temperature number
+---@field connections HeatConnection[]
+---@field heat_buffer_prototype LuaHeatBufferPrototype
+---@field valid boolean
+---@field object_name string
+
+---@class LuaHelpers
+---@field object_name string
+---@field game_version string
+---@field table_to_json fun(data: table): string
+---@field json_to_table fun(json: string): any|nil
+---@field write_file fun(filename: string, data: LocalisedString, append: boolean|nil, for_player: integer|nil)
+---@field send_udp fun(port: integer, data: LocalisedString, for_player: integer|nil)
+---@field recv_udp fun(for_player: integer|nil)
+---@field remove_path fun(path: string)
+---@field direction_to_string fun(direction: integer): string
+---@field evaluate_expression fun(expression: MathExpression, variables: table<string, number>|nil): number
+---@field encode_string fun(string: string): string|nil
+---@field decode_string fun(string: string): string|nil
+---@field parse_map_exchange_string fun(map_exchange_string: string): MapExchangeStringData
+---@field check_prototype_translations fun()
+---@field is_valid_sound_path fun(sound_path: SoundPath): boolean
+---@field is_valid_sprite_path fun(sprite_path: SpritePath): boolean
+---@field create_profiler fun(stopped: boolean|nil): LuaProfiler
+---@field compare_versions fun(first: string, second: string): integer
+---@field multilingual_to_lower fun(input: string): string
+
+---@class LuaInserterControlBehavior: LuaGenericOnOffControlBehavior
+---@field circuit_set_filters boolean
+---@field circuit_read_hand_contents boolean
+---@field circuit_hand_read_mode integer
+---@field circuit_set_stack_size boolean
+---@field circuit_stack_control_signal SignalID|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaInventory
+---@field index integer|nil
+---@field name string|nil
+---@field entity_owner LuaEntity|nil
+---@field player_owner LuaPlayer|nil
+---@field equipment_owner LuaEquipment|nil
+---@field mod_owner string|nil
+---@field weight Weight
+---@field max_weight Weight|nil
+---@field valid boolean
+---@field object_name string
+---@field clear fun()
+---@field can_insert fun(items: ItemStackIdentification): boolean
+---@field insert fun(items: ItemStackIdentification): integer
+---@field remove fun(items: ItemStackIdentification): integer
+---@field get_item_count fun(item: ItemWithQualityID|nil): integer
+---@field get_item_count_filtered fun(filter: ItemFilter): integer
+---@field get_item_quality_counts fun(item: ItemID|nil): table<string, integer>
+---@field is_empty fun(): boolean
+---@field is_full fun(): boolean
+---@field get_contents fun(): ItemWithQualityCounts
+---@field supports_bar fun(): boolean
+---@field get_bar fun(): integer
+---@field set_bar fun(bar: integer|nil)
+---@field supports_filters fun(): boolean
+---@field is_filtered fun(): boolean
+---@field can_set_filter fun(index: integer, filter: ItemFilter): boolean
+---@field get_filter fun(index: integer): ItemFilter|nil
+---@field set_filter fun(index: integer, filter: ItemFilter|nil): boolean
+---@field find_item_stack fun(item: ItemWithQualityID): LuaItemStack|nil, integer|nil
+---@field find_empty_stack fun(item: ItemWithQualityID|nil): LuaItemStack|nil, integer|nil
+---@field count_empty_stacks fun(include_filtered: boolean|nil, include_bar: boolean|nil): integer
+---@field get_insertable_count fun(item: ItemWithQualityID): integer
+---@field sort_and_merge fun()
+---@field resize fun(size: integer)
+---@field destroy fun()
+
+---@class LuaItem: LuaItemCommon
+---@field type string
+---@field name string
+---@field prototype LuaItemPrototype
+---@field quality LuaQualityPrototype
+---@field item_stack LuaItemStack|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaItemCommon
+---@field is_blueprint boolean
+---@field is_blueprint_book boolean
+---@field is_item_with_label boolean
+---@field is_item_with_inventory boolean
+---@field is_item_with_entity_data boolean
+---@field is_selection_tool boolean
+---@field is_item_with_tags boolean
+---@field is_deconstruction_item boolean
+---@field is_upgrade_item boolean
+---@field is_tool boolean
+---@field is_ammo boolean
+---@field is_armor boolean
+---@field is_repair_tool boolean
+---@field item_number integer|nil
+---@field preview_icons BlueprintSignalIcon[]|nil
+---@field grid LuaEquipmentGrid|nil
+---@field owner_location ItemLocationData
+---@field blueprint_snap_to_grid TilePosition|nil
+---@field blueprint_position_relative_to_grid TilePosition|nil
+---@field blueprint_absolute_snapping boolean
+---@field blueprint_description string
+---@field cost_to_build ItemWithQualityCounts
+---@field default_icons BlueprintSignalIcon[]
+---@field active_index integer|nil
+---@field label string|nil
+---@field label_color Color|nil
+---@field allow_manual_label_change boolean
+---@field entity_label string|nil
+---@field entity_color Color|nil
+---@field entity_logistic_sections LogisticSections
+---@field entity_request_from_buffers boolean
+---@field entity_logistics_enabled boolean
+---@field entity_enable_logistics_while_moving boolean
+---@field entity_driver_is_gunner boolean
+---@field entity_auto_target_without_gunner boolean
+---@field entity_auto_target_with_gunner boolean
+---@field tags Tags
+---@field custom_description LocalisedString
+---@field entity_filter_count integer
+---@field entity_filters ItemFilter[]
+---@field tile_filter_count integer
+---@field tile_filters TileID[]
+---@field entity_filter_mode integer
+---@field tile_filter_mode integer
+---@field tile_selection_mode integer
+---@field trees_and_rocks_only boolean
+---@field mapper_count integer
+---@field durability number
+---@field ammo integer
+---@field get_inventory fun(inventory: integer): LuaInventory|nil
+---@field clear_blueprint fun()
+---@field is_blueprint_setup fun(): boolean
+---@field build_blueprint fun(params: { surface: SurfaceIdentification, force: ForceID, position: MapPosition, direction?: integer, build_mode?: integer, skip_fog_of_war?: boolean, by_player?: PlayerIdentification, raise_built?: boolean }): LuaEntity[]
+---@field create_blueprint fun(params: { surface: SurfaceIdentification, force: ForceID, area: BoundingBox, always_include_tiles?: boolean, include_entities?: boolean, include_modules?: boolean, include_station_names?: boolean, include_trains?: boolean, include_fuel?: boolean }): table<integer, LuaEntity>
+---@field get_blueprint_entity_tags fun(index: integer): Tags
+---@field set_blueprint_entity_tags fun(index: integer, tags: Tags)
+---@field get_blueprint_entity_tag fun(index: integer, tag: string): any|nil
+---@field set_blueprint_entity_tag fun(index: integer, tag: string, value: any)
+---@field get_blueprint_entities fun(): BlueprintEntity[]|nil
+---@field set_blueprint_entities fun(entities: BlueprintEntity[])
+---@field get_blueprint_tiles fun(): Tile[]|nil
+---@field set_blueprint_tiles fun(tiles: Tile[])
+---@field get_blueprint_entity_count fun(): integer
+---@field get_tag fun(tag_name: string): any|nil
+---@field set_tag fun(tag_name: string, tag: any)
+---@field remove_tag fun(tag: string): boolean
+---@field get_entity_filter fun(index: integer): ItemFilter|nil
+---@field set_entity_filter fun(index: integer, filter: ItemFilter|nil): boolean
+---@field get_tile_filter fun(index: integer): string|nil
+---@field set_tile_filter fun(index: integer, filter: string|LuaTilePrototype|LuaTile|nil): boolean
+---@field deconstruct_area fun(params: { surface: SurfaceIdentification, force: ForceID, area: BoundingBox, skip_fog_of_war?: boolean, by_player?: PlayerIdentification, super_forced?: boolean })
+---@field cancel_deconstruct_area fun(params: { surface: SurfaceIdentification, force: ForceID, area: BoundingBox, skip_fog_of_war?: boolean, by_player?: PlayerIdentification, super_forced?: boolean })
+---@field clear_deconstruction_item fun()
+---@field clear_upgrade_item fun()
+---@field get_mapper fun(index: integer, type: "from"|"to"): UpgradeMapperSource|UpgradeMapperDestination|nil
+---@field set_mapper fun(index: integer, type: "from"|"to", mapper: UpgradeMapperSource|UpgradeMapperDestination|nil)
+
+---@class LuaItemPrototype: LuaPrototypeBase
+---@field place_result LuaEntityPrototype|nil
+---@field place_as_equipment_result LuaEquipmentPrototype|nil
+---@field place_as_tile_result PlaceAsTileResult|nil
+---@field stackable boolean
+---@field stack_size integer
+---@field fuel_category string|nil
+---@field burnt_result LuaItemPrototype|nil
+---@field fuel_value number
+---@field fuel_acceleration_multiplier number
+---@field fuel_top_speed_multiplier number
+---@field fuel_emissions_multiplier number
+---@field fuel_acceleration_multiplier_quality_bonus number
+---@field fuel_top_speed_multiplier_quality_bonus number
+---@field flags ItemPrototypeFlags
+---@field rocket_launch_products Product[]
+---@field send_to_orbit_mode "not-sendable"|"manual"|"automated"
+---@field can_be_mod_opened boolean
+---@field spoil_result LuaItemPrototype|nil
+---@field plant_result LuaEntityPrototype|nil
+---@field spoil_to_trigger_result SpoilToTriggerResult|nil
+---@field destroyed_by_dropping_trigger TriggerItem[]|nil
+---@field weight Weight
+---@field ingredient_to_weight_coefficient number
+---@field fuel_glow_color Color|nil
+---@field default_import_location LuaSpaceLocationPrototype
+---@field factoriopedia_alternative LuaItemPrototype|nil
+---@field moved_to_hub_when_building boolean
+---@field ammo_category LuaAmmoCategoryPrototype|nil
+---@field magazine_size number|nil
+---@field reload_time number|nil
+---@field equipment_grid LuaEquipmentGridPrototype|nil
+---@field resistances table<string, Resistance>|nil
+---@field collision_box BoundingBox|nil
+---@field drawing_box BoundingBox|nil
+---@field provides_flight boolean|nil
+---@field capsule_action CapsuleAction|nil
+---@field radius_color Color|nil
+---@field attack_parameters AttackParameters|nil
+---@field inventory_size integer|nil
+---@field item_filters LuaItemPrototype[]|nil
+---@field item_group_filters LuaGroup[]|nil
+---@field item_subgroup_filters LuaGroup[]|nil
+---@field filter_mode PrototypeFilterMode|nil
+---@field localised_filter_message LocalisedString|nil
+---@field default_label_color Color|nil
+---@field draw_label_for_cursor_render boolean|nil
+---@field speed number|nil
+---@field module_effects ModuleEffects|nil
+---@field category string|nil
+---@field tier integer|nil
+---@field requires_beacon_alt_mode boolean|nil
+---@field beacon_tint Color[]|nil
+---@field rails LuaEntityPrototype[]|nil
+---@field support LuaEntityPrototype|nil
+---@field manual_length_limit number|nil
+---@field always_include_tiles boolean|nil
+---@field skip_fog_of_war boolean|nil
+---@field entity_filter_slots integer|nil
+---@field tile_filter_slots integer|nil
+---@field durability_description_key string|nil
+---@field factoriopedia_durability_description_key string|nil
+---@field durability_description_value string|nil
+---@field infinite boolean|nil
+---@field trigger TriggerItem|nil
+---@field surface LuaSurfacePrototype|nil
+---@field create_electric_network boolean|nil
+---@field tiles SpacePlatformTileDefinition[]|nil
+---@field initial_items ItemProduct[]|nil
+---@field valid boolean
+---@field object_name string
+---@field has_flag fun(flag: ItemPrototypeFlag): boolean
+---@field get_spoil_ticks fun(quality: QualityID|nil): integer
+---@field get_ammo_type fun(ammo_source_type: "default"|"player"|"turret"|"vehicle"|nil): AmmoType|nil
+---@field get_inventory_size_bonus fun(quality: QualityID|nil): integer|nil
+---@field get_module_effects fun(quality: QualityID|nil): ModuleEffects|nil
+---@field get_selection_border_color fun(selection_mode: integer): Color|nil
+---@field get_selection_mode_flags fun(selection_mode: integer): SelectionModeFlags|nil
+---@field get_cursor_box_type fun(selection_mode: integer): CursorBoxRenderType|nil
+---@field get_entity_filter_mode fun(selection_mode: integer): PrototypeFilterMode|nil
+---@field get_tile_filter_mode fun(selection_mode: integer): PrototypeFilterMode|nil
+---@field get_entity_filters fun(selection_mode: integer): LuaEntityPrototype[]|nil
+---@field get_entity_type_filters fun(selection_mode: integer): table<string, true>|nil
+---@field get_tile_filters fun(selection_mode: integer): LuaTilePrototype[]|nil
+---@field get_durability fun(quality: QualityID|nil): number|nil
+
+---@class LuaItemStack: LuaItemCommon
+---@field valid_for_read boolean
+---@field prototype LuaItemPrototype
+---@field name string
+---@field type string
+---@field count integer
+---@field health number
+---@field quality LuaQualityPrototype
+---@field spoil_tick integer
+---@field spoil_percent number
+---@field item LuaItem|nil
+---@field is_module boolean
+---@field valid boolean
+---@field object_name string
+---@field add_ammo fun(amount: number)
+---@field drain_ammo fun(amount: number)
+---@field add_durability fun(amount: number)
+---@field drain_durability fun(amount: number)
+---@field use_capsule fun(entity: LuaEntity, target_position: MapPosition): LuaEntity[]
+---@field can_set_stack fun(stack: ItemStackIdentification|nil): boolean
+---@field set_stack fun(stack: ItemStackIdentification|nil): boolean
+---@field transfer_stack fun(stack: ItemStackIdentification, amount: integer|nil): boolean
+---@field export_stack fun(): string
+---@field import_stack fun(data: string): integer
+---@field swap_stack fun(stack: LuaItemStack): boolean
+---@field clear fun()
+---@field create_grid fun(): LuaEquipmentGrid
+---@field spoil fun()
+
+---@class LuaLampControlBehavior: LuaGenericOnOffControlBehavior
+---@field use_colors boolean
+---@field color_mode integer
+---@field red_signal SignalID|nil
+---@field green_signal SignalID|nil
+---@field blue_signal SignalID|nil
+---@field rgb_signal SignalID|nil
+---@field color Color|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaLazyLoadedValue
+---@field valid boolean
+---@field object_name string
+---@field get fun(): any
+
+---@class LuaLoaderControlBehavior: LuaGenericOnOffControlBehavior
+---@field circuit_set_filters boolean
+---@field circuit_read_transfers boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaLogisticCell
+---@field logistic_radius number
+---@field logistics_connection_distance number
+---@field construction_radius number
+---@field stationed_logistic_robot_count integer
+---@field stationed_construction_robot_count integer
+---@field mobile boolean
+---@field transmitting boolean
+---@field charge_approach_distance number
+---@field charging_robot_count integer
+---@field to_charge_robot_count integer
+---@field owner LuaEntity
+---@field logistic_network LuaLogisticNetwork|nil
+---@field neighbours LuaLogisticCell[]
+---@field charging_robots LuaEntity[]
+---@field to_charge_robots LuaEntity[]
+---@field valid boolean
+---@field object_name string
+---@field is_in_logistic_range fun(position: MapPosition): boolean
+---@field is_in_construction_range fun(position: MapPosition): boolean
+---@field is_neighbour_with fun(other: LuaLogisticCell): boolean
+
+---@class LuaLogisticContainerControlBehavior: LuaControlBehavior
+---@field circuit_exclusive_mode_of_operation integer
+---@field circuit_condition_enabled boolean
+---@field circuit_condition CircuitConditionDefinition
+---@field valid boolean
+---@field object_name string
+
+---@class LuaLogisticNetwork
+---@field network_id integer
+---@field custom_name string|nil
+---@field force LuaForce
+---@field available_logistic_robots integer
+---@field all_logistic_robots integer
+---@field available_construction_robots integer
+---@field all_construction_robots integer
+---@field robot_limit integer
+---@field cells LuaLogisticCell[]
+---@field providers LuaEntity[]
+---@field empty_providers LuaEntity[]
+---@field requesters LuaEntity[]
+---@field storages LuaEntity[]
+---@field logistic_members LuaEntity[]
+---@field provider_points LuaLogisticPoint[]
+---@field passive_provider_points LuaLogisticPoint[]
+---@field active_provider_points LuaLogisticPoint[]
+---@field empty_provider_points LuaLogisticPoint[]
+---@field requester_points LuaLogisticPoint[]
+---@field storage_points LuaLogisticPoint[]
+---@field robots LuaEntity[]
+---@field construction_robots LuaEntity[]
+---@field logistic_robots LuaEntity[]
+---@field valid boolean
+---@field object_name string
+---@field get_item_count fun(item: ItemWithQualityID|nil, member: "storage"|"providers"|nil): integer
+---@field get_contents fun(member: "storage"|"providers"|nil): ItemWithQualityCounts
+---@field remove_item fun(item: ItemStackIdentification, members: "active-provider"|"passive-provider"|"buffer"|"storage"|nil): integer
+---@field insert fun(item: ItemStackIdentification, members: "storage"|"storage-empty"|"storage-empty-slot"|"requester"|nil): integer
+---@field find_cell_closest_to fun(position: MapPosition): LuaLogisticCell|nil
+---@field select_pickup_point fun(params: { name: ItemWithQualityID, position?: MapPosition, include_buffers?: boolean, members?: "active-provider"|"passive-provider"|"buffer"|"storage" }): LuaLogisticPoint|nil
+---@field select_drop_point fun(params: { stack: ItemStackIdentification, members?: "storage"|"storage-empty"|"storage-empty-slot"|"requester" }): LuaLogisticPoint|nil
+---@field can_satisfy_request fun(item: ItemWithQualityID, count: integer|nil, include_buffers: boolean|nil): boolean
+---@field get_supply_counts fun(item: ItemWithQualityID): LogisticsNetworkSupplyCounts
+---@field get_supply_points fun(item: ItemWithQualityID): LogisticsNetworkSupplyPoints
+
+---@class LuaLogisticPoint
+---@field owner LuaEntity
+---@field logistic_network LuaLogisticNetwork
+---@field logistic_member_index integer
+---@field filters CompiledLogisticFilter[]|nil
+---@field mode integer
+---@field force LuaForce
+---@field targeted_items_pickup ItemWithQualityCounts
+---@field targeted_items_deliver ItemWithQualityCounts
+---@field exact boolean
+---@field trash_not_requested boolean
+---@field enabled boolean
+---@field sections LuaLogisticSection[]
+---@field sections_count integer
+---@field valid boolean
+---@field object_name string
+---@field add_section fun(group: string|nil): LuaLogisticSection|nil
+---@field remove_section fun(section_index: integer): boolean
+---@field get_section fun(section_index: integer): LuaLogisticSection
+
+---@class LuaLogisticSection
+---@field owner LuaEntity
+---@field index integer
+---@field filters LogisticFilter[]
+---@field filters_count integer
+---@field group string
+---@field type integer
+---@field is_manual boolean
+---@field active boolean
+---@field multiplier number
+---@field valid boolean
+---@field object_name string
+---@field set_slot fun(slot_index: LogisticFilterIndex, filter: LogisticFilter): LogisticFilterIndex|nil
+---@field get_slot fun(slot_index: LogisticFilterIndex): LogisticFilter
+---@field clear_slot fun(slot_index: LogisticFilterIndex)
+
+---@class LuaLogisticSections
+---@field sections LuaLogisticSection[]
+---@field sections_count integer
+---@field valid boolean
+---@field object_name string
+---@field add_section fun(group: string|nil): LuaLogisticSection|nil
+---@field remove_section fun(section_index: integer): boolean
+---@field get_section fun(section_index: integer): LuaLogisticSection|nil
+
+---@class LuaMiningDrillControlBehavior: LuaGenericOnOffControlBehavior
+---@field circuit_read_resources boolean
+---@field resource_read_mode integer
+---@field resource_read_targets LuaEntity[]
+---@field valid boolean
+---@field object_name string
+
+---@class LuaModData: LuaPrototypeBase
+---@field data_type string
+---@field data table<string, any>
+---@field valid boolean
+---@field object_name string
+---@field get fun(key: string): any|nil
+
+---@class LuaModSettingPrototype: LuaPrototypeBase
+---@field mod string
+---@field setting_type "startup"|"runtime-global"|"runtime-per-user"
+---@field default_value boolean|number|integer|string|Color
+---@field minimum_value number|integer|nil
+---@field maximum_value number|integer|nil
+---@field allowed_values string[]|integer[]|number[]|nil
+---@field allow_blank boolean|nil
+---@field auto_trim boolean|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaModuleCategoryPrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaNamedNoiseExpression: LuaPrototypeBase
+---@field intended_property string
+---@field expression string
+---@field valid boolean
+---@field object_name string
+
+---@class LuaNamedNoiseFunction: LuaPrototypeBase
+---@field expression string
+---@field valid boolean
+---@field object_name string
+
+---@class LuaParticlePrototype: LuaPrototypeBase
+---@field regular_trigger_effect TriggerEffectItem
+---@field ended_in_water_trigger_effect TriggerEffectItem
+---@field ended_on_ground_trigger_effect TriggerEffectItem
+---@field render_layer RenderLayer
+---@field render_layer_when_on_ground RenderLayer
+---@field fade_out_time integer
+---@field life_time integer
+---@field regular_trigger_effect_frequency integer
+---@field movement_modifier_when_on_ground number
+---@field movement_modifier number
+---@field vertical_acceleration number
+---@field mining_particle_frame_speed number
+---@field valid boolean
+---@field object_name string
+
+---@class LuaPermissionGroup
+---@field name string
+---@field players LuaPlayer[]
+---@field group_id integer
+---@field valid boolean
+---@field object_name string
+---@field add_player fun(player: PlayerIdentification): boolean
+---@field remove_player fun(player: PlayerIdentification): boolean
+---@field allows_action fun(action: integer): boolean
+---@field set_allows_action fun(action: integer, allow_action: boolean): boolean
+---@field destroy fun(): boolean
+
+---@class LuaPermissionGroups
+---@field groups LuaPermissionGroup[]
+---@field valid boolean
+---@field object_name string
+---@field create_group fun(name: string|nil): LuaPermissionGroup|nil
+---@field get_group fun(group: string|integer): LuaPermissionGroup|nil
+
+---@class LuaPlanet
+---@field name string
+---@field prototype LuaSpaceLocationPrototype
+---@field surface LuaSurface|nil
+---@field valid boolean
+---@field object_name string
+---@field create_surface fun(): LuaSurface
+---@field associate_surface fun(surface: SurfaceIdentification)
+---@field reset_map_gen_settings fun()
+---@field get_space_platforms fun(force: ForceID): LuaSpacePlatform[]
+
+---@class LuaPlayer: LuaControl
+---@field physical_surface LuaSurface
+---@field physical_surface_index integer
+---@field physical_position MapPosition
+---@field physical_vehicle LuaEntity|nil
+---@field character LuaEntity|nil
+---@field cutscene_character LuaEntity|nil
+---@field index integer
+---@field gui LuaGui
+---@field opened_self boolean
+---@field controller_type integer
+---@field physical_controller_type integer
+---@field stashed_controller_type integer|nil
+---@field spidertron_remote_selection LuaEntity[]|nil
+---@field zoom number
+---@field zoom_limits ZoomLimits
+---@field centered_on LuaEntity|nil
+---@field game_view_settings GameViewSettings
+---@field minimap_enabled boolean
+---@field color Color
+---@field chat_color Color
+---@field name string
+---@field tag string
+---@field connected boolean
+---@field admin boolean
+---@field entity_copy_source LuaEntity|nil
+---@field afk_time integer
+---@field online_time integer
+---@field last_online integer
+---@field permission_group LuaPermissionGroup|nil
+---@field mod_settings table<string, ModSetting>
+---@field ticks_to_respawn integer|nil
+---@field display_resolution DisplayResolution
+---@field display_scale number
+---@field display_density_scale number
+---@field locale string
+---@field blueprint_to_setup LuaItemStack
+---@field blueprints LuaRecord[]
+---@field render_mode integer
+---@field input_method integer
+---@field spectator boolean
+---@field show_on_map boolean
+---@field remove_unfiltered_items boolean
+---@field infinity_inventory_filters InfinityInventoryFilter[]
+---@field auto_sort_main_inventory boolean
+---@field hand_location ItemStackLocation|nil
+---@field cursor_stack_temporary boolean
+---@field undo_redo_stack LuaUndoRedoStack
+---@field drag_target DragTarget|nil
+---@field map_view_settings MapViewSettings
+---@field valid boolean
+---@field object_name string
+---@field set_ending_screen_data fun(message: LocalisedString, file: string|nil)
+---@field print fun(message: LocalisedString, print_settings: PrintSettings|nil)
+---@field clear_console fun()
+---@field get_goal_description fun(): LocalisedString
+---@field set_goal_description fun(text: LocalisedString|nil, only_update: boolean|nil)
+---@field set_controller fun(params: { type: integer, character?: LuaEntity, waypoints?: CutsceneWaypoint[], start_position?: MapPosition, start_zoom?: number, final_transition_time?: integer, chart_mode_cutoff?: number, position?: MapPosition, surface?: SurfaceIdentification })
+---@field drag_wire fun(params: { position: MapPosition }): boolean
+---@field disable_recipe_groups fun()
+---@field enable_recipe_groups fun()
+---@field disable_recipe_subgroups fun()
+---@field enable_recipe_subgroups fun()
+---@field print_entity_statistics fun(entities: EntityWithQualityID[]|nil)
+---@field print_robot_jobs fun()
+---@field print_lua_object_statistics fun()
+---@field unlock_achievement fun(name: string)
+---@field clear_cursor fun(): boolean
+---@field create_character fun(character: EntityWithQualityID|nil): boolean
+---@field add_alert fun(entity: LuaEntity, type: integer)
+---@field add_custom_alert fun(entity: LuaEntity, icon: SignalID, message: LocalisedString, show_on_map: boolean)
+---@field remove_alert fun(params: { entity?: LuaEntity, prototype?: EntityID, position?: MapPosition, type?: integer, surface?: SurfaceIdentification, icon?: SignalID, message?: LocalisedString })
+---@field get_alerts fun(params: { entity?: LuaEntity, prototype?: LuaEntityPrototype, position?: MapPosition, type?: integer, surface?: SurfaceIdentification }): table<integer, table<integer, Alert[]>>
+---@field mute_alert fun(alert_type: integer): boolean
+---@field unmute_alert fun(alert_type: integer): boolean
+---@field is_alert_muted fun(alert_type: integer): boolean
+---@field enable_alert fun(alert_type: integer): boolean
+---@field disable_alert fun(alert_type: integer): boolean
+---@field is_alert_enabled fun(alert_type: integer): boolean
+---@field add_pin fun(params: { label?: string, preview_distance?: integer, always_visible?: boolean, entity?: LuaEntity, player?: PlayerIdentification, surface?: SurfaceIdentification, position?: MapPosition })
+---@field pipette_entity fun(entity: EntityWithQualityID, allow_ghost: boolean|nil): boolean
+---@field pipette fun(id: PipetteID, quality: QualityID|nil, allow_ghost: boolean|nil): boolean
+---@field can_build_from_cursor fun(params: { position: MapPosition, direction?: integer, flip_horizontal?: boolean, flip_vertical?: boolean, build_mode?: integer, terrain_building_size?: integer, skip_fog_of_war?: boolean }): boolean
+---@field build_from_cursor fun(params: { position: MapPosition, direction?: integer, mirror?: boolean, flip_horizontal?: boolean, flip_vertical?: boolean, build_mode?: integer, terrain_building_size?: integer, skip_fog_of_war?: boolean })
+---@field clear_inventory_highlights fun()
+---@field use_from_cursor fun(position: MapPosition)
+---@field play_sound fun(sound_specification: PlaySoundSpecification)
+---@field get_associated_characters fun(): LuaEntity[]
+---@field associate_character fun(character: LuaEntity)
+---@field disassociate_character fun(character: LuaEntity)
+---@field swap_characters fun(player: PlayerIdentification): boolean
+---@field create_local_flying_text fun(params: { text: LocalisedString, position?: MapPosition, surface?: SurfaceIdentification, create_at_cursor?: boolean, color?: Color, time_to_live?: integer, speed?: number })
+---@field clear_local_flying_texts fun()
+---@field get_quick_bar_slot fun(index: integer): ItemFilter|nil
+---@field set_quick_bar_slot fun(index: integer, filter: LuaItemStack|ItemWithQualityID|nil)
+---@field get_active_quick_bar_page fun(index: integer): integer|nil
+---@field set_active_quick_bar_page fun(screen_index: integer, page_index: integer)
+---@field jump_to_cutscene_waypoint fun(waypoint_index: integer)
+---@field exit_cutscene fun()
+---@field exit_remote_view fun()
+---@field is_shortcut_toggled fun(prototype_name: string): boolean
+---@field is_shortcut_available fun(prototype_name: string): boolean
+---@field set_shortcut_toggled fun(prototype_name: string, toggled: boolean)
+---@field set_shortcut_available fun(prototype_name: string, available: boolean)
+---@field connect_to_server fun(params: { address: string, name?: LocalisedString, description?: LocalisedString, password?: string })
+---@field toggle_map_editor fun()
+---@field request_translation fun(localised_string: LocalisedString): integer|nil
+---@field request_translations fun(localised_strings: LocalisedString[]): integer[]|nil
+---@field get_infinity_inventory_filter fun(index: integer): InfinityInventoryFilter|nil
+---@field set_infinity_inventory_filter fun(index: integer, filter: InfinityInventoryFilter|nil)
+---@field clear_recipe_notifications fun()
+---@field add_recipe_notification fun(recipe: RecipeID)
+---@field clear_recipe_notification fun(recipe: RecipeID)
+---@field get_recipe_notifications fun(): LuaRecipePrototype[]
+---@field add_to_clipboard fun(blueprint: LuaItemStack)
+---@field activate_paste fun()
+---@field start_selection fun(position: MapPosition, selection_mode: integer)
+---@field clear_selection fun()
+---@field enter_space_platform fun(space_platform: LuaSpacePlatform): boolean
+---@field leave_space_platform fun()
+---@field land_on_planet fun(): boolean
+---@field set_zoom_limits fun(controller_type: integer, zoom_limits: ZoomLimits)
+
+---@class LuaProcessionLayerInheritanceGroupPrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaProcessionPrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaProfiler
+---@field valid boolean
+---@field object_name string
+---@field reset fun()
+---@field stop fun()
+---@field restart fun()
+---@field add fun(other: LuaProfiler)
+---@field divide fun(number: number)
+
+---@class LuaProgrammableSpeakerControlBehavior: LuaControlBehavior
+---@field circuit_parameters ProgrammableSpeakerCircuitParameters
+---@field circuit_condition CircuitConditionDefinition
+---@field valid boolean
+---@field object_name string
+
+---@class LuaPrototypeBase
+---@field type string
+---@field name string
+---@field order string
+---@field localised_name LocalisedString
+---@field localised_description LocalisedString
+---@field factoriopedia_description LocalisedString
+---@field group LuaGroup
+---@field subgroup LuaGroup
+---@field hidden boolean
+---@field hidden_in_factoriopedia boolean
+---@field parameter boolean
+---@field custom_tooltip_fields CustomTooltipField[]|nil
+
+---@class LuaPrototypes
+---@field object_name string
+---@field font table<string, LuaFontPrototype>
+---@field map_gen_preset table<string, MapGenPreset>
+---@field style table<string, string>
+---@field utility_constants table<string, any>
+---@field entity table<string, LuaEntityPrototype>
+---@field item table<string, LuaItemPrototype>
+---@field fluid table<string, LuaFluidPrototype>
+---@field tile table<string, LuaTilePrototype>
+---@field equipment table<string, LuaEquipmentPrototype>
+---@field damage table<string, LuaDamagePrototype>
+---@field virtual_signal table<string, LuaVirtualSignalPrototype>
+---@field equipment_grid table<string, LuaEquipmentGridPrototype>
+---@field recipe table<string, LuaRecipePrototype>
+---@field technology table<string, LuaTechnologyPrototype>
+---@field decorative table<string, LuaDecorativePrototype>
+---@field particle table<string, LuaParticlePrototype>
+---@field autoplace_control table<string, LuaAutoplaceControlPrototype>
+---@field mod_setting table<string, LuaModSettingPrototype>
+---@field custom_input table<string, LuaCustomInputPrototype>
+---@field ammo_category table<string, LuaAmmoCategoryPrototype>
+---@field named_noise_expression table<string, LuaNamedNoiseExpression>
+---@field named_noise_function table<string, LuaNamedNoiseFunction>
+---@field item_subgroup table<string, LuaGroup>
+---@field item_group table<string, LuaGroup>
+---@field fuel_category table<string, LuaFuelCategoryPrototype>
+---@field resource_category table<string, LuaResourceCategoryPrototype>
+---@field achievement table<string, LuaAchievementPrototype>
+---@field module_category table<string, LuaModuleCategoryPrototype>
+---@field equipment_category table<string, LuaEquipmentCategoryPrototype>
+---@field trivial_smoke table<string, LuaTrivialSmokePrototype>
+---@field shortcut table<string, LuaShortcutPrototype>
+---@field recipe_category table<string, LuaRecipeCategoryPrototype>
+---@field quality table<string, LuaQualityPrototype>
+---@field surface_property table<string, LuaSurfacePropertyPrototype>
+---@field space_location table<string, LuaSpaceLocationPrototype>
+---@field space_connection table<string, LuaSpaceConnectionPrototype>
+---@field custom_event table<string, LuaCustomEventPrototype>
+---@field active_trigger table<string, LuaActiveTriggerPrototype>
+---@field asteroid_chunk table<string, LuaAsteroidChunkPrototype>
+---@field collision_layer table<string, LuaCollisionLayerPrototype>
+---@field airborne_pollutant table<string, LuaAirbornePollutantPrototype>
+---@field burner_usage table<string, LuaBurnerUsagePrototype>
+---@field mod_data table<string, LuaModData>
+---@field surface table<string, LuaSurfacePrototype>
+---@field procession table<string, LuaProcessionPrototype>
+---@field procession_layer_inheritance_group table<string, LuaProcessionLayerInheritanceGroupPrototype>
+---@field max_force_distraction_distance number
+---@field max_force_distraction_chunk_distance integer
+---@field max_electric_pole_supply_area_distance number
+---@field max_electric_pole_connection_distance number
+---@field max_beacon_supply_area_distance integer
+---@field max_gate_activation_distance number
+---@field max_inserter_reach_distance number
+---@field max_pipe_to_ground_distance integer
+---@field max_underground_belt_distance integer
+---@field get_entity_filtered fun(filters: EntityPrototypeFilter[]): table<string, LuaEntityPrototype>
+---@field get_item_filtered fun(filters: ItemPrototypeFilter[]): table<string, LuaItemPrototype>
+---@field get_equipment_filtered fun(filters: EquipmentPrototypeFilter[]): table<string, LuaEquipmentPrototype>
+---@field get_mod_setting_filtered fun(filters: ModSettingPrototypeFilter[]): table<string, LuaModSettingPrototype>
+---@field get_achievement_filtered fun(filters: AchievementPrototypeFilter[]): table<string, LuaAchievementPrototype>
+---@field get_tile_filtered fun(filters: TilePrototypeFilter[]): table<string, LuaTilePrototype>
+---@field get_decorative_filtered fun(filters: DecorativePrototypeFilter[]): table<string, LuaDecorativePrototype>
+---@field get_fluid_filtered fun(filters: FluidPrototypeFilter[]): table<string, LuaFluidPrototype>
+---@field get_recipe_filtered fun(filters: RecipePrototypeFilter[]): table<string, LuaRecipePrototype>
+---@field get_technology_filtered fun(filters: TechnologyPrototypeFilter[]): table<string, LuaTechnologyPrototype>
+---@field get_history fun(type: string, name: string): PrototypeHistory
+
+---@class LuaProxyContainerControlBehavior: LuaControlBehavior
+---@field read_contents boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaPumpControlBehavior: LuaGenericOnOffControlBehavior
+---@field set_filter boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaQualityPrototype: LuaPrototypeBase
+---@field color Color
+---@field level integer
+---@field next LuaQualityPrototype
+---@field next_probability number
+---@field draw_sprite_by_default boolean
+---@field beacon_power_usage_multiplier number
+---@field mining_drill_resource_drain_multiplier number
+---@field science_pack_drain_multiplier number
+---@field default_multiplier number
+---@field inserter_speed_multiplier number
+---@field fluid_wagon_capacity_multiplier number
+---@field inventory_size_multiplier number
+---@field lab_research_speed_multiplier number
+---@field crafting_machine_speed_multiplier number
+---@field crafting_machine_energy_usage_multiplier number
+---@field logistic_cell_charging_energy_multiplier number
+---@field tool_durability_multiplier number
+---@field accumulator_capacity_multiplier number
+---@field flying_robot_max_energy_multiplier number
+---@field range_multiplier number
+---@field equipment_grid_width_bonus integer
+---@field equipment_grid_height_bonus integer
+---@field electric_pole_wire_reach_bonus number
+---@field electric_pole_supply_area_distance_bonus number
+---@field beacon_supply_area_distance_bonus number
+---@field mining_drill_mining_radius_bonus number
+---@field logistic_cell_charging_station_count_bonus integer
+---@field asteroid_collector_collection_radius_bonus integer
+---@field beacon_module_slots_bonus ItemStackIndex
+---@field crafting_machine_module_slots_bonus ItemStackIndex
+---@field mining_drill_module_slots_bonus ItemStackIndex
+---@field lab_module_slots_bonus ItemStackIndex
+---@field valid boolean
+---@field object_name string
+
+---@class LuaRCON
+---@field object_name string
+---@field print fun(message: LocalisedString)
+
+---@class LuaRadarControlBehavior: LuaControlBehavior
+---@field valid boolean
+---@field object_name string
+
+---@class LuaRailEnd
+---@field rail LuaEntity
+---@field direction integer
+---@field location RailLocation
+---@field out_signal_location RailLocation
+---@field alternative_out_signal_location RailLocation|nil
+---@field in_signal_location RailLocation
+---@field alternative_in_signal_location RailLocation|nil
+---@field valid boolean
+---@field object_name string
+---@field make_copy fun(): LuaRailEnd
+---@field flip_direction fun()
+---@field move_forward fun(connection_direction: integer): boolean
+---@field move_natural fun(): boolean
+---@field move_to_segment_end fun()
+---@field get_rail_extensions fun(planner_item: ItemID): RailExtensionData[]
+
+---@class LuaRailPath
+---@field size integer
+---@field current integer
+---@field total_distance number
+---@field travelled_distance number
+---@field rails table<integer, LuaEntity>
+---@field is_front boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaRailSignalBaseControlBehavior: LuaControlBehavior
+---@field red_signal SignalID|nil
+---@field orange_signal SignalID|nil
+---@field green_signal SignalID|nil
+---@field blue_signal SignalID|nil
+---@field close_signal boolean
+---@field read_signal boolean
+---@field circuit_condition CircuitConditionDefinition
+---@field valid boolean
+---@field object_name string
+
+---@class LuaRandomGenerator
+---@field valid boolean
+---@field object_name string
+---@field re_seed fun(seed: integer)
+
+---@class LuaReactorControlBehavior: LuaControlBehavior
+---@field read_fuel boolean
+---@field read_temperature boolean
+---@field temperature_signal SignalID|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaRecipe
+---@field name string
+---@field localised_name LocalisedString
+---@field localised_description LocalisedString
+---@field prototype LuaRecipePrototype
+---@field enabled boolean
+---@field category string
+---@field additional_categories string[]
+---@field ingredients Ingredient[]
+---@field products Product[]
+---@field hidden boolean
+---@field hidden_from_flow_stats boolean
+---@field energy number
+---@field order string
+---@field group LuaGroup
+---@field subgroup LuaGroup
+---@field force LuaForce
+---@field productivity_bonus number
+---@field valid boolean
+---@field object_name string
+---@field reload fun()
+---@field has_category fun(category: RecipeCategoryID): boolean
+
+---@class LuaRecipeCategoryPrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaRecipePrototype: LuaPrototypeBase
+---@field enabled boolean
+---@field category string
+---@field additional_categories string[]
+---@field ingredients Ingredient[]
+---@field products Product[]
+---@field main_product Product|nil
+---@field hidden_from_flow_stats boolean
+---@field hidden_from_player_crafting boolean
+---@field always_show_made_in boolean
+---@field energy number
+---@field request_paste_multiplier integer
+---@field overload_multiplier integer
+---@field maximum_productivity number
+---@field allow_inserter_overload boolean
+---@field allow_as_intermediate boolean
+---@field allow_intermediates boolean
+---@field show_amount_in_title boolean
+---@field always_show_products boolean
+---@field emissions_multiplier number
+---@field allow_decomposition boolean
+---@field unlock_results boolean
+---@field hide_from_signal_gui boolean
+---@field hide_from_flow_stats boolean
+---@field hide_from_player_crafting boolean
+---@field hide_from_bonus_gui boolean
+---@field trash LuaItemPrototype[]|nil
+---@field preserve_products_in_machine_output boolean
+---@field is_parameter boolean
+---@field allowed_effects table<string, boolean>|nil
+---@field allowed_module_categories table<string, true>|nil
+---@field effect_limitation_messages LocalisedString[]|nil
+---@field surface_conditions SurfaceCondition[]|nil
+---@field alternative_unlock_methods LuaTechnologyPrototype[]|nil
+---@field crafting_machine_tints Color[]
+---@field factoriopedia_alternative LuaRecipePrototype|nil
+---@field result_is_always_fresh boolean
+---@field reset_freshness_on_craft boolean
+---@field valid boolean
+---@field object_name string
+---@field has_category fun(category: RecipeCategoryID): boolean
+
+---@class LuaRecord
+---@field valid_for_write boolean
+---@field type "blueprint"|"blueprint-book"|"deconstruction-planner"|"upgrade-planner"
+---@field preview_icons BlueprintSignalIcon[]
+---@field is_preview boolean
+---@field is_blueprint_preview boolean
+---@field blueprint_snap_to_grid TilePosition|nil
+---@field blueprint_position_relative_to_grid TilePosition|nil
+---@field blueprint_absolute_snapping boolean
+---@field blueprint_description string
+---@field cost_to_build ItemWithQualityCounts
+---@field default_icons BlueprintSignalIcon[]
+---@field contents table<ItemStackIndex, LuaRecord>
+---@field contents_size ItemStackIndex
+---@field entity_filters ItemFilter[]
+---@field tile_filters TileID[]
+---@field entity_filter_mode integer
+---@field tile_filter_mode integer
+---@field tile_selection_mode integer
+---@field trees_and_rocks_only boolean
+---@field entity_filter_count integer
+---@field tile_filter_count integer
+---@field mapper_count integer
+---@field valid boolean
+---@field object_name string
+---@field export_record fun(): string
+---@field clear_blueprint fun()
+---@field is_blueprint_setup fun(): boolean
+---@field build_blueprint fun(params: { surface: SurfaceIdentification, force: ForceID, position: MapPosition, direction?: integer, build_mode?: integer, skip_fog_of_war?: boolean, by_player?: PlayerIdentification, raise_built?: boolean }): LuaEntity[]
+---@field create_blueprint fun(params: { surface: SurfaceIdentification, force: ForceID, area: BoundingBox, always_include_tiles?: boolean, include_entities?: boolean, include_modules?: boolean, include_station_names?: boolean, include_trains?: boolean, include_fuel?: boolean }): table<integer, LuaEntity>
+---@field get_blueprint_entity_tags fun(index: integer): Tags
+---@field set_blueprint_entity_tags fun(index: integer, tags: Tags)
+---@field get_blueprint_entity_tag fun(index: integer, tag: string): any|nil
+---@field set_blueprint_entity_tag fun(index: integer, tag: string, value: any)
+---@field get_blueprint_entities fun(): BlueprintEntity[]|nil
+---@field set_blueprint_entities fun(entities: BlueprintEntity[])
+---@field get_blueprint_tiles fun(): Tile[]|nil
+---@field set_blueprint_tiles fun(tiles: Tile[])
+---@field get_blueprint_entity_count fun(): integer
+---@field get_active_index fun(player: PlayerIdentification): integer
+---@field get_selected_record fun(player: PlayerIdentification): LuaRecord|nil
+---@field get_entity_filter fun(index: integer): ItemFilter|nil
+---@field set_entity_filter fun(index: integer, filter: ItemFilter|nil): boolean
+---@field get_tile_filter fun(index: integer): string|nil
+---@field set_tile_filter fun(index: integer, filter: string|LuaTilePrototype|LuaTile): boolean
+---@field deconstruct_area fun(params: { surface: SurfaceIdentification, force: ForceID, area: BoundingBox, skip_fog_of_war?: boolean, by_player?: PlayerIdentification, super_forced?: boolean })
+---@field cancel_deconstruct_area fun(params: { surface: SurfaceIdentification, force: ForceID, area: BoundingBox, skip_fog_of_war?: boolean, by_player?: PlayerIdentification, super_forced?: boolean })
+---@field clear_deconstruction_data fun()
+---@field clear_upgrade_data fun()
+---@field get_mapper fun(index: integer, type: "from"|"to"): UpgradeMapperSource|UpgradeMapperDestination
+---@field set_mapper fun(index: integer, type: "from"|"to", mapper: UpgradeMapperSource|UpgradeMapperDestination|nil)
+
+---@class LuaRemote
+---@field object_name string
+---@field interfaces table<string, table<string, true>>
+---@field add_interface fun(name: string, functions: table<string, fun()>)
+---@field remove_interface fun(name: string): boolean
+---@field call fun(interface: string, function: string, ...: any): any|nil
+
+---@class LuaRenderObject
+---@field id integer
+---@field type "text"|"line"|"circle"|"rectangle"|"arc"|"polygon"|"sprite"|"light"|"animation"
+---@field surface LuaSurface
+---@field time_to_live integer
+---@field blink_interval integer
+---@field forces LuaForce[]|ForceSet|nil
+---@field players LuaPlayer[]|PlayerIdentification[]|nil
+---@field visible boolean
+---@field draw_on_ground boolean
+---@field only_in_alt_mode boolean
+---@field render_mode ScriptRenderMode
+---@field use_target_orientation boolean
+---@field color Color
+---@field width number
+---@field from ScriptRenderTarget
+---@field to ScriptRenderTarget
+---@field dash_length number
+---@field gap_length number
+---@field dash_offset number
+---@field target ScriptRenderTarget
+---@field orientation RealOrientation
+---@field scale number
+---@field text LocalisedString
+---@field font string
+---@field alignment TextAlign
+---@field vertical_alignment VerticalTextAlign
+---@field scale_with_zoom boolean
+---@field use_rich_text boolean
+---@field filled boolean
+---@field radius number
+---@field left_top ScriptRenderTarget
+---@field right_bottom ScriptRenderTarget
+---@field max_radius number
+---@field min_radius number
+---@field start_angle number
+---@field angle number
+---@field vertices ScriptRenderTarget[]
+---@field sprite SpritePath
+---@field x_scale number
+---@field y_scale number
+---@field render_layer RenderLayer
+---@field orientation_target ScriptRenderTarget|nil
+---@field oriented_offset Vector
+---@field intensity number
+---@field minimum_darkness number
+---@field oriented boolean
+---@field animation string
+---@field animation_speed number
+---@field animation_offset number
+---@field valid boolean
+---@field object_name string
+---@field destroy fun()
+---@field bring_to_front fun()
+---@field move_to_back fun()
+---@field set_dashes fun(dash_length: number, gap_length: number)
+---@field set_corners fun(left_top: ScriptRenderTarget, right_bottom: ScriptRenderTarget)
+
+---@class LuaRendering
+---@field object_name string
+---@field draw_line fun(params: { color: Color, width: number, gap_length?: number, dash_length?: number, dash_offset?: number, from: ScriptRenderTarget, to: ScriptRenderTarget, surface: SurfaceIdentification, time_to_live?: integer, blink_interval?: integer, forces?: ForceSet, players?: PlayerIdentification[], visible?: boolean, draw_on_ground?: boolean, only_in_alt_mode?: boolean, render_mode?: ScriptRenderMode }): LuaRenderObject
+---@field draw_text fun(params: { text: LocalisedString, surface: SurfaceIdentification, target: ScriptRenderTarget, color: Color, scale?: number, font?: string, time_to_live?: integer, blink_interval?: integer, forces?: ForceSet, players?: PlayerIdentification[], visible?: boolean, draw_on_ground?: boolean, orientation?: RealOrientation, alignment?: TextAlign, vertical_alignment?: VerticalTextAlign, scale_with_zoom?: boolean, only_in_alt_mode?: boolean, render_mode?: ScriptRenderMode, use_rich_text?: boolean }): LuaRenderObject
+---@field draw_circle fun(params: { color: Color, radius: number, width?: number, filled?: boolean, target: ScriptRenderTarget, surface: SurfaceIdentification, time_to_live?: integer, blink_interval?: integer, forces?: ForceSet, players?: PlayerIdentification[], visible?: boolean, draw_on_ground?: boolean, only_in_alt_mode?: boolean, render_mode?: ScriptRenderMode }): LuaRenderObject
+---@field draw_rectangle fun(params: { color: Color, width?: number, filled?: boolean, left_top: ScriptRenderTarget, right_bottom: ScriptRenderTarget, surface: SurfaceIdentification, time_to_live?: integer, blink_interval?: integer, forces?: ForceSet, players?: PlayerIdentification[], visible?: boolean, draw_on_ground?: boolean, only_in_alt_mode?: boolean, render_mode?: ScriptRenderMode }): LuaRenderObject
+---@field draw_arc fun(params: { color: Color, max_radius: number, min_radius: number, start_angle: number, angle: number, target: ScriptRenderTarget, surface: SurfaceIdentification, time_to_live?: integer, blink_interval?: integer, forces?: ForceSet, players?: PlayerIdentification[], visible?: boolean, draw_on_ground?: boolean, only_in_alt_mode?: boolean, render_mode?: ScriptRenderMode }): LuaRenderObject
+---@field draw_polygon fun(params: { color: Color, vertices: ScriptRenderTarget[], target?: ScriptRenderTarget, orientation?: RealOrientation, orientation_target?: ScriptRenderTarget, use_target_orientation?: boolean, surface: SurfaceIdentification, time_to_live?: integer, blink_interval?: integer, forces?: ForceSet, players?: PlayerIdentification[], visible?: boolean, draw_on_ground?: boolean, only_in_alt_mode?: boolean, render_mode?: ScriptRenderMode }): LuaRenderObject
+---@field draw_sprite fun(params: { sprite: SpritePath, orientation?: RealOrientation, x_scale?: number, y_scale?: number, tint?: Color, render_layer?: RenderLayer, orientation_target?: ScriptRenderTarget, use_target_orientation?: boolean, oriented_offset?: Vector, target: ScriptRenderTarget, surface: SurfaceIdentification, time_to_live?: integer, blink_interval?: integer, forces?: ForceSet, players?: PlayerIdentification[], visible?: boolean, only_in_alt_mode?: boolean, render_mode?: ScriptRenderMode }): LuaRenderObject
+---@field draw_light fun(params: { sprite: SpritePath, orientation?: RealOrientation, scale?: number, intensity?: number, minimum_darkness?: number, oriented?: boolean, color?: Color, target: ScriptRenderTarget, surface: SurfaceIdentification, time_to_live?: integer, blink_interval?: integer, forces?: ForceSet, players?: PlayerIdentification[], visible?: boolean, only_in_alt_mode?: boolean, render_mode?: ScriptRenderMode }): LuaRenderObject
+---@field draw_animation fun(params: { animation: string, orientation?: RealOrientation, x_scale?: number, y_scale?: number, tint?: Color, render_layer?: RenderLayer, animation_speed?: number, animation_offset?: number, orientation_target?: ScriptRenderTarget, use_target_orientation?: boolean, oriented_offset?: Vector, target: ScriptRenderTarget, surface: SurfaceIdentification, time_to_live?: integer, blink_interval?: integer, forces?: ForceSet, players?: PlayerIdentification[], visible?: boolean, only_in_alt_mode?: boolean, render_mode?: ScriptRenderMode }): LuaRenderObject
+---@field get_all_objects fun(mod_name: string|nil): LuaRenderObject[]
+---@field clear fun(mod_name: string|nil)
+---@field get_object_by_id fun(object_id: integer): LuaRenderObject|nil
+
+---@class LuaResourceCategoryPrototype: LuaPrototypeBase
+---@field valid boolean
+---@field object_name string
+
+---@class LuaRoboportControlBehavior: LuaControlBehavior
+---@field read_items_mode integer
+---@field read_logistics boolean
+---@field read_robot_stats boolean
+---@field available_logistic_output_signal SignalID|nil
+---@field total_logistic_output_signal SignalID|nil
+---@field available_construction_output_signal SignalID|nil
+---@field total_construction_output_signal SignalID|nil
+---@field roboport_count_output_signal SignalID|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaRocketSiloControlBehavior: LuaControlBehavior
+---@field read_mode integer
+---@field valid boolean
+---@field object_name string
+
+---@class LuaSchedule
+---@field owner LuaTrain|LuaSpacePlatform|nil
+---@field interrupt_count integer
+---@field current integer
+---@field tick_of_last_schedule_change integer
+---@field tick_of_last_activity integer
+---@field ticks_in_station integer
+---@field group string|nil
+---@field valid boolean
+---@field object_name string
+---@field add_wait_condition fun(record_position: ScheduleRecordPosition, condition_index: integer, type: WaitConditionType)
+---@field remove_wait_condition fun(record_position: ScheduleRecordPosition, condition_index: integer)
+---@field set_wait_condition_mode fun(record_position: ScheduleRecordPosition, condition_index: integer, mode: string)
+---@field change_wait_condition fun(record_position: ScheduleRecordPosition, condition_index: integer, wait_condition: WaitCondition)
+---@field add_record fun(data: AddRecordData): integer|nil
+---@field remove_record fun(record_position: ScheduleRecordPosition)
+---@field copy_record fun(source_schedule: LuaSchedule, source_index: integer, destination_index: integer)
+---@field add_interrupt fun(interrupt: ScheduleInterrupt)
+---@field remove_interrupt fun(index: integer)
+---@field activate_interrupt fun(index: integer)
+---@field change_interrupt fun(index: integer, interrupt: ScheduleInterrupt)
+---@field rename_interrupt fun(old_name: string, new_name: string)
+---@field go_to_station fun(schedule_index: integer)
+---@field set_stopped fun(stopped: boolean)
+---@field set_allow_unloading fun(record_position: ScheduleRecordPosition, allow: boolean)
+---@field drag_record fun(from: integer, to: integer, interrupt_index: integer|nil)
+---@field drag_interrupt fun(from: integer, to: integer)
+---@field drag_wait_condition fun(record_position: ScheduleRecordPosition, from: integer, to: integer)
+---@field get_record fun(record_position: ScheduleRecordPosition): ScheduleRecord|nil
+---@field get_records fun(interrupt_index: integer|nil): ScheduleRecord[]|nil
+---@field set_records fun(records: ScheduleRecord[], interrupt_index: integer|nil)
+---@field clear_records fun(interrupt_index: integer|nil)
+---@field get_interrupt fun(index: integer): ScheduleInterrupt|nil
+---@field get_interrupts fun(): ScheduleInterrupt[]
+---@field set_interrupts fun(interrupts: ScheduleInterrupt[])
+---@field clear_interrupts fun()
+---@field get_wait_condition fun(record_position: ScheduleRecordPosition, condition_index: integer): WaitCondition|nil
+---@field get_wait_conditions fun(record_position: ScheduleRecordPosition): WaitCondition[]|nil
+---@field get_wait_condition_count fun(record_position: ScheduleRecordPosition): integer|nil
+---@field get_inside_interrupt fun(interrupt_index: integer): boolean
+---@field set_inside_interrupt fun(interrupt_index: integer, value: boolean)
+---@field get_record_count fun(interrupt_index: integer|nil): integer|nil
+
+---@class LuaSegment
+---@field prototype LuaEntityPrototype
+---@field unit LuaSegmentedUnit
+---@field entity LuaEntity|nil
+---@field position MapPosition|nil
+---@field orientation RealOrientation|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaSegmentedUnit
+---@field prototype LuaEntityPrototype
+---@field surface LuaSurface
+---@field territory LuaTerritory|nil
+---@field segments LuaSegment[]
+---@field force LuaForce
+---@field unit_number integer
+---@field health number
+---@field max_health number
+---@field health_ratio number
+---@field speed number
+---@field target_speed number
+---@field acceleration number
+---@field max_body_nodes integer
+---@field activity_mode integer
+---@field minimum_activity_mode integer
+---@field valid boolean
+---@field object_name string
+---@field destroy fun(params: { raise_destroy?: boolean }|nil)
+---@field die fun(force: ForceID|nil, cause: LuaEntity|nil, damage_type: DamageTypeID|nil)
+---@field damage fun(damage: number, force: ForceID, type: DamageTypeID|nil, source: LuaEntity|nil, cause: LuaEntity|nil): number
+---@field move_forward fun(distance: number)
+---@field clone fun(params: { position: MapPosition, surface?: LuaSurface, force?: ForceID, territory?: LuaTerritory }): LuaSegmentedUnit|nil
+---@field get_body_nodes fun(): MapPosition[]
+---@field set_body_nodes fun(nodes: MapPosition[])
+---@field get_ai_state fun(): SegmentedUnitAIState
+---@field set_ai_state fun(state: SegmentedUnitAIState)
+
+---@class LuaSelectorCombinatorControlBehavior: LuaCombinatorControlBehavior
+---@field parameters SelectorCombinatorParameters
+---@field valid boolean
+---@field object_name string
+
+---@class LuaSettings
+---@field startup table<string, ModSetting>
+---@field global table<string, ModSetting>
+---@field player_default table<string, ModSetting>
+---@field object_name string
+---@field get_player_settings fun(player: PlayerIdentification): table<string, ModSetting>
+
+---@class LuaShortcutPrototype: LuaPrototypeBase
+---@field action string
+---@field item_to_spawn LuaItemPrototype|nil
+---@field technology_to_unlock LuaTechnologyPrototype|nil
+---@field toggleable boolean
+---@field associated_control_input string|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaSimulation
+---@field camera_player_cursor_position MapPosition|nil
+---@field camera_position MapPosition|nil
+---@field camera_surface_index integer|nil
+---@field hide_cursor boolean
+---@field camera_zoom number
+---@field camera_player PlayerIdentification
+---@field camera_player_cursor_direction integer
+---@field camera_alt_info boolean
+---@field smart_belt_building boolean|nil
+---@field gui_tooltip_interval number
+---@field active_quickbars integer
+---@field valid boolean
+---@field object_name string
+---@field create_test_player fun(params: { name: string }): LuaPlayer
+---@field get_slot_position fun(params: { inventory_index: InventoryIndex, slot_index: ItemStackIndex, inventory?: "character"|"entity" }): MapPosition|nil
+---@field get_widget_position fun(params: { type: SimulationWidgetType, data?: string, data2?: string }): MapPosition|nil
+---@field activate_rail_planner fun(params: { position?: MapPosition, ghost_mode?: boolean, build_mode?: integer }|nil)
+---@field deactivate_rail_planner fun()
+---@field move_cursor fun(params: { position: MapPosition, speed?: number }): boolean
+---@field mouse_down fun()
+---@field mouse_up fun()
+---@field mouse_click fun()
+---@field control_down fun(params: { control: string, notify: boolean })
+---@field control_up fun(params: { control: string })
+---@field control_press fun(params: { control: string, notify: boolean })
+---@field write fun(params: { text?: string })
+---@field scroll_clipboard_forwards fun()
+---@field scroll_clipboard_backwards fun()
+
+---@class LuaSpaceConnectionPrototype: LuaPrototypeBase
+---@field from LuaSpaceLocationPrototype
+---@field to LuaSpaceLocationPrototype
+---@field length integer
+---@field asteroid_spawn_definitions SpaceConnectionAsteroidSpawnDefinition[]|nil
+---@field factoriopedia_alternative LuaSpaceConnectionPrototype|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaSpaceLocationPrototype: LuaPrototypeBase
+---@field position MapPosition
+---@field solar_power_in_space number
+---@field asteroid_spawn_influence number
+---@field asteroid_spawn_definitions SpaceLocationAsteroidSpawnDefinition[]|nil
+---@field factoriopedia_alternative LuaSpaceLocationPrototype|nil
+---@field map_seed_offset integer|nil
+---@field map_gen_settings MapGenSettings|nil
+---@field entities_require_heating boolean|nil
+---@field pollutant_type LuaAirbornePollutantPrototype|nil
+---@field player_effects TriggerItem[]|nil
+---@field ticks_between_player_effects integer|nil
+---@field surface_properties table<string, number>|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaSpacePlatform
+---@field force LuaForce
+---@field name string
+---@field index integer
+---@field space_location LuaSpaceLocationPrototype|nil
+---@field last_visited_space_location LuaSpaceLocationPrototype|nil
+---@field space_connection LuaSpaceConnectionPrototype|nil
+---@field distance number|nil
+---@field state integer
+---@field paused boolean
+---@field starter_pack ItemIDAndQualityIDPair|nil
+---@field surface LuaSurface
+---@field hub LuaEntity|nil
+---@field schedule PlatformSchedule|nil
+---@field speed number
+---@field scheduled_for_deletion integer
+---@field weight Weight
+---@field damaged_tiles { position: TilePosition, damage: number }[]
+---@field ejected_items EjectedItem[]
+---@field hidden boolean
+---@field valid boolean
+---@field object_name string
+---@field destroy fun(ticks: integer|nil)
+---@field cancel_deletion fun()
+---@field apply_starter_pack fun(): LuaEntity|nil
+---@field damage_tile fun(params: { position: TilePosition, damage: number, cause?: LuaEntity }|nil)
+---@field repair_tile fun(position: TilePosition, amount: number|nil)
+---@field destroy_asteroid_chunks fun(params: { area?: BoundingBox, position?: MapPosition, name?: AsteroidChunkID|AsteroidChunkID[], limit?: integer, invert?: boolean }): integer
+---@field create_asteroid_chunks fun(asteroid_chunks: AsteroidChunk[])
+---@field find_asteroid_chunks_filtered fun(params: { area?: BoundingBox, position?: MapPosition, name?: AsteroidChunkID|AsteroidChunkID[], limit?: integer, invert?: boolean }): AsteroidChunk[]
+---@field can_leave_current_location fun(): boolean
+---@field get_schedule fun(): LuaSchedule
+---@field eject_item fun(item: ItemStackIdentification, position: MapPosition, movement: Vector)
+---@field clear_ejected_items fun()
+
+---@class LuaSpacePlatformHubControlBehavior: LuaControlBehavior
+---@field read_contents boolean
+---@field send_to_platform boolean
+---@field read_moving_from boolean
+---@field read_moving_to boolean
+---@field read_speed boolean
+---@field speed_signal SignalID|nil
+---@field read_damage_taken boolean
+---@field damage_taken_signal SignalID|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaSplitterControlBehavior: LuaControlBehavior
+---@field set_input_side boolean
+---@field input_left_condition CircuitConditionDefinition
+---@field input_right_condition CircuitConditionDefinition
+---@field set_output_side boolean
+---@field output_left_condition CircuitConditionDefinition
+---@field output_right_condition CircuitConditionDefinition
+---@field set_filter boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaStorageTankControlBehavior: LuaControlBehavior
+---@field read_contents boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaStyle
+---@field gui LuaGui
+---@field name string
+---@field minimal_width integer
+---@field maximal_width integer
+---@field minimal_height integer
+---@field maximal_height integer
+---@field natural_width integer
+---@field natural_height integer
+---@field top_padding integer
+---@field right_padding integer
+---@field bottom_padding integer
+---@field left_padding integer
+---@field top_margin integer
+---@field right_margin integer
+---@field bottom_margin integer
+---@field left_margin integer
+---@field horizontal_align "left"|"center"|"right"|nil
+---@field vertical_align "top"|"center"|"bottom"|nil
+---@field font_color Color
+---@field font string
+---@field top_cell_padding integer
+---@field right_cell_padding integer
+---@field bottom_cell_padding integer
+---@field left_cell_padding integer
+---@field horizontally_stretchable boolean|nil
+---@field vertically_stretchable boolean|nil
+---@field horizontally_squashable boolean|nil
+---@field vertically_squashable boolean|nil
+---@field rich_text_setting integer
+---@field hovered_font_color Color
+---@field clicked_font_color Color
+---@field disabled_font_color Color
+---@field pie_progress_color Color
+---@field clicked_vertical_offset integer
+---@field selected_font_color Color
+---@field selected_hovered_font_color Color
+---@field selected_clicked_font_color Color
+---@field strikethrough_color Color
+---@field draw_grayscale_picture boolean
+---@field horizontal_spacing integer
+---@field vertical_spacing integer
+---@field use_header_filler boolean
+---@field bar_width integer
+---@field color Color
+---@field column_alignments table<integer, Alignment>
+---@field single_line boolean
+---@field extra_top_padding_when_activated integer
+---@field extra_bottom_padding_when_activated integer
+---@field extra_left_padding_when_activated integer
+---@field extra_right_padding_when_activated integer
+---@field extra_top_margin_when_activated integer
+---@field extra_bottom_margin_when_activated integer
+---@field extra_left_margin_when_activated integer
+---@field extra_right_margin_when_activated integer
+---@field extra_padding_when_activated integer|integer[]
+---@field extra_margin_when_activated integer|integer[]
+---@field stretch_image_to_widget_size boolean
+---@field badge_font string
+---@field badge_horizontal_spacing integer
+---@field default_badge_font_color Color
+---@field selected_badge_font_color Color
+---@field disabled_badge_font_color Color
+---@field width integer
+---@field height integer
+---@field size integer|integer[]
+---@field padding integer|integer[]
+---@field margin integer|integer[]
+---@field cell_padding integer
+---@field valid boolean
+---@field object_name string
+
+---@class LuaSurface
+---@field name string
+---@field index integer
+---@field map_gen_settings MapGenSettings
+---@field generate_with_lab_tiles boolean
+---@field always_day boolean
+---@field daytime number
+---@field darkness number
+---@field wind_speed number
+---@field wind_orientation RealOrientation
+---@field wind_orientation_change number
+---@field peaceful_mode boolean
+---@field no_enemies_mode boolean
+---@field freeze_daytime boolean
+---@field ticks_per_day integer
+---@field dusk number
+---@field dawn number
+---@field evening number
+---@field morning number
+---@field daytime_parameters { dusk: number, evening: number, morning: number, dawn: number }
+---@field solar_power_multiplier number
+---@field min_brightness number
+---@field brightness_visual_weights ColorModifier
+---@field show_clouds boolean
+---@field has_global_electric_network boolean
+---@field platform LuaSpacePlatform|nil
+---@field planet LuaPlanet|nil
+---@field deletable boolean
+---@field global_effect ModuleEffects|nil
+---@field pollutant_type LuaAirbornePollutantPrototype|nil
+---@field localised_name LocalisedString|nil
+---@field ignore_surface_conditions boolean
+---@field pollution_statistics LuaFlowStatistics
+---@field global_electric_network_statistics LuaFlowStatistics|nil
+---@field valid boolean
+---@field object_name string
+---@field get_pollution fun(position: MapPosition): number
+---@field set_pollution fun(position: MapPosition, amount: number)
+---@field can_place_entity fun(params: { name: EntityID, position: MapPosition, direction?: integer, force?: ForceID, build_check_type?: integer, forced?: boolean, inner_name?: string }): boolean
+---@field can_fast_replace fun(params: { name: EntityID, position: MapPosition, direction?: integer, force?: ForceID }): boolean
+---@field find_entity fun(entity: EntityWithQualityID, position: MapPosition): LuaEntity|nil
+---@field find_entities fun(area: BoundingBox|nil): LuaEntity[]
+---@field find_entities_filtered fun(filter: EntitySearchFilters): LuaEntity[]
+---@field find_tiles_filtered fun(filter: TileSearchFilters): LuaTile[]
+---@field count_entities_filtered fun(filter: EntitySearchFilters): integer
+---@field count_tiles_filtered fun(filter: TileSearchFilters): integer
+---@field find_non_colliding_position fun(name: EntityID, center: MapPosition, radius: number, precision: number, force_to_tile_center: boolean|nil): MapPosition|nil
+---@field find_non_colliding_position_in_box fun(name: EntityID, search_space: BoundingBox, precision: number, force_to_tile_center: boolean|nil): MapPosition|nil
+---@field spill_item_stack fun(params: { position: MapPosition, stack: ItemStackIdentification, enable_looted?: boolean, force?: ForceID, allow_belts?: boolean, max_radius?: number, use_start_position_on_failure?: boolean, drop_full_stack?: boolean }): LuaEntity[]
+---@field spill_inventory fun(params: { position: MapPosition, inventory: LuaInventory, enable_looted?: boolean, force?: ForceID, allow_belts?: boolean, max_radius?: number, use_start_position_on_failure?: boolean, drop_full_stack?: boolean }): LuaEntity[]
+---@field find_enemy_units fun(center: MapPosition, radius: number, force: ForceID|nil): LuaEntity[]
+---@field find_units fun(params: { area: BoundingBox, force: ForceID, condition: ForceCondition }): LuaEntity[]
+---@field find_nearest_enemy fun(params: { position: MapPosition, max_distance: number, force?: ForceID }): LuaEntity|nil
+---@field find_nearest_enemy_entity_with_owner fun(params: { position: MapPosition, max_distance: number, force?: ForceID }): LuaEntity
+---@field set_multi_command fun(params: { command: Command, unit_count: integer, force?: ForceID, unit_search_distance?: integer }): integer
+---@field create_entity fun(params: { name: EntityID, position: MapPosition, direction?: integer, mirror?: boolean, quality?: QualityID, force?: ForceID, target?: LuaEntity|MapPosition, source?: LuaEntity|MapPosition, cause?: LuaEntity|ForceID, snap_to_grid?: boolean, fast_replace?: boolean, undo_index?: integer, player?: PlayerIdentification, character?: LuaEntity, spill?: boolean, raise_built?: boolean, create_build_effect_smoke?: boolean, spawn_decorations?: boolean, move_stuck_players?: boolean, item?: LuaItemStack, preserve_ghosts_and_corpses?: boolean, register_plant?: boolean, burner_fuel_inventory?: BlueprintInventoryWithFilters }): LuaEntity|nil
+---@field create_segmented_unit fun(params: { name: EntityID, quality?: QualityID, force?: ForceID, territory?: LuaTerritory }): LuaSegmentedUnit|nil
+---@field create_territory fun(params: { chunks: ChunkPosition[], patrol_path?: MapPosition[] }): LuaTerritory|nil
+---@field create_trivial_smoke fun(params: { name: TrivialSmokeID, position: MapPosition })
+---@field create_particle fun(params: { name: ParticleID, position: MapPosition, movement: Vector, height: number, vertical_speed: number, frame_speed: number })
+---@field create_unit_group fun(params: { position: MapPosition, force?: ForceID }): LuaCommandable
+---@field build_enemy_base fun(position: MapPosition, unit_count: integer, force: ForceID|nil)
+---@field get_tile fun(x: integer, y: integer): LuaTile
+---@field set_tiles fun(tiles: Tile[], correct_tiles: boolean|nil, remove_colliding_entities: boolean|"abort_on_collision"|nil, remove_colliding_decoratives: boolean|nil, raise_event: boolean|nil, player: PlayerIdentification|nil, undo_index: integer|nil)
+---@field pollute fun(source: MapPosition, amount: number, prototype: EntityID|nil)
+---@field get_chunks fun(): LuaChunkIterator
+---@field is_chunk_generated fun(chunk_position: ChunkPosition): boolean
+---@field request_to_generate_chunks fun(position: MapPosition, radius: integer|nil)
+---@field force_generate_chunk_requests fun()
+---@field set_chunk_generated_status fun(chunk_position: ChunkPosition, status: integer)
+---@field get_territories fun(): LuaTerritory[]
+---@field get_territory_for_chunk fun(chunk_position: ChunkPosition): LuaTerritory|nil
+---@field set_territory_for_chunks fun(chunk_positions: ChunkPosition[], territory: LuaTerritory|nil)
+---@field clear_territory_for_chunks fun(chunk_positions: ChunkPosition[])
+---@field get_segmented_units fun(): LuaSegmentedUnit[]
+---@field find_logistic_network_by_position fun(position: MapPosition, force: ForceID): LuaLogisticNetwork|nil
+---@field find_closest_logistic_network_by_position fun(position: MapPosition, force: ForceID): LuaLogisticNetwork|nil
+---@field find_logistic_networks_by_construction_area fun(position: MapPosition, force: ForceID): LuaLogisticNetwork[]
+---@field deconstruct_area fun(params: { area: BoundingBox, force: ForceID, player?: PlayerIdentification, skip_fog_of_war?: boolean, item?: LuaItemStack, super_forced?: boolean })
+---@field cancel_deconstruct_area fun(params: { area: BoundingBox, force: ForceID, player?: PlayerIdentification, skip_fog_of_war?: boolean, item?: LuaItemStack, undo_index?: integer, super_forced?: boolean })
+---@field upgrade_area fun(params: { area: BoundingBox, force: ForceID, player?: PlayerIdentification, skip_fog_of_war?: boolean, item: LuaItemStack })
+---@field cancel_upgrade_area fun(params: { area: BoundingBox, force: ForceID, player?: PlayerIdentification, skip_fog_of_war?: boolean, item: LuaItemStack })
+---@field get_hidden_tile fun(position: TilePosition): string|nil
+---@field get_double_hidden_tile fun(position: TilePosition): string
+---@field set_hidden_tile fun(position: TilePosition, tile: TileID|nil)
+---@field set_double_hidden_tile fun(position: TilePosition, tile: TileID|nil)
+---@field get_connected_tiles fun(position: TilePosition, tiles: TileID[], include_diagonal: boolean|nil, area: BoundingBox|nil): TilePosition[]
+---@field delete_chunk fun(chunk_position: ChunkPosition)
+---@field regenerate_entity fun(entities: string|string[]|nil, chunks: ChunkPosition[]|nil)
+---@field regenerate_decorative fun(decoratives: string|string[]|nil, chunks: ChunkPosition[]|nil)
+---@field print fun(message: LocalisedString, print_settings: PrintSettings|nil)
+---@field destroy_decoratives fun(params: { area?: BoundingBox, position?: TilePosition, name?: DecorativeID|DecorativeID[], collision_mask?: CollisionLayerID|CollisionLayerID[]|table<CollisionLayerID, true>, from_layer?: string, to_layer?: string, exclude_soft?: boolean, limit?: integer, invert?: boolean })
+---@field create_decoratives fun(params: { check_collision?: boolean, decoratives: Decorative[] })
+---@field find_decoratives_filtered fun(params: { area?: BoundingBox, position?: TilePosition, name?: DecorativeID|DecorativeID[], collision_mask?: CollisionLayerID|CollisionLayerID[]|table<CollisionLayerID, true>, from_layer?: string, to_layer?: string, exclude_soft?: boolean, limit?: integer, invert?: boolean }): DecorativeResult[]
+---@field clear_pollution fun()
+---@field play_sound fun(sound_specification: PlaySoundSpecification)
+---@field get_resource_counts fun(): table<string, integer>
+---@field get_random_chunk fun(): ChunkPosition
+---@field clone_area fun(params: { source_area: BoundingBox, destination_area: BoundingBox, destination_surface?: SurfaceIdentification, destination_force?: ForceID, clone_tiles?: boolean, clone_entities?: boolean, clone_decoratives?: boolean, clear_destination_entities?: boolean, clear_destination_decoratives?: boolean, expand_map?: boolean, create_build_effect_smoke?: boolean })
+---@field clone_brush fun(params: { source_offset: TilePosition, destination_offset: TilePosition, source_positions: TilePosition[], destination_surface?: SurfaceIdentification, destination_force?: LuaForce|string, clone_tiles?: boolean, clone_entities?: boolean, clone_decoratives?: boolean, clear_destination_entities?: boolean, clear_destination_decoratives?: boolean, expand_map?: boolean, manual_collision_mode?: boolean, create_build_effect_smoke?: boolean })
+---@field clone_entities fun(params: { entities: LuaEntity[], destination_offset: Vector, destination_surface?: SurfaceIdentification, destination_force?: ForceID, snap_to_grid?: boolean, create_build_effect_smoke?: boolean })
+---@field clear fun(ignore_characters: boolean|nil)
+---@field request_path fun(params: { bounding_box: BoundingBox, collision_mask: CollisionMask, start: MapPosition, goal: MapPosition, force: ForceID, radius?: number, pathfind_flags?: PathfinderFlags, can_open_gates?: boolean, path_resolution_modifier?: integer, max_gap_size?: integer, max_attack_distance?: number, entity_to_ignore?: LuaEntity }): integer
+---@field get_script_areas fun(name: string|nil): ScriptArea[]
+---@field get_script_area fun(key: string|integer|nil): ScriptArea|nil
+---@field edit_script_area fun(id: integer, area: ScriptArea)
+---@field add_script_area fun(area: ScriptArea): integer
+---@field remove_script_area fun(id: integer): boolean
+---@field get_script_positions fun(name: string|nil): ScriptPosition[]
+---@field get_script_position fun(key: string|integer|nil): ScriptPosition|nil
+---@field edit_script_position fun(id: integer, position: ScriptPosition)
+---@field add_script_position fun(position: ScriptPosition): integer
+---@field remove_script_position fun(id: integer): boolean
+---@field get_map_exchange_string fun(): string
+---@field get_starting_area_radius fun(): number
+---@field get_closest fun(position: MapPosition, entities: LuaEntity[]): LuaEntity|nil
+---@field get_total_pollution fun(): number
+---@field entity_prototype_collides fun(prototype: EntityID, position: MapPosition, use_map_generation_bounding_box: boolean, direction: integer|nil): boolean
+---@field decorative_prototype_collides fun(prototype: DecorativeID, position: MapPosition): boolean
+---@field calculate_tile_properties fun(property_names: string[], positions: MapPosition[]): table<string, number[]>
+---@field get_entities_with_force fun(chunk_position: ChunkPosition, force: ForceID): LuaEntity[]
+---@field create_entities_from_blueprint_string fun(params: { string: string, position: MapPosition, force?: ForceID, direction?: integer, flip_horizontal?: boolean, flip_vertical?: boolean, by_player?: PlayerIdentification }): integer|nil
+---@field build_checkerboard fun(area: BoundingBox)
+---@field get_property fun(property: SurfacePropertyID): number
+---@field set_property fun(property: SurfacePropertyID, value: number)
+---@field create_global_electric_network fun()
+---@field destroy_global_electric_network fun()
+---@field execute_lightning fun(params: { name: EntityID, position: MapPosition })
+---@field clear_hidden_tiles fun()
+---@field get_default_cover_tile fun(force: ForceID, tile: TileID): LuaTilePrototype|nil
+---@field set_default_cover_tile fun(force: ForceID, from_tile: TileID, to_tile: TileID|nil)
+
+---@class LuaSurfacePropertyPrototype: LuaPrototypeBase
+---@field localised_unit_key string
+---@field default_value number
+---@field is_time boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaSurfacePrototype: LuaPrototypeBase
+---@field surface_properties table<SurfacePropertyID, number>
+---@field factoriopedia_alternative LuaSurfacePrototype|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaTechnology
+---@field force LuaForce
+---@field name string
+---@field localised_name LocalisedString
+---@field localised_description LocalisedString
+---@field prototype LuaTechnologyPrototype
+---@field enabled boolean
+---@field visible_when_disabled boolean
+---@field upgrade boolean
+---@field researched boolean
+---@field prerequisites table<string, LuaTechnology>
+---@field successors table<string, LuaTechnology>
+---@field research_unit_ingredients ResearchIngredient[]
+---@field research_unit_count integer
+---@field research_unit_energy number
+---@field order string
+---@field level integer
+---@field research_unit_count_formula MathExpression|nil
+---@field saved_progress number
+---@field valid boolean
+---@field object_name string
+---@field reload fun()
+---@field research_recursive fun()
+
+---@class LuaTechnologyPrototype: LuaPrototypeBase
+---@field enabled boolean
+---@field essential boolean
+---@field visible_when_disabled boolean
+---@field ignore_tech_cost_multiplier boolean
+---@field upgrade boolean
+---@field prerequisites table<string, LuaTechnologyPrototype>
+---@field successors table<string, LuaTechnologyPrototype>
+---@field research_unit_ingredients ResearchIngredient[]
+---@field effects TechnologyModifier[]
+---@field research_unit_count integer
+---@field research_unit_energy number
+---@field level integer
+---@field max_level integer
+---@field research_unit_count_formula MathExpression|nil
+---@field research_trigger ResearchTrigger|nil
+---@field allows_productivity boolean
+---@field factoriopedia_alternative LuaTechnologyPrototype|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaTerritory
+---@field surface LuaSurface
+---@field valid boolean
+---@field object_name string
+---@field destroy fun()
+---@field get_chunks fun(): ChunkPositionAndArea[]
+---@field get_segmented_units fun(): LuaSegmentedUnit[]
+---@field regenerate_segmented_units fun()
+---@field regenerate_patrol_path fun()
+---@field get_patrol_path fun(): MapPosition[]
+---@field set_patrol_path fun(patrol_path: MapPosition[])
+
+---@class LuaTile
+---@field name string
+---@field prototype LuaTilePrototype
+---@field position TilePosition
+---@field hidden_tile string|nil
+---@field double_hidden_tile string|nil
+---@field surface LuaSurface
+---@field valid boolean
+---@field object_name string
+---@field collides_with fun(layer: CollisionLayerID): boolean
+---@field to_be_deconstructed fun(force: ForceID|nil): boolean
+---@field order_deconstruction fun(force: ForceID, player: PlayerIdentification|nil): LuaEntity|nil
+---@field cancel_deconstruction fun(force: ForceID, player: PlayerIdentification|nil)
+---@field has_tile_ghost fun(force: ForceID|nil): boolean
+---@field get_tile_ghosts fun(force: ForceID|nil): LuaEntity[]
+
+---@class LuaTilePrototype: LuaPrototypeBase
+---@field collision_mask CollisionMask
+---@field layer integer
+---@field autoplace_specification AutoplaceSpecification|nil
+---@field walking_speed_modifier number
+---@field vehicle_friction_modifier number
+---@field map_color Color
+---@field decorative_removal_probability number
+---@field automatic_neighbors boolean
+---@field allowed_neighbors table<string, LuaTilePrototype>
+---@field needs_correction boolean
+---@field mineable_properties { minable: boolean, mining_time: number, mining_particle?: string, products: Product[] }
+---@field fluid LuaFluidPrototype|nil
+---@field next_direction LuaTilePrototype|nil
+---@field items_to_place_this ItemToPlace[]|nil
+---@field can_be_part_of_blueprint boolean
+---@field absorptions_per_second table<string, number>
+---@field is_foundation boolean
+---@field allows_being_covered boolean
+---@field check_collision_with_entities boolean
+---@field destroys_dropped_items boolean
+---@field max_health number
+---@field weight Weight
+---@field default_cover_tile LuaTilePrototype|nil
+---@field frozen_variant LuaTilePrototype|nil
+---@field thawed_variant LuaTilePrototype|nil
+---@field trigger_effect TriggerEffectItem[]|nil
+---@field default_destroyed_dropped_item_trigger TriggerItem[]|nil
+---@field scorch_mark_color Color|nil
+---@field bound_decoratives LuaDecorativePrototype[]|nil
+---@field ambient_sounds_group LuaTilePrototype|nil
+---@field factoriopedia_alternative LuaTilePrototype|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaTrain
+---@field manual_mode boolean
+---@field speed number
+---@field max_forward_speed number
+---@field max_backward_speed number
+---@field weight number
+---@field carriages LuaEntity[]
+---@field locomotives { front_movers: LuaEntity[], back_movers: LuaEntity[] }
+---@field cargo_wagons LuaEntity[]
+---@field fluid_wagons LuaEntity[]
+---@field schedule TrainSchedule|nil
+---@field state integer
+---@field front_stock LuaEntity|nil
+---@field back_stock LuaEntity|nil
+---@field station LuaEntity|nil
+---@field has_path boolean
+---@field path_end_rail LuaEntity|nil
+---@field path_end_stop LuaEntity|nil
+---@field id integer
+---@field passengers LuaPlayer[]
+---@field riding_state RidingState
+---@field killed_players table<integer, integer>
+---@field kill_count integer
+---@field path LuaRailPath|nil
+---@field signal LuaEntity|nil
+---@field group string
+---@field front_end LuaRailEnd
+---@field back_end LuaRailEnd
+---@field valid boolean
+---@field object_name string
+---@field get_item_count fun(item: ItemFilter|nil): integer
+---@field get_contents fun(): ItemWithQualityCounts
+---@field remove_item fun(stack: ItemStackIdentification): integer
+---@field insert fun(stack: ItemStackIdentification)
+---@field clear_items_inside fun()
+---@field recalculate_path fun(force: boolean|nil): boolean
+---@field get_fluid_count fun(fluid: string|nil): number
+---@field get_fluid_contents fun(): table<string, FluidAmount>
+---@field remove_fluid fun(fluid: Fluid): number
+---@field insert_fluid fun(fluid: Fluid): number
+---@field clear_fluids_inside fun()
+---@field go_to_station fun(index: integer)
+---@field get_rails fun(): LuaEntity[]
+---@field get_rail_end fun(direction: integer): LuaRailEnd
+---@field get_schedule fun(): LuaSchedule
+
+---@class LuaTrainManager
+---@field valid boolean
+---@field object_name string
+---@field get_train_by_id fun(train_id: integer): LuaTrain|nil
+---@field get_trains fun(filter: TrainFilter): LuaTrain[]
+---@field get_train_stops fun(filter: TrainStopFilter): LuaEntity[]
+---@field request_train_path fun(params: { type?: TrainPathRequestType, train?: LuaTrain, goals: TrainPathFinderGoal[], return_path?: boolean, starts?: RailEndStart[], search_direction?: "respect-movement-direction"|"any-direction-with-locomotives", in_chain_signal_section?: boolean, steps_limit?: integer, shortest_path?: boolean }): TrainPathFinderOneGoalResult|TrainPathAllGoalsResult
+
+---@class LuaTrainStopControlBehavior: LuaGenericOnOffControlBehavior
+---@field send_to_train boolean
+---@field read_from_train boolean
+---@field read_stopped_train boolean
+---@field set_trains_limit boolean
+---@field read_trains_count boolean
+---@field stopped_train_signal SignalID|nil
+---@field trains_count_signal SignalID|nil
+---@field trains_limit_signal SignalID|nil
+---@field set_priority boolean
+---@field priority_signal SignalID|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaTransportBeltControlBehavior: LuaGenericOnOffControlBehavior
+---@field read_contents boolean
+---@field read_contents_mode integer
+---@field valid boolean
+---@field object_name string
+
+---@class LuaTransportLine
+---@field owner LuaEntity
+---@field output_lines LuaTransportLine[]
+---@field input_lines LuaTransportLine[]
+---@field line_length number
+---@field total_segment_length number
+---@field valid boolean
+---@field object_name string
+---@field clear fun()
+---@field get_item_count fun(item: ItemFilter|nil): integer
+---@field remove_item fun(items: ItemStackIdentification): integer
+---@field can_insert_at fun(position: number): boolean
+---@field can_insert_at_back fun(): boolean
+---@field insert_at fun(position: number, items: ItemStackIdentification, belt_stack_size: integer|nil): boolean
+---@field insert_at_back fun(items: ItemStackIdentification, belt_stack_size: integer|nil): boolean
+---@field force_insert_at fun(position: number, items: ItemStackIdentification, belt_stack_size: integer|nil)
+---@field get_contents fun(): ItemWithQualityCounts
+---@field get_detailed_contents fun(): DetailedItemOnLine[]
+---@field line_equals fun(other: LuaTransportLine): boolean
+---@field get_line_item_position fun(position: number): MapPosition
+
+---@class LuaTrivialSmokePrototype: LuaPrototypeBase
+---@field color Color
+---@field start_scale number
+---@field end_scale number
+---@field movement_slow_down_factor number
+---@field duration integer
+---@field spread_duration integer
+---@field fade_away_duration integer
+---@field fade_in_duration integer
+---@field glow_fade_away_duration integer
+---@field cyclic boolean
+---@field affected_by_wind boolean
+---@field show_when_smoke_off boolean
+---@field glow_animation boolean
+---@field render_layer RenderLayer
+---@field valid boolean
+---@field object_name string
+
+---@class LuaTurretControlBehavior: LuaGenericOnOffControlBehavior
+---@field set_priority_list boolean
+---@field set_ignore_unlisted_targets boolean
+---@field ignore_unlisted_targets_condition CircuitConditionDefinition
+---@field read_ammo boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaUndoRedoStack
+---@field player_index integer
+---@field valid boolean
+---@field object_name string
+---@field get_undo_item fun(index: integer): UndoRedoAction[]
+---@field get_undo_item_count fun(): integer
+---@field remove_undo_item fun(index: integer)
+---@field remove_undo_action fun(item_index: integer, action_index: integer)
+---@field get_redo_item fun(index: integer): UndoRedoAction[]
+---@field get_redo_item_count fun(): integer
+---@field remove_redo_item fun(index: integer)
+---@field remove_redo_action fun(item_index: integer, action_index: integer)
+---@field get_undo_tags fun(item_index: integer, action_index: integer): Tags
+---@field get_undo_tag fun(item_index: integer, action_index: integer, tag_name: string): any
+---@field set_undo_tag fun(item_index: integer, action_index: integer, tag_name: string, tag: any)
+---@field remove_undo_tag fun(item_index: integer, action_index: integer, tag: string): boolean
+---@field get_redo_tags fun(item_index: integer, action_index: integer): Tags
+---@field get_redo_tag fun(item_index: integer, action_index: integer, tag_name: string): any
+---@field set_redo_tag fun(item_index: integer, action_index: integer, tag_name: string, tag: any)
+---@field remove_redo_tag fun(item_index: integer, action_index: integer, tag: string): boolean
+
+---@class LuaVirtualSignalPrototype: LuaPrototypeBase
+---@field special boolean
+---@field factoriopedia_alternative LuaVirtualSignalPrototype|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaVoidEnergySourcePrototype
+---@field emissions_per_joule table<string, number>
+---@field render_no_network_icon boolean
+---@field render_no_power_icon boolean
+---@field valid boolean
+---@field object_name string
+
+---@class LuaWallControlBehavior: LuaControlBehavior
+---@field circuit_condition CircuitConditionDefinition
+---@field open_gate boolean
+---@field read_sensor boolean
+---@field output_signal SignalID|nil
+---@field valid boolean
+---@field object_name string
+
+---@class LuaWireConnector
+---@field owner LuaEntity
+---@field wire_type integer
+---@field wire_connector_id integer
+---@field is_ghost boolean
+---@field connection_count integer
+---@field connections WireConnection[]
+---@field real_connection_count integer
+---@field real_connections WireConnection[]
+---@field network_id integer
+---@field valid boolean
+---@field object_name string
+---@field is_connected_to fun(target: LuaWireConnector, origin: integer|nil): boolean
+---@field connect_to fun(target: LuaWireConnector, reach_check: boolean|nil, origin: integer|nil): boolean
+---@field disconnect_from fun(target: LuaWireConnector, origin: integer|nil): boolean
+---@field disconnect_all fun(origin: integer|nil): boolean
+---@field can_wire_reach fun(other_connector: LuaWireConnector|LuaEntity): boolean
+---@field have_common_neighbour fun(other_connector: LuaWireConnector, ignore_ghost_neighbours: boolean|nil): boolean
+
+---@class defines_control_behavior_cargo_landing_pad_exclusive_mode
+---@field none integer
+---@field send_contents integer
+---@field set_requests integer
+
+---@class defines_control_behavior_inserter_hand_read_mode
+---@field hold integer
+---@field pulse integer
+
+---@class defines_control_behavior_lamp_color_mode
+---@field color_mapping integer
+---@field components integer
+---@field packed_rgb integer
+
+---@class defines_control_behavior_logistic_container_exclusive_mode
+---@field send_contents integer
+---@field set_requests integer
+---@field none integer
+
+---@class defines_control_behavior_mining_drill_resource_read_mode
+---@field this_miner integer
+---@field entire_patch integer
+
+---@class defines_control_behavior_roboport_read_items_mode
+---@field none integer
+---@field logistics integer
+---@field missing_requests integer
+
+---@class defines_control_behavior_rocket_silo_read_mode
+---@field none integer
+---@field logistic_inventory integer
+---@field orbital_requests integer
+
+---@class defines_control_behavior_transport_belt_content_read_mode
+---@field pulse integer
+---@field hold integer
+---@field entire_belt_hold integer
+
+---@class defines_control_behavior_cargo_landing_pad
+---@field exclusive_mode defines_control_behavior_cargo_landing_pad_exclusive_mode
+
+---@class defines_control_behavior_inserter
+---@field hand_read_mode defines_control_behavior_inserter_hand_read_mode
+
+---@class defines_control_behavior_lamp
+---@field color_mode defines_control_behavior_lamp_color_mode
+
+---@class defines_control_behavior_logistic_container
+---@field exclusive_mode defines_control_behavior_logistic_container_exclusive_mode
+
+---@class defines_control_behavior_mining_drill
+---@field resource_read_mode defines_control_behavior_mining_drill_resource_read_mode
+
+---@class defines_control_behavior_roboport
+---@field read_items_mode defines_control_behavior_roboport_read_items_mode
+
+---@class defines_control_behavior_rocket_silo
+---@field read_mode defines_control_behavior_rocket_silo_read_mode
+
+---@class defines_control_behavior_transport_belt
+---@field content_read_mode defines_control_behavior_transport_belt_content_read_mode
+
+---@class defines_control_behavior_type
+---@field container integer
+---@field generic_on_off integer
+---@field inserter integer
+---@field lamp integer
+---@field logistic_container integer
+---@field roboport integer
+---@field storage_tank integer
+---@field train_stop integer
+---@field decider_combinator integer
+---@field arithmetic_combinator integer
+---@field constant_combinator integer
+---@field transport_belt integer
+---@field accumulator integer
+---@field rail_signal integer
+---@field rail_chain_signal integer
+---@field wall integer
+---@field mining_drill integer
+---@field programmable_speaker integer
+---@field assembling_machine integer
+---@field pump integer
+---@field selector_combinator integer
+---@field rocket_silo integer
+---@field turret integer
+---@field reactor integer
+---@field space_platform_hub integer
+---@field artillery_turret integer
+---@field asteroid_collector integer
+---@field radar integer
+---@field display_panel integer
+---@field loader integer
+---@field cargo_landing_pad integer
+---@field agricultural_tower integer
+---@field furnace integer
+---@field proxy_container integer
+---@field splitter integer
+
+---@class defines_deconstruction_item_entity_filter_mode
+---@field whitelist integer
+---@field blacklist integer
+
+---@class defines_deconstruction_item_tile_filter_mode
+---@field whitelist integer
+---@field blacklist integer
+
+---@class defines_deconstruction_item_tile_selection_mode
+---@field normal integer
+---@field always integer
+---@field never integer
+---@field only integer
+
+---@class defines_prototypes_achievement
+---@field achievement integer
+---@field ["build-entity-achievement"] integer
+---@field ["change-surface-achievement"] integer
+---@field ["combat-robot-count-achievement"] integer
+---@field ["complete-objective-achievement"] integer
+---@field ["construct-with-robots-achievement"] integer
+---@field ["create-platform-achievement"] integer
+---@field ["deconstruct-with-robots-achievement"] integer
+---@field ["deliver-by-robots-achievement"] integer
+---@field ["deplete-resource-achievement"] integer
+---@field ["destroy-cliff-achievement"] integer
+---@field ["dont-build-entity-achievement"] integer
+---@field ["dont-craft-manually-achievement"] integer
+---@field ["dont-kill-manually-achievement"] integer
+---@field ["dont-research-before-researching-achievement"] integer
+---@field ["dont-use-entity-in-energy-production-achievement"] integer
+---@field ["equip-armor-achievement"] integer
+---@field ["group-attack-achievement"] integer
+---@field ["kill-achievement"] integer
+---@field ["module-transfer-achievement"] integer
+---@field ["place-equipment-achievement"] integer
+---@field ["player-damaged-achievement"] integer
+---@field ["produce-achievement"] integer
+---@field ["produce-per-hour-achievement"] integer
+---@field ["research-achievement"] integer
+---@field ["research-with-science-pack-achievement"] integer
+---@field ["shoot-achievement"] integer
+---@field ["space-connection-distance-traveled-achievement"] integer
+---@field ["train-path-achievement"] integer
+---@field ["use-entity-in-energy-production-achievement"] integer
+---@field ["use-item-achievement"] integer
+
+---@class defines_prototypes_active_trigger
+---@field ["chain-active-trigger"] integer
+---@field ["delayed-active-trigger"] integer
+
+---@class defines_prototypes_airborne_pollutant
+---@field ["airborne-pollutant"] integer
+
+---@class defines_prototypes_ambient_sound
+---@field ["ambient-sound"] integer
+
+---@class defines_prototypes_ammo_category
+---@field ["ammo-category"] integer
+
+---@class defines_prototypes_animation
+---@field animation integer
+
+---@class defines_prototypes_asteroid_chunk
+---@field ["asteroid-chunk"] integer
+
+---@class defines_prototypes_autoplace_control
+---@field ["autoplace-control"] integer
+
+---@class defines_prototypes_burner_usage
+---@field ["burner-usage"] integer
+
+---@class defines_prototypes_collision_layer
+---@field ["collision-layer"] integer
+
+---@class defines_prototypes_custom_event
+---@field ["custom-event"] integer
+
+---@class defines_prototypes_custom_input
+---@field ["custom-input"] integer
+
+---@class defines_prototypes_damage_type
+---@field ["damage-type"] integer
+
+---@class defines_prototypes_decorative
+---@field ["optimized-decorative"] integer
+
+---@class defines_prototypes_deliver_category
+---@field ["deliver-category"] integer
+
+---@class defines_prototypes_deliver_impact_combination
+---@field ["deliver-impact-combination"] integer
+
+---@class defines_prototypes_editor_controller
+---@field ["editor-controller"] integer
+
+---@class defines_prototypes_entity
+---@field accumulator integer
+---@field ["agricultural-tower"] integer
+---@field ["ammo-turret"] integer
+---@field ["arithmetic-combinator"] integer
+---@field arrow integer
+---@field ["artillery-flare"] integer
+---@field ["artillery-projectile"] integer
+---@field ["artillery-turret"] integer
+---@field ["artillery-wagon"] integer
+---@field ["assembling-machine"] integer
+---@field asteroid integer
+---@field ["asteroid-collector"] integer
+---@field beacon integer
+---@field beam integer
+---@field boiler integer
+---@field ["burner-generator"] integer
+---@field ["capture-robot"] integer
+---@field car integer
+---@field ["cargo-bay"] integer
+---@field ["cargo-landing-pad"] integer
+---@field ["cargo-pod"] integer
+---@field ["cargo-wagon"] integer
+---@field character integer
+---@field ["character-corpse"] integer
+---@field cliff integer
+---@field ["combat-robot"] integer
+---@field ["constant-combinator"] integer
+---@field ["construction-robot"] integer
+---@field container integer
+---@field corpse integer
+---@field ["curved-rail-a"] integer
+---@field ["curved-rail-b"] integer
+---@field ["decider-combinator"] integer
+---@field ["deconstructible-tile-proxy"] integer
+---@field ["display-panel"] integer
+---@field ["electric-energy-interface"] integer
+---@field ["electric-pole"] integer
+---@field ["electric-turret"] integer
+---@field ["elevated-curved-rail-a"] integer
+---@field ["elevated-curved-rail-b"] integer
+---@field ["elevated-half-diagonal-rail"] integer
+---@field ["elevated-straight-rail"] integer
+---@field ["entity-ghost"] integer
+---@field explosion integer
+---@field fire integer
+---@field fish integer
+---@field ["fluid-turret"] integer
+---@field ["fluid-wagon"] integer
+---@field furnace integer
+---@field ["fusion-generator"] integer
+---@field ["fusion-reactor"] integer
+---@field gate integer
+---@field generator integer
+---@field ["half-diagonal-rail"] integer
+---@field ["heat-interface"] integer
+---@field ["heat-pipe"] integer
+---@field ["highlight-box"] integer
+---@field ["infinity-cargo-wagon"] integer
+---@field ["infinity-container"] integer
+---@field ["infinity-pipe"] integer
+---@field inserter integer
+---@field ["item-entity"] integer
+---@field ["item-request-proxy"] integer
+---@field lab integer
+---@field lamp integer
+---@field ["land-mine"] integer
+---@field ["lane-splitter"] integer
+---@field ["legacy-curved-rail"] integer
+---@field ["legacy-straight-rail"] integer
+---@field lightning integer
+---@field ["lightning-attractor"] integer
+---@field ["linked-belt"] integer
+---@field ["linked-container"] integer
+---@field loader integer
+---@field ["loader-1x1"] integer
+---@field locomotive integer
+---@field ["logistic-container"] integer
+---@field ["logistic-robot"] integer
+---@field market integer
+---@field ["mining-drill"] integer
+---@field ["offshore-pump"] integer
+---@field ["particle-source"] integer
+---@field pipe integer
+---@field ["pipe-to-ground"] integer
+---@field plant integer
+---@field ["player-port"] integer
+---@field ["power-switch"] integer
+---@field ["programmable-speaker"] integer
+---@field projectile integer
+---@field ["proxy-container"] integer
+---@field pump integer
+---@field radar integer
+---@field ["rail-chain-signal"] integer
+---@field ["rail-ramp"] integer
+---@field ["rail-remnants"] integer
+---@field ["rail-signal"] integer
+---@field ["rail-support"] integer
+---@field reactor integer
+---@field resource integer
+---@field roboport integer
+---@field ["rocket-silo"] integer
+---@field ["rocket-silo-rocket"] integer
+---@field ["rocket-silo-rocket-shadow"] integer
+---@field segment integer
+---@field ["segmented-unit"] integer
+---@field ["selector-combinator"] integer
+---@field ["simple-entity"] integer
+---@field ["simple-entity-with-force"] integer
+---@field ["simple-entity-with-owner"] integer
+---@field ["smoke-with-trigger"] integer
+---@field ["solar-panel"] integer
+---@field ["space-platform-hub"] integer
+---@field ["speech-bubble"] integer
+---@field ["spider-leg"] integer
+---@field ["spider-unit"] integer
+---@field ["spider-vehicle"] integer
+---@field splitter integer
+---@field sticker integer
+---@field ["storage-tank"] integer
+---@field ["straight-rail"] integer
+---@field stream integer
+---@field ["temporary-container"] integer
+---@field thruster integer
+---@field ["tile-ghost"] integer
+---@field ["train-stop"] integer
+---@field ["transport-belt"] integer
+---@field tree integer
+---@field turret integer
+---@field ["underground-belt"] integer
+---@field unit integer
+---@field ["unit-spawner"] integer
+---@field valve integer
+---@field wall integer
+
+---@class defines_prototypes_equipment
+---@field ["active-defense-equipment"] integer
+---@field ["battery-equipment"] integer
+---@field ["belt-immunity-equipment"] integer
+---@field ["energy-shield-equipment"] integer
+---@field ["equipment-ghost"] integer
+---@field ["generator-equipment"] integer
+---@field ["inventory-bonus-equipment"] integer
+---@field ["movement-bonus-equipment"] integer
+---@field ["night-vision-equipment"] integer
+---@field ["roboport-equipment"] integer
+---@field ["solar-panel-equipment"] integer
+
+---@class defines_prototypes_equipment_category
+---@field ["equipment-category"] integer
+
+---@class defines_prototypes_equipment_grid
+---@field ["equipment-grid"] integer
+
+---@class defines_prototypes_fluid
+---@field fluid integer
+
+---@class defines_prototypes_font
+---@field font integer
+
+---@class defines_prototypes_fuel_category
+---@field ["fuel-category"] integer
+
+---@class defines_prototypes_god_controller
+---@field ["god-controller"] integer
+
+---@class defines_prototypes_gui_style
+---@field ["gui-style"] integer
+
+---@class defines_prototypes_impact_category
+---@field ["impact-category"] integer
+
+---@class defines_prototypes_item
+---@field ammo integer
+---@field armor integer
+---@field blueprint integer
+---@field ["blueprint-book"] integer
+---@field capsule integer
+---@field ["copy-paste-tool"] integer
+---@field ["deconstruction-item"] integer
+---@field gun integer
+---@field item integer
+---@field ["item-with-entity-data"] integer
+---@field ["item-with-inventory"] integer
+---@field ["item-with-label"] integer
+---@field ["item-with-tags"] integer
+---@field module integer
+---@field ["rail-planner"] integer
+---@field ["repair-tool"] integer
+---@field ["selection-tool"] integer
+---@field ["space-platform-starter-pack"] integer
+---@field ["spidertron-remote"] integer
+---@field tool integer
+---@field ["upgrade-item"] integer
+
+---@class defines_prototypes_item_group
+---@field ["item-group"] integer
+
+---@class defines_prototypes_item_subgroup
+---@field ["item-subgroup"] integer
+
+---@class defines_prototypes_map_gen_presets
+---@field ["map-gen-presets"] integer
+
+---@class defines_prototypes_map_settings
+---@field ["map-settings"] integer
+
+---@class defines_prototypes_mod_data
+---@field ["mod-data"] integer
+
+---@class defines_prototypes_module_category
+---@field ["module-category"] integer
+
+---@class defines_prototypes_mouse_cursor
+---@field ["mouse-cursor"] integer
+
+---@class defines_prototypes_noise_expression
+---@field ["noise-expression"] integer
+
+---@class defines_prototypes_noise_function
+---@field ["noise-function"] integer
+
+---@class defines_prototypes_particle
+---@field ["optimized-particle"] integer
+
+---@class defines_prototypes_procession
+---@field procession integer
+
+---@class defines_prototypes_procession_layer_inheritance_group
+---@field ["procession-layer-inheritance-group"] integer
+
+---@class defines_prototypes_quality
+---@field quality integer
+
+---@class defines_prototypes_recipe
+---@field recipe integer
+
+---@class defines_prototypes_recipe_category
+---@field ["recipe-category"] integer
+
+---@class defines_prototypes_remote_controller
+---@field ["remote-controller"] integer
+
+---@class defines_prototypes_resource_category
+---@field ["resource-category"] integer
+
+---@class defines_prototypes_shortcut
+---@field shortcut integer
+
+---@class defines_prototypes_sound
+---@field sound integer
+
+---@class defines_prototypes_space_connection
+---@field ["space-connection"] integer
+
+---@class defines_prototypes_space_location
+---@field planet integer
+---@field ["space-location"] integer
+
+---@class defines_prototypes_spectator_controller
+---@field ["spectator-controller"] integer
+
+---@class defines_prototypes_sprite
+---@field sprite integer
+
+---@class defines_prototypes_surface
+---@field surface integer
+
+---@class defines_prototypes_surface_property
+---@field ["surface-property"] integer
+
+---@class defines_prototypes_technology
+---@field technology integer
+
+---@class defines_prototypes_tile
+---@field tile integer
+
+---@class defines_prototypes_tile_effect
+---@field ["tile-effect"] integer
+
+---@class defines_prototypes_tips_and_tricks_item
+---@field ["tips-and-tricks-item"] integer
+
+---@class defines_prototypes_tips_and_tricks_item_category
+---@field ["tips-and-tricks-item-category"] integer
+
+---@class defines_prototypes_trigger_target_type
+---@field ["trigger-target-type"] integer
+
+---@class defines_prototypes_trivial_smoke
+---@field ["trivial-smoke"] integer
+
+---@class defines_prototypes_tutorial
+---@field tutorial integer
+
+---@class defines_prototypes_utility_constants
+---@field ["utility-constants"] integer
+
+---@class defines_prototypes_utility_sounds
+---@field ["utility-sounds"] integer
+
+---@class defines_prototypes_utility_sprites
+---@field ["utility-sprites"] integer
+
+---@class defines_prototypes_virtual_signal
+---@field ["virtual-signal"] integer
+
+---@class defines_riding_acceleration
+---@field nothing integer
+---@field accelerating integer
+---@field braking integer
+---@field reversing integer
+
+---@class defines_riding_direction
+---@field left integer
+---@field straight integer
+---@field right integer
+
+---@class defines_alert_type
+---@field collector_path_blocked integer
+---@field custom integer
+---@field entity_destroyed integer
+---@field entity_under_attack integer
+---@field no_material_for_construction integer
+---@field no_platform_storage integer
+---@field no_roboport_storage integer
+---@field no_storage integer
+---@field not_enough_construction_robots integer
+---@field not_enough_repair_packs integer
+---@field pipeline_overextended integer
+---@field platform_tile_building_blocked integer
+---@field train_no_path integer
+---@field train_out_of_fuel integer
+---@field turret_fire integer
+---@field turret_out_of_ammo integer
+---@field unclaimed_cargo integer
+
+---@class defines_behavior_result
+---@field in_progress integer
+---@field fail integer
+---@field success integer
+---@field deleted integer
+
+---@class defines_build_check_type
+---@field script integer
+---@field manual integer
+---@field manual_ghost integer
+---@field script_ghost integer
+---@field blueprint_ghost integer
+---@field ghost_revive integer
+
+---@class defines_build_mode
+---@field normal integer
+---@field forced integer
+---@field superforced integer
+
+---@class defines_cargo_destination
+---@field invalid integer
+---@field orbit integer
+---@field station integer
+---@field surface integer
+---@field space_platform integer
+
+---@class defines_chain_signal_state
+---@field none integer
+---@field all_open integer
+---@field partially_open integer
+---@field none_open integer
+
+---@class defines_chunk_generated_status
+---@field nothing integer
+---@field custom_tiles integer
+---@field basic_tiles integer
+---@field corrected_tiles integer
+---@field tiles integer
+---@field entities integer
+
+---@class defines_command
+---@field attack integer
+---@field go_to_location integer
+---@field compound integer
+---@field group integer
+---@field attack_area integer
+---@field wander integer
+---@field flee integer
+---@field stop integer
+---@field build_base integer
+
+---@class defines_compound_command
+---@field logical_and integer
+---@field logical_or integer
+---@field return_last integer
+
+---@class defines_control_behavior
+---@field inserter defines_control_behavior_inserter
+---@field logistic_container defines_control_behavior_logistic_container
+---@field lamp defines_control_behavior_lamp
+---@field mining_drill defines_control_behavior_mining_drill
+---@field transport_belt defines_control_behavior_transport_belt
+---@field rocket_silo defines_control_behavior_rocket_silo
+---@field roboport defines_control_behavior_roboport
+---@field cargo_landing_pad defines_control_behavior_cargo_landing_pad
+---@field type defines_control_behavior_type
+
+---@class defines_controllers
+---@field ghost integer
+---@field character integer
+---@field god integer
+---@field editor integer
+---@field cutscene integer
+---@field spectator integer
+---@field remote integer
+
+---@class defines_deconstruction_item
+---@field entity_filter_mode defines_deconstruction_item_entity_filter_mode
+---@field tile_filter_mode defines_deconstruction_item_tile_filter_mode
+---@field tile_selection_mode defines_deconstruction_item_tile_selection_mode
+
+---@class defines_default_icon_size
+
+---@class defines_difficulty
+---@field easy integer
+---@field normal integer
+---@field hard integer
+
+---@class defines_direction
+---@field north integer
+---@field northnortheast integer
+---@field northeast integer
+---@field eastnortheast integer
+---@field east integer
+---@field eastsoutheast integer
+---@field southeast integer
+---@field southsoutheast integer
+---@field south integer
+---@field southsouthwest integer
+---@field southwest integer
+---@field westsouthwest integer
+---@field west integer
+---@field westnorthwest integer
+---@field northwest integer
+---@field northnorthwest integer
+
+---@class defines_disconnect_reason
+---@field quit integer
+---@field dropped integer
+---@field reconnect integer
+---@field wrong_input integer
+---@field desync_limit_reached integer
+---@field cannot_keep_up integer
+---@field afk integer
+---@field kicked integer
+---@field kicked_and_deleted integer
+---@field banned integer
+---@field switching_servers integer
+
+---@class defines_distraction
+---@field none integer
+---@field by_enemy integer
+---@field by_anything integer
+---@field by_damage integer
+
+---@class defines_entity_status
+---@field working integer
+---@field normal integer
+---@field ghost integer
+---@field broken integer
+---@field no_power integer
+---@field low_power integer
+---@field no_fuel integer
+---@field frozen integer
+---@field disabled_by_control_behavior integer
+---@field opened_by_circuit_network integer
+---@field closed_by_circuit_network integer
+---@field disabled_by_script integer
+---@field marked_for_deconstruction integer
+---@field paused integer
+---@field not_plugged_in_electric_network integer
+---@field networks_connected integer
+---@field networks_disconnected integer
+---@field charging integer
+---@field discharging integer
+---@field fully_charged integer
+---@field out_of_logistic_network integer
+---@field no_recipe integer
+---@field no_ingredients integer
+---@field no_input_fluid integer
+---@field no_research_in_progress integer
+---@field no_minable_resources integer
+---@field not_connected_to_hub_or_pad integer
+---@field low_input_fluid integer
+---@field fluid_ingredient_shortage integer
+---@field full_output integer
+---@field not_enough_space_in_output integer
+---@field full_burnt_result_output integer
+---@field item_ingredient_shortage integer
+---@field missing_required_fluid integer
+---@field missing_science_packs integer
+---@field waiting_for_source_items integer
+---@field waiting_for_more_items integer
+---@field waiting_for_space_in_destination integer
+---@field preparing_rocket_for_launch integer
+---@field waiting_to_launch_rocket integer
+---@field waiting_for_space_in_platform_hub integer
+---@field launching_rocket integer
+---@field thrust_not_required integer
+---@field on_the_way integer
+---@field waiting_in_orbit integer
+---@field waiting_at_stop integer
+---@field waiting_for_rockets_to_arrive integer
+---@field not_enough_thrust integer
+---@field destination_stop_full integer
+---@field no_path integer
+---@field no_modules_to_transmit integer
+---@field recharging_after_power_outage integer
+---@field waiting_for_target_to_be_built integer
+---@field waiting_for_train integer
+---@field no_ammo integer
+---@field low_temperature integer
+---@field disabled integer
+---@field turned_off_during_daytime integer
+---@field not_connected_to_rail integer
+---@field cant_divide_segments integer
+---@field no_filter integer
+---@field no_spot_seedable_by_inputs integer
+---@field waiting_for_plants_to_grow integer
+---@field computing_navigation integer
+---@field pipeline_overextended integer
+---@field recipe_not_researched integer
+---@field recipe_is_parameter integer
+
+---@class defines_entity_status_diode
+---@field green integer
+---@field red integer
+---@field yellow integer
+
+---@class defines_events
+---@field on_achievement_gained integer
+---@field on_ai_command_completed integer
+---@field on_area_cloned integer
+---@field on_biter_base_built integer
+---@field on_brush_cloned integer
+---@field on_build_base_arrived integer
+---@field on_built_entity integer
+---@field on_cancelled_deconstruction integer
+---@field on_cancelled_upgrade integer
+---@field on_cargo_pod_delivered_cargo integer
+---@field on_cargo_pod_finished_ascending integer
+---@field on_cargo_pod_finished_descending integer
+---@field on_cargo_pod_started_ascending integer
+---@field on_character_corpse_expired integer
+---@field on_chart_tag_added integer
+---@field on_chart_tag_modified integer
+---@field on_chart_tag_removed integer
+---@field on_chunk_charted integer
+---@field on_chunk_deleted integer
+---@field on_chunk_generated integer
+---@field on_combat_robot_expired integer
+---@field on_console_chat integer
+---@field on_console_command integer
+---@field on_cutscene_cancelled integer
+---@field on_cutscene_finished integer
+---@field on_cutscene_started integer
+---@field on_cutscene_waypoint_reached integer
+---@field on_entity_cloned integer
+---@field on_entity_color_changed integer
+---@field on_entity_damaged integer
+---@field on_entity_died integer
+---@field on_entity_logistic_slot_changed integer
+---@field on_entity_renamed integer
+---@field on_entity_settings_pasted integer
+---@field on_entity_spawned integer
+---@field on_equipment_inserted integer
+---@field on_equipment_removed integer
+---@field on_force_cease_fire_changed integer
+---@field on_force_created integer
+---@field on_force_friends_changed integer
+---@field on_force_reset integer
+---@field on_forces_merged integer
+---@field on_forces_merging integer
+---@field on_game_created_from_scenario integer
+---@field on_gui_checked_state_changed integer
+---@field on_gui_click integer
+---@field on_gui_closed integer
+---@field on_gui_confirmed integer
+---@field on_gui_elem_changed integer
+---@field on_gui_hover integer
+---@field on_gui_leave integer
+---@field on_gui_location_changed integer
+---@field on_gui_opened integer
+---@field on_gui_selected_tab_changed integer
+---@field on_gui_selection_state_changed integer
+---@field on_gui_switch_state_changed integer
+---@field on_gui_text_changed integer
+---@field on_gui_value_changed integer
+---@field on_land_mine_armed integer
+---@field on_lua_shortcut integer
+---@field on_marked_for_deconstruction integer
+---@field on_marked_for_upgrade integer
+---@field on_market_item_purchased integer
+---@field on_mod_item_opened integer
+---@field on_multiplayer_init integer
+---@field on_object_destroyed integer
+---@field on_permission_group_added integer
+---@field on_permission_group_deleted integer
+---@field on_permission_group_edited integer
+---@field on_permission_string_imported integer
+---@field on_picked_up_item integer
+---@field on_player_alt_reverse_selected_area integer
+---@field on_player_alt_selected_area integer
+---@field on_player_ammo_inventory_changed integer
+---@field on_player_armor_inventory_changed integer
+---@field on_player_banned integer
+---@field on_player_built_tile integer
+---@field on_player_cancelled_crafting integer
+---@field on_player_changed_force integer
+---@field on_player_changed_position integer
+---@field on_player_changed_surface integer
+---@field on_player_cheat_mode_disabled integer
+---@field on_player_cheat_mode_enabled integer
+---@field on_player_clicked_gps_tag integer
+---@field on_player_configured_blueprint integer
+---@field on_player_controller_changed integer
+---@field on_player_crafted_item integer
+---@field on_player_created integer
+---@field on_player_cursor_stack_changed integer
+---@field on_player_deconstructed_area integer
+---@field on_player_demoted integer
+---@field on_player_died integer
+---@field on_player_display_density_scale_changed integer
+---@field on_player_display_resolution_changed integer
+---@field on_player_display_scale_changed integer
+---@field on_player_driving_changed_state integer
+---@field on_player_dropped_item integer
+---@field on_player_dropped_item_into_entity integer
+---@field on_player_fast_transferred integer
+---@field on_player_flipped_entity integer
+---@field on_player_flushed_fluid integer
+---@field on_player_gun_inventory_changed integer
+---@field on_player_input_method_changed integer
+---@field on_player_joined_game integer
+---@field on_player_kicked integer
+---@field on_player_left_game integer
+---@field on_player_locale_changed integer
+---@field on_player_main_inventory_changed integer
+---@field on_player_mined_entity integer
+---@field on_player_mined_item integer
+---@field on_player_mined_tile integer
+---@field on_player_muted integer
+---@field on_player_pipette integer
+---@field on_player_placed_equipment integer
+---@field on_player_promoted integer
+---@field on_player_removed integer
+---@field on_player_removed_equipment integer
+---@field on_player_repaired_entity integer
+---@field on_player_respawned integer
+---@field on_player_reverse_selected_area integer
+---@field on_player_rotated_entity integer
+---@field on_player_selected_area integer
+---@field on_player_set_quick_bar_slot integer
+---@field on_player_setup_blueprint integer
+---@field on_player_toggled_alt_mode integer
+---@field on_player_toggled_map_editor integer
+---@field on_player_trash_inventory_changed integer
+---@field on_player_unbanned integer
+---@field on_player_unmuted integer
+---@field on_player_used_capsule integer
+---@field on_player_used_spidertron_remote integer
+---@field on_post_entity_died integer
+---@field on_post_segmented_unit_died integer
+---@field on_pre_build integer
+---@field on_pre_chunk_deleted integer
+---@field on_pre_entity_settings_pasted integer
+---@field on_pre_ghost_deconstructed integer
+---@field on_pre_ghost_upgraded integer
+---@field on_pre_permission_group_deleted integer
+---@field on_pre_permission_string_imported integer
+---@field on_pre_player_crafted_item integer
+---@field on_pre_player_died integer
+---@field on_pre_player_left_game integer
+---@field on_pre_player_mined_item integer
+---@field on_pre_player_removed integer
+---@field on_pre_player_toggled_map_editor integer
+---@field on_pre_robot_exploded_cliff integer
+---@field on_pre_scenario_finished integer
+---@field on_pre_script_inventory_resized integer
+---@field on_pre_surface_cleared integer
+---@field on_pre_surface_deleted integer
+---@field on_redo_applied integer
+---@field on_research_cancelled integer
+---@field on_research_finished integer
+---@field on_research_moved integer
+---@field on_research_queued integer
+---@field on_research_reversed integer
+---@field on_research_started integer
+---@field on_resource_depleted integer
+---@field on_robot_built_entity integer
+---@field on_robot_built_tile integer
+---@field on_robot_exploded_cliff integer
+---@field on_robot_mined integer
+---@field on_robot_mined_entity integer
+---@field on_robot_mined_tile integer
+---@field on_robot_pre_mined integer
+---@field on_rocket_launch_ordered integer
+---@field on_rocket_launched integer
+---@field on_runtime_mod_setting_changed integer
+---@field on_script_inventory_resized integer
+---@field on_script_path_request_finished integer
+---@field on_script_trigger_effect integer
+---@field on_sector_scanned integer
+---@field on_segment_entity_created integer
+---@field on_segmented_unit_created integer
+---@field on_segmented_unit_damaged integer
+---@field on_segmented_unit_died integer
+---@field on_selected_entity_changed integer
+---@field on_singleplayer_init integer
+---@field on_space_platform_built_entity integer
+---@field on_space_platform_built_tile integer
+---@field on_space_platform_changed_state integer
+---@field on_space_platform_mined_entity integer
+---@field on_space_platform_mined_item integer
+---@field on_space_platform_mined_tile integer
+---@field on_space_platform_pre_mined integer
+---@field on_spider_command_completed integer
+---@field on_string_translated integer
+---@field on_surface_cleared integer
+---@field on_surface_created integer
+---@field on_surface_deleted integer
+---@field on_surface_imported integer
+---@field on_surface_renamed integer
+---@field on_technology_effects_reset integer
+---@field on_territory_created integer
+---@field on_territory_destroyed integer
+---@field on_tick integer
+---@field on_tower_mined_plant integer
+---@field on_tower_planted_seed integer
+---@field on_tower_pre_mined_plant integer
+---@field on_train_changed_state integer
+---@field on_train_created integer
+---@field on_train_schedule_changed integer
+---@field on_trigger_created_entity integer
+---@field on_trigger_fired_artillery integer
+---@field on_udp_packet_received integer
+---@field on_undo_applied integer
+---@field on_unit_added_to_group integer
+---@field on_unit_group_created integer
+---@field on_unit_group_finished_gathering integer
+---@field on_unit_removed_from_group integer
+---@field on_worker_robot_expired integer
+---@field script_raised_built integer
+---@field script_raised_destroy integer
+---@field script_raised_destroy_segmented_unit integer
+---@field script_raised_revive integer
+---@field script_raised_set_tiles integer
+---@field script_raised_teleported integer
+
+---@class defines_flow_precision_index
+---@field five_seconds integer
+---@field one_minute integer
+---@field ten_minutes integer
+---@field one_hour integer
+---@field ten_hours integer
+---@field fifty_hours integer
+---@field two_hundred_fifty_hours integer
+---@field one_thousand_hours integer
+
+---@class defines_game_controller_interaction
+---@field always integer
+---@field never integer
+---@field normal integer
+
+---@class defines_group_state
+---@field gathering integer
+---@field moving integer
+---@field attacking_distraction integer
+---@field attacking_target integer
+---@field finished integer
+---@field pathfinding integer
+---@field wander_in_group integer
+
+---@class defines_gui_type
+---@field achievement integer
+---@field blueprint_library integer
+---@field bonus integer
+---@field controller integer
+---@field custom integer
+---@field entity integer
+---@field equipment integer
+---@field global_electric_network integer
+---@field item integer
+---@field logistic integer
+---@field none integer
+---@field opened_entity_grid integer
+---@field other_player integer
+---@field permissions integer
+---@field player_management integer
+---@field production integer
+---@field script_inventory integer
+---@field server_management integer
+---@field tile integer
+---@field trains integer
+
+---@class defines_input_action
+---@field activate_interrupt integer
+---@field activate_paste integer
+---@field add_decider_combinator_condition integer
+---@field add_decider_combinator_output integer
+---@field add_logistic_section integer
+---@field add_permission_group integer
+---@field add_pin integer
+---@field add_train_interrupt integer
+---@field add_train_station integer
+---@field adjust_blueprint_snapping integer
+---@field admin_action integer
+---@field alt_reverse_select_area integer
+---@field alt_select_area integer
+---@field alt_select_blueprint_entities integer
+---@field alternative_copy integer
+---@field begin_mining integer
+---@field begin_mining_terrain integer
+---@field build integer
+---@field build_rail integer
+---@field build_terrain integer
+---@field cancel_craft integer
+---@field cancel_deconstruct integer
+---@field cancel_delete_space_platform integer
+---@field cancel_new_blueprint integer
+---@field cancel_research integer
+---@field cancel_upgrade integer
+---@field change_active_character_tab integer
+---@field change_active_item_group_for_crafting integer
+---@field change_active_item_group_for_filters integer
+---@field change_active_quick_bar integer
+---@field change_arithmetic_combinator_parameters integer
+---@field change_entity_label integer
+---@field change_heading_riding_state integer
+---@field change_item_label integer
+---@field change_logistic_point_group integer
+---@field change_multiplayer_config integer
+---@field change_picking_state integer
+---@field change_programmable_speaker_alert_parameters integer
+---@field change_programmable_speaker_circuit_parameters integer
+---@field change_programmable_speaker_parameters integer
+---@field change_riding_state integer
+---@field change_selector_combinator_parameters integer
+---@field change_shooting_state integer
+---@field change_train_name integer
+---@field change_train_stop_station integer
+---@field change_train_wait_condition integer
+---@field change_train_wait_condition_data integer
+---@field cheat integer
+---@field clear_cursor integer
+---@field connect_rolling_stock integer
+---@field copy integer
+---@field copy_entity_settings integer
+---@field copy_large_opened_blueprint integer
+---@field copy_large_opened_item integer
+---@field copy_opened_blueprint integer
+---@field copy_opened_item integer
+---@field craft integer
+---@field create_space_platform integer
+---@field cursor_split integer
+---@field cursor_transfer integer
+---@field custom_input integer
+---@field cycle_blueprint_book_backwards integer
+---@field cycle_blueprint_book_forwards integer
+---@field cycle_quality_down integer
+---@field cycle_quality_up integer
+---@field deconstruct integer
+---@field delete_blueprint_library integer
+---@field delete_blueprint_record integer
+---@field delete_custom_tag integer
+---@field delete_logistic_group integer
+---@field delete_permission_group integer
+---@field delete_space_platform integer
+---@field destroy_item integer
+---@field destroy_opened_item integer
+---@field disconnect_rolling_stock integer
+---@field drag_decider_combinator_condition integer
+---@field drag_decider_combinator_output integer
+---@field drag_train_schedule integer
+---@field drag_train_schedule_interrupt integer
+---@field drag_train_wait_condition integer
+---@field drop_blueprint_record integer
+---@field drop_item integer
+---@field edit_blueprint_tool_preview integer
+---@field edit_custom_tag integer
+---@field edit_display_panel integer
+---@field edit_display_panel_always_show integer
+---@field edit_display_panel_icon integer
+---@field edit_display_panel_parameters integer
+---@field edit_display_panel_show_in_chart integer
+---@field edit_display_panel_single_entry integer
+---@field edit_interrupt integer
+---@field edit_permission_group integer
+---@field edit_pin integer
+---@field export_blueprint integer
+---@field fast_entity_split integer
+---@field fast_entity_transfer integer
+---@field flip_entity integer
+---@field flush_opened_entity_fluid integer
+---@field flush_opened_entity_specific_fluid integer
+---@field go_to_train_station integer
+---@field grab_blueprint_record integer
+---@field gui_checked_state_changed integer
+---@field gui_click integer
+---@field gui_confirmed integer
+---@field gui_elem_changed integer
+---@field gui_hover integer
+---@field gui_leave integer
+---@field gui_location_changed integer
+---@field gui_selected_tab_changed integer
+---@field gui_selection_state_changed integer
+---@field gui_switch_state_changed integer
+---@field gui_text_changed integer
+---@field gui_value_changed integer
+---@field import_blueprint integer
+---@field import_blueprint_string integer
+---@field import_blueprints_filtered integer
+---@field import_permissions_string integer
+---@field instantly_create_space_platform integer
+---@field inventory_split integer
+---@field inventory_transfer integer
+---@field land_at_planet integer
+---@field launch_rocket integer
+---@field lua_shortcut integer
+---@field map_editor_action integer
+---@field market_offer integer
+---@field mod_settings_changed integer
+---@field modify_decider_combinator_condition integer
+---@field modify_decider_combinator_output integer
+---@field move_pin integer
+---@field move_research integer
+---@field open_achievements_gui integer
+---@field open_blueprint_library_gui integer
+---@field open_blueprint_record integer
+---@field open_bonus_gui integer
+---@field open_character_gui integer
+---@field open_current_vehicle_gui integer
+---@field open_equipment integer
+---@field open_global_electric_network_gui integer
+---@field open_gui integer
+---@field open_item integer
+---@field open_logistics_gui integer
+---@field open_mod_item integer
+---@field open_new_platform_button_from_rocket_silo integer
+---@field open_opened_entity_grid integer
+---@field open_parent_of_opened_item integer
+---@field open_production_gui integer
+---@field open_train_gui integer
+---@field open_train_station_gui integer
+---@field open_trains_gui integer
+---@field parametrise_blueprint integer
+---@field paste_entity_settings integer
+---@field pin_alert_group integer
+---@field pin_custom_alert integer
+---@field pin_search_result integer
+---@field pipette integer
+---@field place_equipment integer
+---@field quick_bar_pick_slot integer
+---@field quick_bar_set_selected_page integer
+---@field quick_bar_set_slot integer
+---@field reassign_blueprint integer
+---@field redo integer
+---@field remote_view_entity integer
+---@field remote_view_surface integer
+---@field remove_cables integer
+---@field remove_decider_combinator_condition integer
+---@field remove_decider_combinator_output integer
+---@field remove_logistic_section integer
+---@field remove_pin integer
+---@field remove_train_interrupt integer
+---@field remove_train_station integer
+---@field rename_interrupt integer
+---@field rename_space_platform integer
+---@field reorder_logistic_section integer
+---@field request_missing_construction_materials integer
+---@field reset_assembling_machine integer
+---@field reverse_select_area integer
+---@field rotate_entity integer
+---@field select_area integer
+---@field select_asteroid_chunk_slot integer
+---@field select_blueprint_entities integer
+---@field select_entity_filter_slot integer
+---@field select_entity_slot integer
+---@field select_item_filter integer
+---@field select_mapper_slot_from integer
+---@field select_mapper_slot_to integer
+---@field select_next_valid_gun integer
+---@field select_tile_slot integer
+---@field send_spidertron integer
+---@field send_stack_to_trash integer
+---@field send_stacks_to_trash integer
+---@field send_train_to_pin_target integer
+---@field set_behavior_mode integer
+---@field set_car_weapons_control integer
+---@field set_cheat_mode_quality integer
+---@field set_circuit_condition integer
+---@field set_circuit_mode_of_operation integer
+---@field set_combinator_description integer
+---@field set_copy_color_from_train_stop integer
+---@field set_deconstruction_item_tile_selection_mode integer
+---@field set_deconstruction_item_trees_and_rocks_only integer
+---@field set_entity_color integer
+---@field set_entity_energy_property integer
+---@field set_filter integer
+---@field set_ghost_cursor integer
+---@field set_heat_interface_mode integer
+---@field set_heat_interface_temperature integer
+---@field set_infinity_container_filter_item integer
+---@field set_infinity_container_remove_unfiltered_items integer
+---@field set_infinity_pipe_filter integer
+---@field set_inserter_max_stack_size integer
+---@field set_inventory_bar integer
+---@field set_lamp_always_on integer
+---@field set_linked_container_link_i_d integer
+---@field set_loader_belt_stack_size_override integer
+---@field set_logistic_filter_item integer
+---@field set_logistic_network_name integer
+---@field set_logistic_section_active integer
+---@field set_player_color integer
+---@field set_pump_fluid_filter integer
+---@field set_request_from_buffers integer
+---@field set_research_finished_stops_game integer
+---@field set_rocket_silo_send_to_orbit_automated_mode integer
+---@field set_schedule_record_allow_unloading integer
+---@field set_signal integer
+---@field set_splitter_priority integer
+---@field set_spoil_priority integer
+---@field set_train_stop_priority integer
+---@field set_train_stopped integer
+---@field set_trains_limit integer
+---@field set_turret_ignore_unlisted integer
+---@field set_use_inserter_filters integer
+---@field set_vehicle_automatic_targeting_parameters integer
+---@field setup_assembling_machine integer
+---@field setup_blueprint integer
+---@field setup_single_blueprint_record integer
+---@field spawn_item integer
+---@field spectator_change_surface integer
+---@field stack_split integer
+---@field stack_transfer integer
+---@field start_repair integer
+---@field start_research integer
+---@field start_walking integer
+---@field stop_drag_build integer
+---@field swap_asteroid_chunk_slots integer
+---@field swap_entity_filter_slots integer
+---@field swap_entity_slots integer
+---@field swap_infinity_container_filter_items integer
+---@field swap_item_filters integer
+---@field swap_logistic_filter_items integer
+---@field swap_mappers integer
+---@field swap_tile_slots integer
+---@field switch_connect_to_logistic_network integer
+---@field switch_constant_combinator_state integer
+---@field switch_inserter_filter_mode_state integer
+---@field switch_loader_filter_mode integer
+---@field switch_mining_drill_filter_mode_state integer
+---@field switch_power_switch_state integer
+---@field take_equipment integer
+---@field toggle_artillery_auto_targeting integer
+---@field toggle_deconstruction_item_entity_filter_mode integer
+---@field toggle_deconstruction_item_tile_filter_mode integer
+---@field toggle_driving integer
+---@field toggle_enable_vehicle_logistics_while_moving integer
+---@field toggle_entity_logistic_requests integer
+---@field toggle_equipment_movement_bonus integer
+---@field toggle_map_editor integer
+---@field toggle_personal_logistic_requests integer
+---@field toggle_personal_roboport integer
+---@field toggle_selected_entity integer
+---@field toggle_show_entity_info integer
+---@field translate_string integer
+---@field trash_not_requested_items integer
+---@field undo integer
+---@field upgrade integer
+---@field upgrade_opened_blueprint_by_item integer
+---@field upgrade_opened_blueprint_by_record integer
+---@field use_item integer
+---@field wire_dragging integer
+---@field write_to_console integer
+
+---@class defines_input_method
+---@field keyboard_and_mouse integer
+---@field game_controller integer
+
+---@class defines_inventory
+---@field fuel integer
+---@field burnt_result integer
+---@field chest integer
+---@field logistic_container_trash integer
+---@field furnace_source integer
+---@field furnace_result integer
+---@field furnace_modules integer
+---@field furnace_trash integer
+---@field character_main integer
+---@field character_guns integer
+---@field character_ammo integer
+---@field character_armor integer
+---@field character_vehicle integer
+---@field character_trash integer
+---@field god_main integer
+---@field editor_main integer
+---@field editor_guns integer
+---@field editor_ammo integer
+---@field editor_armor integer
+---@field roboport_robot integer
+---@field roboport_material integer
+---@field robot_cargo integer
+---@field robot_repair integer
+---@field assembling_machine_input integer
+---@field assembling_machine_output integer
+---@field assembling_machine_modules integer
+---@field assembling_machine_dump integer
+---@field assembling_machine_trash integer
+---@field lab_input integer
+---@field lab_modules integer
+---@field lab_trash integer
+---@field mining_drill_modules integer
+---@field item_main integer
+---@field rocket_silo_rocket integer
+---@field rocket_silo_trash integer
+---@field rocket_silo_input integer
+---@field rocket_silo_output integer
+---@field rocket_silo_modules integer
+---@field cargo_unit integer
+---@field car_trunk integer
+---@field car_ammo integer
+---@field car_trash integer
+---@field cargo_wagon integer
+---@field turret_ammo integer
+---@field beacon_modules integer
+---@field character_corpse integer
+---@field artillery_turret_ammo integer
+---@field artillery_wagon_ammo integer
+---@field spider_trunk integer
+---@field spider_ammo integer
+---@field spider_trash integer
+---@field hub_main integer
+---@field hub_trash integer
+---@field cargo_landing_pad_main integer
+---@field cargo_landing_pad_trash integer
+---@field proxy_main integer
+---@field agricultural_tower_input integer
+---@field agricultural_tower_output integer
+---@field linked_container_main integer
+---@field crafter_input integer
+---@field crafter_output integer
+---@field crafter_modules integer
+---@field crafter_trash integer
+---@field asteroid_collector_output integer
+---@field asteroid_collector_arm integer
+
+---@class defines_logistic_group_type
+---@field with_trash integer
+---@field roboport integer
+
+---@class defines_logistic_member_index
+---@field logistic_container integer
+---@field logistic_container_trash_provider integer
+---@field vehicle_storage integer
+---@field character_requester integer
+---@field character_storage integer
+---@field character_provider integer
+---@field generic_on_off_behavior integer
+---@field spidertron_requester integer
+---@field spidertron_provider integer
+---@field car_requester integer
+---@field car_provider integer
+---@field roboport_provider integer
+---@field roboport_requester integer
+---@field rocket_silo_provider integer
+---@field rocket_silo_requester integer
+---@field rocket_silo_trash_provider integer
+---@field space_platform_hub_requester integer
+---@field space_platform_hub_provider integer
+---@field cargo_landing_pad_requester integer
+---@field cargo_landing_pad_provider integer
+---@field cargo_landing_pad_trash_provider integer
+
+---@class defines_logistic_mode
+---@field none integer
+---@field active_provider integer
+---@field storage integer
+---@field requester integer
+---@field passive_provider integer
+---@field buffer integer
+
+---@class defines_logistic_section_type
+---@field manual integer
+---@field circuit_controlled integer
+---@field transitional_request_controlled integer
+---@field request_missing_materials_controlled integer
+
+---@class defines_mouse_button_type
+---@field none integer
+---@field left integer
+---@field right integer
+---@field middle integer
+
+---@class defines_moving_state
+---@field stale integer
+---@field moving integer
+---@field adaptive integer
+---@field stuck integer
+
+---@class defines_print_skip
+---@field never integer
+---@field if_redundant integer
+---@field if_visible integer
+
+---@class defines_print_sound
+---@field always integer
+---@field never integer
+---@field use_player_settings integer
+
+---@class defines_prototypes
+---@field achievement defines_prototypes_achievement
+---@field ["active-trigger"] defines_prototypes_active_trigger
+---@field ["airborne-pollutant"] defines_prototypes_airborne_pollutant
+---@field ["ambient-sound"] defines_prototypes_ambient_sound
+---@field ["ammo-category"] defines_prototypes_ammo_category
+---@field animation defines_prototypes_animation
+---@field ["asteroid-chunk"] defines_prototypes_asteroid_chunk
+---@field ["autoplace-control"] defines_prototypes_autoplace_control
+---@field ["burner-usage"] defines_prototypes_burner_usage
+---@field ["collision-layer"] defines_prototypes_collision_layer
+---@field ["custom-event"] defines_prototypes_custom_event
+---@field ["custom-input"] defines_prototypes_custom_input
+---@field ["damage-type"] defines_prototypes_damage_type
+---@field decorative defines_prototypes_decorative
+---@field ["deliver-category"] defines_prototypes_deliver_category
+---@field ["deliver-impact-combination"] defines_prototypes_deliver_impact_combination
+---@field ["editor-controller"] defines_prototypes_editor_controller
+---@field entity defines_prototypes_entity
+---@field equipment defines_prototypes_equipment
+---@field ["equipment-category"] defines_prototypes_equipment_category
+---@field ["equipment-grid"] defines_prototypes_equipment_grid
+---@field fluid defines_prototypes_fluid
+---@field font defines_prototypes_font
+---@field ["fuel-category"] defines_prototypes_fuel_category
+---@field ["god-controller"] defines_prototypes_god_controller
+---@field ["gui-style"] defines_prototypes_gui_style
+---@field ["impact-category"] defines_prototypes_impact_category
+---@field item defines_prototypes_item
+---@field ["item-group"] defines_prototypes_item_group
+---@field ["item-subgroup"] defines_prototypes_item_subgroup
+---@field ["map-gen-presets"] defines_prototypes_map_gen_presets
+---@field ["map-settings"] defines_prototypes_map_settings
+---@field ["mod-data"] defines_prototypes_mod_data
+---@field ["module-category"] defines_prototypes_module_category
+---@field ["mouse-cursor"] defines_prototypes_mouse_cursor
+---@field ["noise-expression"] defines_prototypes_noise_expression
+---@field ["noise-function"] defines_prototypes_noise_function
+---@field particle defines_prototypes_particle
+---@field procession defines_prototypes_procession
+---@field ["procession-layer-inheritance-group"] defines_prototypes_procession_layer_inheritance_group
+---@field quality defines_prototypes_quality
+---@field recipe defines_prototypes_recipe
+---@field ["recipe-category"] defines_prototypes_recipe_category
+---@field ["remote-controller"] defines_prototypes_remote_controller
+---@field ["resource-category"] defines_prototypes_resource_category
+---@field shortcut defines_prototypes_shortcut
+---@field sound defines_prototypes_sound
+---@field ["space-connection"] defines_prototypes_space_connection
+---@field ["space-location"] defines_prototypes_space_location
+---@field ["spectator-controller"] defines_prototypes_spectator_controller
+---@field sprite defines_prototypes_sprite
+---@field surface defines_prototypes_surface
+---@field ["surface-property"] defines_prototypes_surface_property
+---@field technology defines_prototypes_technology
+---@field tile defines_prototypes_tile
+---@field ["tile-effect"] defines_prototypes_tile_effect
+---@field ["tips-and-tricks-item"] defines_prototypes_tips_and_tricks_item
+---@field ["tips-and-tricks-item-category"] defines_prototypes_tips_and_tricks_item_category
+---@field ["trigger-target-type"] defines_prototypes_trigger_target_type
+---@field ["trivial-smoke"] defines_prototypes_trivial_smoke
+---@field tutorial defines_prototypes_tutorial
+---@field ["utility-constants"] defines_prototypes_utility_constants
+---@field ["utility-sounds"] defines_prototypes_utility_sounds
+---@field ["utility-sprites"] defines_prototypes_utility_sprites
+---@field ["virtual-signal"] defines_prototypes_virtual_signal
+
+---@class defines_rail_connection_direction
+---@field left integer
+---@field straight integer
+---@field right integer
+---@field none integer
+
+---@class defines_rail_direction
+---@field front integer
+---@field back integer
+
+---@class defines_rail_layer
+---@field ground integer
+---@field elevated integer
+
+---@class defines_relative_gui_position
+---@field top integer
+---@field bottom integer
+---@field left integer
+---@field right integer
+
+---@class defines_relative_gui_type
+---@field accumulator_gui integer
+---@field achievement_gui integer
+---@field additional_entity_info_gui integer
+---@field admin_gui integer
+---@field agriculture_tower_gui integer
+---@field arithmetic_combinator_gui integer
+---@field armor_gui integer
+---@field assembling_machine_gui integer
+---@field assembling_machine_select_recipe_gui integer
+---@field asteroid_collector_gui integer
+---@field beacon_gui integer
+---@field blueprint_book_gui integer
+---@field blueprint_library_gui integer
+---@field blueprint_setup_gui integer
+---@field bonus_gui integer
+---@field burner_equipment_gui integer
+---@field car_gui integer
+---@field cargo_landing_pad_gui integer
+---@field constant_combinator_gui integer
+---@field container_gui integer
+---@field controller_gui integer
+---@field decider_combinator_gui integer
+---@field deconstruction_item_gui integer
+---@field display_panel_gui integer
+---@field electric_energy_interface_gui integer
+---@field electric_network_gui integer
+---@field entity_variations_gui integer
+---@field entity_with_energy_source_gui integer
+---@field equipment_grid_gui integer
+---@field furnace_gui integer
+---@field generic_on_off_entity_gui integer
+---@field ghost_picker_gui integer
+---@field global_electric_network_gui integer
+---@field heat_interface_gui integer
+---@field infinity_pipe_gui integer
+---@field inserter_gui integer
+---@field item_with_inventory_gui integer
+---@field lab_gui integer
+---@field lamp_gui integer
+---@field linked_container_gui integer
+---@field loader_gui integer
+---@field logistic_gui integer
+---@field market_gui integer
+---@field mining_drill_gui integer
+---@field other_player_gui integer
+---@field permissions_gui integer
+---@field pick_stop_gui integer
+---@field pipe_gui integer
+---@field power_switch_gui integer
+---@field production_gui integer
+---@field programmable_speaker_gui integer
+---@field proxy_container_gui integer
+---@field pump_gui integer
+---@field rail_signal_base_gui integer
+---@field reactor_gui integer
+---@field resource_entity_gui integer
+---@field roboport_gui integer
+---@field rocket_silo_gui integer
+---@field script_inventory_gui integer
+---@field selector_combinator_gui integer
+---@field server_config_gui integer
+---@field space_platform_hub_gui integer
+---@field spider_vehicle_gui integer
+---@field splitter_gui integer
+---@field standalone_character_gui integer
+---@field storage_tank_gui integer
+---@field tile_variations_gui integer
+---@field tips_and_tricks_gui integer
+---@field train_gui integer
+---@field train_stop_gui integer
+---@field trains_gui integer
+---@field transport_belt_gui integer
+---@field turret_gui integer
+---@field upgrade_item_gui integer
+---@field wall_gui integer
+
+---@class defines_render_mode
+---@field game integer
+---@field chart integer
+---@field chart_zoomed_in integer
+
+---@class defines_rich_text_setting
+---@field enabled integer
+---@field disabled integer
+---@field highlight integer
+
+---@class defines_riding
+---@field acceleration defines_riding_acceleration
+---@field direction defines_riding_direction
+
+---@class defines_robot_order_type
+---@field construct integer
+---@field pickup integer
+---@field deliver integer
+---@field repair integer
+---@field deconstruct integer
+---@field deliver_items integer
+---@field upgrade integer
+---@field explode_cliff integer
+---@field pickup_items integer
+
+---@class defines_rocket_silo_status
+---@field building_rocket integer
+---@field create_rocket integer
+---@field lights_blinking_open integer
+---@field doors_opening integer
+---@field doors_opened integer
+---@field rocket_rising integer
+---@field arms_advance integer
+---@field rocket_ready integer
+---@field launch_starting integer
+---@field engine_starting integer
+---@field arms_retract integer
+---@field rocket_flying integer
+---@field lights_blinking_close integer
+---@field doors_closing integer
+---@field launch_started integer
+
+---@class defines_segmented_unit_activity_mode
+---@field asleep integer
+---@field minimal integer
+---@field full integer
+
+---@class defines_segmented_unit_ai_state
+---@field patrolling integer
+---@field investigating integer
+---@field attacking integer
+---@field enraged_at_target integer
+---@field enraged_at_nothing integer
+
+---@class defines_segmented_unit_created_cause
+---@field map_generated integer
+---@field script_created integer
+---@field script_cloned integer
+
+---@class defines_selection_mode
+---@field select integer
+---@field alt_select integer
+---@field reverse_select integer
+---@field alt_reverse_select integer
+
+---@class defines_shooting
+---@field not_shooting integer
+---@field shooting_enemies integer
+---@field shooting_selected integer
+
+---@class defines_signal_state
+---@field open integer
+---@field closed integer
+---@field reserved integer
+---@field reserved_by_circuit_network integer
+
+---@class defines_space_platform_state
+---@field waiting_for_starter_pack integer
+---@field starter_pack_requested integer
+---@field starter_pack_on_the_way integer
+---@field on_the_path integer
+---@field waiting_for_departure integer
+---@field no_schedule integer
+---@field no_path integer
+---@field waiting_at_station integer
+---@field paused integer
+
+---@class defines_target_type
+---@field entity integer
+---@field equipment integer
+---@field equipment_grid integer
+---@field item integer
+---@field logistic_cell integer
+---@field logistic_network integer
+---@field logistic_section integer
+---@field permission_group integer
+---@field planet integer
+---@field player integer
+---@field rail_path integer
+---@field render_object integer
+---@field space_platform integer
+---@field surface integer
+---@field train integer
+---@field commandable integer
+---@field custom_chart_tag integer
+---@field gui_element integer
+---@field cargo_hatch integer
+---@field schedule integer
+---@field territory integer
+---@field segmented_unit integer
+
+---@class defines_territory_created_cause
+---@field map_generated integer
+---@field script_created integer
+
+---@class defines_train_state
+---@field on_the_path integer
+---@field no_schedule integer
+---@field no_path integer
+---@field arrive_signal integer
+---@field wait_signal integer
+---@field arrive_station integer
+---@field manual_control_stop integer
+---@field manual_control integer
+---@field wait_station integer
+---@field destination_full integer
+
+---@class defines_transport_line
+---@field left_line integer
+---@field right_line integer
+---@field left_underground_line integer
+---@field right_underground_line integer
+---@field secondary_left_line integer
+---@field secondary_right_line integer
+---@field left_split_line integer
+---@field right_split_line integer
+---@field secondary_left_split_line integer
+---@field secondary_right_split_line integer
+
+---@class defines_wire_connector_id
+---@field circuit_red integer
+---@field circuit_green integer
+---@field combinator_input_red integer
+---@field combinator_input_green integer
+---@field combinator_output_red integer
+---@field combinator_output_green integer
+---@field pole_copper integer
+---@field power_switch_left_copper integer
+---@field power_switch_right_copper integer
+
+---@class defines_wire_origin
+---@field player integer
+---@field script integer
+---@field radars integer
+
+---@class defines_wire_type
+---@field red integer
+---@field green integer
+---@field copper integer
+
+---@class defines
+---@field alert_type defines_alert_type
+---@field behavior_result defines_behavior_result
+---@field build_check_type defines_build_check_type
+---@field build_mode defines_build_mode
+---@field cargo_destination defines_cargo_destination
+---@field chain_signal_state defines_chain_signal_state
+---@field chunk_generated_status defines_chunk_generated_status
+---@field command defines_command
+---@field compound_command defines_compound_command
+---@field control_behavior defines_control_behavior
+---@field controllers defines_controllers
+---@field deconstruction_item defines_deconstruction_item
+---@field default_icon_size defines_default_icon_size
+---@field difficulty defines_difficulty
+---@field direction defines_direction
+---@field disconnect_reason defines_disconnect_reason
+---@field distraction defines_distraction
+---@field entity_status defines_entity_status
+---@field entity_status_diode defines_entity_status_diode
+---@field events defines_events
+---@field flow_precision_index defines_flow_precision_index
+---@field game_controller_interaction defines_game_controller_interaction
+---@field group_state defines_group_state
+---@field gui_type defines_gui_type
+---@field input_action defines_input_action
+---@field input_method defines_input_method
+---@field inventory defines_inventory
+---@field logistic_group_type defines_logistic_group_type
+---@field logistic_member_index defines_logistic_member_index
+---@field logistic_mode defines_logistic_mode
+---@field logistic_section_type defines_logistic_section_type
+---@field mouse_button_type defines_mouse_button_type
+---@field moving_state defines_moving_state
+---@field print_skip defines_print_skip
+---@field print_sound defines_print_sound
+---@field prototypes defines_prototypes
+---@field rail_connection_direction defines_rail_connection_direction
+---@field rail_direction defines_rail_direction
+---@field rail_layer defines_rail_layer
+---@field relative_gui_position defines_relative_gui_position
+---@field relative_gui_type defines_relative_gui_type
+---@field render_mode defines_render_mode
+---@field rich_text_setting defines_rich_text_setting
+---@field riding defines_riding
+---@field robot_order_type defines_robot_order_type
+---@field rocket_silo_status defines_rocket_silo_status
+---@field segmented_unit_activity_mode defines_segmented_unit_activity_mode
+---@field segmented_unit_ai_state defines_segmented_unit_ai_state
+---@field segmented_unit_created_cause defines_segmented_unit_created_cause
+---@field selection_mode defines_selection_mode
+---@field shooting defines_shooting
+---@field signal_state defines_signal_state
+---@field space_platform_state defines_space_platform_state
+---@field target_type defines_target_type
+---@field territory_created_cause defines_territory_created_cause
+---@field train_state defines_train_state
+---@field transport_line defines_transport_line
+---@field wire_connector_id defines_wire_connector_id
+---@field wire_origin defines_wire_origin
+---@field wire_type defines_wire_type
+
+---@type defines
+defines = nil
+
+---@type LuaGameScript
+game = nil
+
+---@type LuaBootstrap
+script = nil
+
+---@type LuaRendering
+rendering = nil
+
+---@type LuaRemote
+remote = nil
+
+---@type LuaCommandProcessor
+commands = nil
+
+---@type LuaRCON
+rcon = nil
+
+---@type LuaPrototypes
+prototypes = nil
+
+---@type LuaSettings
+settings = nil
+
+---@type LuaHelpers
+helpers = nil
+
+---@param string LocalisedString
+function log(string) end
+
+---@param string LocalisedString
+function localised_print(string) end
+
+---@param table table
+---@return integer
+function table_size(table) end

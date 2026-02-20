@@ -1,8 +1,12 @@
 {
   "runtime.version": "Lua 5.2",
   "workspace.checkThirdParty": false,
+  "workspace.library": [
+    ".luals/factorio"
+  ],
   "workspace.ignoreDir": [
     ".git",
+    ".luals",
     ".tmp",
     "research"
   ],

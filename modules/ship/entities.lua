@@ -1,11 +1,14 @@
 local util = require("__core__/lualib/util")
+local Constants = require("__warpage__/constants")
+local ShipConstants = require("modules.ship.constants")
 
-local HUB_ACCUMULATOR_ENTITY_NAME = "warpage-hub-accumulator"
-local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
-local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
-local HUB_MAIN_ENTITY_NAME = "cargo-landing-pad"
-local HUB_DESTROYED_CONTAINER_ENTITY_NAME = "warpage-destroyed-hub-container"
-local HUB_DESTROYED_RUBBLE_ENTITY_NAME = "warpage-destroyed-hub-rubble"
+local HUB_ACCUMULATOR_ENTITY_NAME = ShipConstants.hub_accumulator_entity_name
+local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
+local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
+local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
+local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
+local HUB_DESTROYED_RUBBLE_ENTITY_NAME = ShipConstants.hub_destroyed_rubble_entity_name
+local MOD_NAMESPACE = Constants.mod_namespace
 
 ---@param entity_type string
 ---@param prototype_name string
@@ -44,7 +47,7 @@ local function make_hub_accumulator_prototype()
   prototype.close_sound = nil
   prototype.draw_copper_wires = false
   prototype.draw_circuit_wires = false
-  prototype.order = "z[warpage]-a[hub-accumulator]"
+  prototype.order = "z[" .. MOD_NAMESPACE .. "]-a[hub-accumulator]"
 
   return prototype
 end
@@ -72,7 +75,7 @@ local function make_hub_power_pole_prototype()
   prototype.auto_connect_up_to_n_wires = 0
   prototype.draw_copper_wires = false
   prototype.draw_circuit_wires = false
-  prototype.order = "z[warpage]-b[hub-power-pole]"
+  prototype.order = "z[" .. MOD_NAMESPACE .. "]-b[hub-power-pole]"
 
   return prototype
 end
@@ -138,7 +141,7 @@ local function make_hub_fluid_pipe_prototype()
       scale = 0.5
     }
   }
-  prototype.order = "z[warpage]-c[hub-fluid-pipe]"
+  prototype.order = "z[" .. MOD_NAMESPACE .. "]-c[hub-fluid-pipe]"
 
   return prototype
 end
@@ -169,7 +172,7 @@ local function make_destroyed_hub_container_prototype()
       util.empty_sprite()
     }
   }
-  prototype.order = "z[warpage]-d[destroyed-hub-container]"
+  prototype.order = "z[" .. MOD_NAMESPACE .. "]-d[destroyed-hub-container]"
 
   return prototype
 end
@@ -184,18 +187,16 @@ local function make_destroyed_hub_rubble_prototype()
   prototype.expires = false
   prototype.remove_on_entity_placement = false
   prototype.remove_on_tile_placement = false
-  prototype.order = "z[warpage]-e[destroyed-hub-rubble]"
+  prototype.order = "z[" .. MOD_NAMESPACE .. "]-e[destroyed-hub-rubble]"
 
   return prototype
 end
 
----@type WarpageStageRunner
-return function(_context)
-  data:extend({
-    make_hub_accumulator_prototype(),
-    make_hub_power_pole_prototype(),
-    make_hub_fluid_pipe_prototype(),
-    make_destroyed_hub_container_prototype(),
-    make_destroyed_hub_rubble_prototype()
-  })
-end
+---@type table[]
+return {
+  make_hub_accumulator_prototype(),
+  make_hub_power_pole_prototype(),
+  make_hub_fluid_pipe_prototype(),
+  make_destroyed_hub_container_prototype(),
+  make_destroyed_hub_rubble_prototype()
+}

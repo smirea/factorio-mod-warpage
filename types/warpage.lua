@@ -13,116 +13,37 @@
 
 ---@alias WarpageDirection integer
 
----@class MapPosition
----@field x number
----@field y number
-
----@class Color
----@field r number
----@field g number
----@field b number
----@field a? number
-
----@class BoundingBox
----@field left_top MapPosition
----@field right_bottom MapPosition
-
----@class LuaFluidPrototype
----@field base_color Color
-
----@class LuaFluidBox
----@field get_capacity fun(index: integer): number
-
----@class LuaItemStack
----@field set_stack fun(stack: table): boolean
-
----@class LuaInventory
----@field supports_filters fun(): boolean
----@field supports_bar fun(): boolean
----@field set_filter fun(index: integer, filter: string|nil): boolean
----@field set_bar fun(bar: integer|nil)
----@field get_item_count fun(item?: string): integer
----@field remove fun(items: table): integer
----@field insert fun(items: table): integer
----@field [integer] LuaItemStack
-
----@class LuaWireConnector
----@field valid boolean
----@field is_connected_to fun(target: LuaWireConnector, origin?: integer): boolean
----@field connect_to fun(target: LuaWireConnector, reach_check?: boolean, origin?: integer): boolean
-
----@class LuaGuiElement
----@field valid boolean
----@field name string
----@field style? table
----@field caption? string|table
----@field value? number
----@field add? fun(options: table): LuaGuiElement
----@field clear? fun()
----@field destroy? fun()
----@field [string] LuaGuiElement|unknown
-
----@class LuaGui
----@field screen LuaGuiElement
----@field relative LuaGuiElement
-
----@class LuaPlayer
----@field valid boolean
----@field index integer
----@field gui LuaGui
-
----@class LuaForce
----@field name string
-
 ---@alias ForceIdentification string|LuaForce
----@alias QualityID string
 
----@class LuaEntity
----@field valid boolean
----@field name string
----@field type string
----@field direction WarpageDirection
----@field force LuaForce
----@field surface LuaSurface
----@field position MapPosition
----@field collision_box? BoundingBox
----@field selection_box? BoundingBox
----@field fluidbox LuaFluidBox
----@field minable? boolean
----@field destructible? boolean
----@field quality? QualityID
----@field energy? number
----@field electric_buffer_size? number
----@field corpse_expires? boolean
----@field corpse_immune_to_entity_placement? boolean
----@field destroy fun(): boolean
----@field teleport fun(position: MapPosition): boolean
----@field get_fluid_contents fun(): table<string, number>
----@field insert_fluid fun(fluid: table): number
----@field get_inventory fun(inventory: integer): LuaInventory|nil
----@field get_wire_connector fun(wire_connector_id: integer, or_create: boolean): LuaWireConnector|nil
+---@class WarpageGlobalConstants
+---@field mod_namespace string
+---@field entity_prefix string
+---@field gui_prefix string
+---@field prefixed_entity_name fun(suffix: string): string
+---@field prefixed_gui_name fun(suffix: string): string
+---@field prefixed_setting_name fun(suffix: string): string
 
----@class LuaSurface
----@field name string
----@field create_entity fun(options: table): LuaEntity|nil
----@field find_entities_filtered fun(options: table): LuaEntity[]
----@field set_tiles fun(tiles: table[])
+---@class WarpageShipConstants
+---@field player_force_name string
+---@field hub_surface_name string
+---@field ship_tests_setting_name string
+---@field hub_main_entity_name string
+---@field hub_accumulator_entity_name string
+---@field hub_power_pole_entity_name string
+---@field hub_fluid_pipe_entity_name string
+---@field hub_destroyed_container_entity_name string
+---@field hub_destroyed_rubble_entity_name string
+---@field hub_ui_root_name string
+---@field hub_ui_power_label_name string
+---@field hub_ui_power_bar_name string
+---@field hub_ui_fluid_table_name string
+---@field hub_ui_fluid_left_icon string
+---@field hub_ui_fluid_right_icon string
+---@field hub_ui_fluid_empty_icon string
 
----@class LuaGameScript
----@field surfaces table<integer|string, LuaSurface>
----@field forces table<string, LuaForce>
----@field players table<integer, LuaPlayer>
----@field fluid_prototypes table<string, LuaFluidPrototype>
----@field get_player fun(player_index: integer): LuaPlayer|nil
-
----@class WarpageFeatureManifest
----@field id string
----@field stages table<WarpageStage, string?>
-
----@class WarpageLoadedFeature
+---@class WarpageControlModuleRegistration
 ---@field id string
 ---@field module_path string
----@field stages table<WarpageStage, string?>
 
 ---@class WarpageHandlerEntry
 ---@field handler fun(payload: table|nil)
@@ -174,11 +95,7 @@
 
 ---@alias WarpageStageRunner fun(context: WarpageFeatureContext)
 
----@class WarpageBootstrapState
----@field initialized_at_tick integer
-
 ---@class WarpageFeatureStorage
----@field bootstrap? WarpageBootstrapState
 ---@field [string] unknown
 
 ---@class WarpageStorageRoot

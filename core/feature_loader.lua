@@ -1,10 +1,5 @@
 local common = require("core.utils.common")
 
----@type string[]
-local feature_names = {
-  "bootstrap"
-}
-
 ---@type table<WarpageStage, true>
 local VALID_STAGES = {
   settings = true,
@@ -16,6 +11,35 @@ local VALID_STAGES = {
   control = true
 }
 
+-- Keep registrations explicit; add new module files to these lists as they are created.
+---@type WarpageControlModuleRegistration[]
+local control_modules = {
+  {
+    id = "ship",
+    module_path = "modules.ship.control"
+  }
+}
+
+---@type string[]
+local shared_entity_module_paths = {
+  "data.entities.init"
+}
+
+---@type string[]
+local shared_recipe_module_paths = {
+  "data.recipes.init"
+}
+
+---@type string[]
+local module_entity_module_paths = {
+  "modules.ship.entities"
+}
+
+---@type string[]
+local module_recipe_module_paths = {
+  "modules.ship.recipes"
+}
+
 ---@param stage unknown
 local function ensure_valid_stage(stage)
   if type(stage) ~= "string" or not VALID_STAGES[stage] then
@@ -23,83 +47,88 @@ local function ensure_valid_stage(stage)
   end
 end
 
----@param feature_folder_name unknown
----@param seen_ids table<string, true>
----@return WarpageLoadedFeature
-local function load_feature(feature_folder_name, seen_ids)
-  common.ensure_non_empty_string(feature_folder_name, "feature list entry")
-  ---@cast feature_folder_name string
-
-  local feature_module_path = "modules." .. feature_folder_name .. ".feature"
-  local feature_manifest = require(feature_module_path)
-  common.ensure_table(feature_manifest, feature_module_path)
-  common.ensure_non_empty_string(feature_manifest.id, feature_module_path .. ".id")
-  ---@cast feature_manifest WarpageFeatureManifest
-
-  if seen_ids[feature_manifest.id] then
-    error("Duplicate feature id '" .. feature_manifest.id .. "' in " .. feature_module_path .. ".")
-  end
-  seen_ids[feature_manifest.id] = true
-
-  local stages = feature_manifest.stages or {}
-  common.ensure_table(stages, feature_module_path .. ".stages")
-
-  for stage_name, stage_module_path in pairs(stages) do
-    ensure_valid_stage(stage_name)
-    ---@cast stage_name WarpageStage
-    common.ensure_non_empty_string(stage_module_path, feature_module_path .. ".stages." .. stage_name)
+---@param module_path string
+local function extend_prototypes(module_path)
+  local prototypes = require(module_path)
+  common.ensure_table(prototypes, module_path)
+  if next(prototypes) == nil then
+    return
   end
 
-  return {
-    id = feature_manifest.id,
-    module_path = feature_module_path,
-    stages = stages
-  }
+  data:extend(prototypes)
 end
 
----@return WarpageLoadedFeature[]
-local function load_features()
-  common.ensure_table(feature_names, "feature list")
+---@param module_paths string[]
+---@param name string
+local function extend_prototype_modules(module_paths, name)
+  common.ensure_table(module_paths, name)
 
-  local features = {} ---@type WarpageLoadedFeature[]
-  local seen_ids = {} ---@type table<string, true>
-  for _, feature_folder_name in ipairs(feature_names) do
-    features[#features + 1] = load_feature(feature_folder_name, seen_ids)
+  for index, module_path in ipairs(module_paths) do
+    local path = name .. "[" .. tostring(index) .. "]"
+    common.ensure_non_empty_string(module_path, path)
+    extend_prototypes(module_path)
+  end
+end
+
+local function run_data_stage()
+  if data == nil or type(data.extend) ~= "function" then
+    error("data stage requires global data.extend.")
   end
 
-  return features
+  extend_prototype_modules(shared_entity_module_paths, "shared_entity_module_paths")
+  extend_prototype_modules(shared_recipe_module_paths, "shared_recipe_module_paths")
+  extend_prototype_modules(module_entity_module_paths, "module_entity_module_paths")
+  extend_prototype_modules(module_recipe_module_paths, "module_recipe_module_paths")
 end
 
 ---@param base_context WarpageBaseContext
----@param feature WarpageLoadedFeature
+---@param module_registration WarpageControlModuleRegistration
 ---@param stage WarpageStage
 ---@return WarpageFeatureContext
-local function build_feature_context(base_context, feature, stage)
-  local feature_context = {} ---@type WarpageBaseContext
+local function build_feature_context(base_context, module_registration, stage)
+  local feature_context = {
+    feature_id = module_registration.id,
+    feature_module_path = module_registration.module_path,
+    stage = stage
+  } ---@type WarpageFeatureContext
+
   for key, value in pairs(base_context) do
     feature_context[key] = value
   end
-
-  feature_context.feature_id = feature.id
-  feature_context.feature_module_path = feature.module_path
-  feature_context.stage = stage
 
   if stage == "control" then
     local event_bus = feature_context.event_bus
     if event_bus == nil then
       error("control stage requires context.event_bus.")
     end
-    ---@cast event_bus WarpageEventBus
 
     if type(event_bus.for_source) ~= "function" then
       error("context.event_bus must define for_source(source).")
     end
 
-    feature_context.events = event_bus:for_source(feature.id)
+    feature_context.events = event_bus:for_source(module_registration.id)
   end
 
-  ---@cast feature_context WarpageFeatureContext
   return feature_context
+end
+
+---@param base_context WarpageBaseContext
+local function run_control_stage(base_context)
+  common.ensure_table(control_modules, "control_modules")
+
+  for index, module_registration in ipairs(control_modules) do
+    local path = "control_modules[" .. tostring(index) .. "]"
+    common.ensure_table(module_registration, path)
+    common.ensure_non_empty_string(module_registration.id, path .. ".id")
+    common.ensure_non_empty_string(module_registration.module_path, path .. ".module_path")
+
+    local runner = require(module_registration.module_path)
+    if type(runner) ~= "function" then
+      error(module_registration.module_path .. " must return a function.")
+    end
+
+    runner(build_feature_context(base_context, module_registration, "control"))
+  end
 end
 
 ---@class FeatureLoader
@@ -110,23 +139,19 @@ local FeatureLoader = {}
 ---@param context? WarpageBaseContext
 function FeatureLoader.run_stage(stage, context)
   ensure_valid_stage(stage)
-  ---@cast stage WarpageStage
+  stage = stage --[[@as WarpageStage]]
 
   local base_context = context or {}
   common.ensure_table(base_context, "context")
-  ---@cast base_context WarpageBaseContext
+  base_context = base_context --[[@as WarpageBaseContext]]
 
-  for _, feature in ipairs(load_features()) do
-    local stage_module_path = feature.stages[stage]
-    if stage_module_path ~= nil then
-      local runner = require(stage_module_path)
-      if type(runner) ~= "function" then
-        error(stage_module_path .. " must return a function.")
-      end
-      ---@cast runner WarpageStageRunner
+  if stage == "data" then
+    run_data_stage()
+    return
+  end
 
-      runner(build_feature_context(base_context, feature, stage))
-    end
+  if stage == "control" then
+    run_control_stage(base_context)
   end
 end
 

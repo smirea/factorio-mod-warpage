@@ -1,14 +1,15 @@
 local common = require("core.utils.common")
 local StorageSchema = require("core.storage_schema")
+local ShipConstants = require("modules.ship.constants")
 
-local HUB_SURFACE_NAME = "nauvis"
-local HUB_FORCE_NAME = "player"
-local HUB_MAIN_ENTITY_NAME = "cargo-landing-pad"
-local HUB_ACCUMULATOR_ENTITY_NAME = "warpage-hub-accumulator"
-local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
-local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
-local HUB_DESTROYED_CONTAINER_ENTITY_NAME = "warpage-destroyed-hub-container"
-local HUB_DESTROYED_RUBBLE_ENTITY_NAME = "warpage-destroyed-hub-rubble"
+local HUB_SURFACE_NAME = ShipConstants.hub_surface_name
+local HUB_FORCE_NAME = ShipConstants.player_force_name
+local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
+local HUB_ACCUMULATOR_ENTITY_NAME = ShipConstants.hub_accumulator_entity_name
+local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
+local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
+local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
+local HUB_DESTROYED_RUBBLE_ENTITY_NAME = ShipConstants.hub_destroyed_rubble_entity_name
 local HUB_POSITION = { x = 0, y = 0 }
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
 local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
@@ -388,22 +389,14 @@ local function assert_destroyed_hub_state()
     error("Ship tests expected destroyed hub container to be non-minable.")
   end
 
-  local collision_box = container.collision_box
-  if collision_box == nil then
-    error("Ship tests expected destroyed hub container collision_box.")
-  end
-
+  local collision_box = container.prototype.collision_box
   local collision_width = collision_box.right_bottom.x - collision_box.left_top.x
   local expected_collision_width = HUB_COLLISION_HALF_EXTENT * 2
   if math.abs(collision_width - expected_collision_width) > POSITION_EPSILON then
     error("Ship tests expected destroyed hub collision width to match cargo landing pad bounds.")
   end
 
-  local selection_box = container.selection_box
-  if selection_box == nil then
-    error("Ship tests expected destroyed hub container selection_box.")
-  end
-
+  local selection_box = container.prototype.selection_box
   local selection_width = selection_box.right_bottom.x - selection_box.left_top.x
   local expected_selection_width = HUB_SELECTION_HALF_EXTENT * 2
   if math.abs(selection_width - expected_selection_width) > POSITION_EPSILON then

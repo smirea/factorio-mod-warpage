@@ -15,8 +15,8 @@ Error on the side of simpler reusable code
 - This repo uses LuaLS + LuaCATS as the source-of-truth type system for Lua code.
 - Workspace LuaLS configuration lives in `.luarc.json`.
 - Shared project type aliases/classes live in `types/warpage.lua`.
-- Prefer annotating function parameters/returns and structural tables at module boundaries, especially feature manifests, contexts, event registrations, and storage schemas.
-- When adding new typed shared structures, define them in `types/warpage.lua` first and then consume them from feature/core modules.
+- Prefer annotating function parameters/returns and structural tables at module boundaries, especially module registration tables, contexts, event registrations, and storage schemas.
+- When adding new typed shared structures, define them in `types/warpage.lua` first and then consume them from module/core modules.
 
 ## Required local verification
 
@@ -59,7 +59,7 @@ This repository contains a Factorio 2.0-ready scaffold with strict stage routing
 
 ### Core framework
 
-- `core/feature_loader.lua` defines feature load order, validates feature manifests/stage keys, and dispatches stage handlers.
+- `core/feature_loader.lua` defines explicit module registrations per stage and dispatches stage handlers.
 - `core/runtime.lua` creates the shared event bus and invokes runtime feature handlers.
 - `core/event_bus.lua` provides source-scoped runtime bindings per feature.
 - `core/storage_schema.lua` enforces persistent storage structure early.
@@ -70,14 +70,15 @@ This repository contains a Factorio 2.0-ready scaffold with strict stage routing
 - `core/utils/compound_entity.lua` handles compound-entity placement, syncing, cleanup, and event wiring.
 - For compound entities in control stage, bind through feature-scoped events (`compound:bind(context.events)`) so event registration remains source-scoped.
 
-### Feature contract
+### Module registration
 
-Each feature folder contains a `feature.lua` file that returns:
+Modules do not use manifest files. Register module files directly in `core/feature_loader.lua`.
 
-- `id`: unique feature identifier.
-- `stages`: map from stage names to module paths.
+- `control_modules`: runtime control stage runners.
+- `module_entity_module_paths`: module-owned entity prototype lists.
+- `module_recipe_module_paths`: module-owned recipe prototype lists.
 
-Each stage module must return one function. The loader errors immediately when contracts are invalid.
+Shared cross-module prototypes live in `data/entities/init.lua` and `data/recipes/init.lua`.
 
 ### Runtime feature context
 
@@ -97,11 +98,11 @@ Control-stage modules receive one context table with:
 - `on_nth_tick(tick, handler)`
 - `bind({ ... })` for bulk registration
 
-### Adding a new feature
+### Adding a new module
 
-1. Create `modules/<new_feature>/feature.lua` with `id` and `stages`.
-2. Add any stage modules referenced by `stages`.
-3. Add `<new_feature>` to the `feature_names` list in `core/feature_loader.lua`.
+1. Create module files directly (commonly `modules/<new_module>/control.lua`, `modules/<new_module>/entities.lua`, `modules/<new_module>/recipes.lua`).
+2. Manually register each new file path in `core/feature_loader.lua`.
+3. Put runtime-global settings in top-level `settings.lua` when needed.
 4. In control modules, register events through `context.events`.
 5. If runtime state is needed, initialize schema in `on_init` and validate in `on_load`.
 6. Run `HEADLESS=1 ./scripts/launch.sh` to make sure game boots up

@@ -1,30 +1,22 @@
 local common = require("core.utils.common")
 local CompoundEntity = require("core.utils.compound_entity")
+local StorageSchema = require("core.storage_schema")
+local ShipConstants = require("modules.ship.constants")
 
-local PLAYER_FORCE_NAME = "player"
-local HUB_SURFACE_NAME = "nauvis"
-local HUB_MAIN_ENTITY_NAME = "cargo-landing-pad"
-local HUB_ACCUMULATOR_ENTITY_NAME = "warpage-hub-accumulator"
-local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
-local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
-local HUB_DESTROYED_CONTAINER_ENTITY_NAME = "warpage-destroyed-hub-container"
-local HUB_DESTROYED_RUBBLE_ENTITY_NAME = "warpage-destroyed-hub-rubble"
+local PLAYER_FORCE_NAME = ShipConstants.player_force_name
+local HUB_SURFACE_NAME = ShipConstants.hub_surface_name
+local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
+local HUB_ACCUMULATOR_ENTITY_NAME = ShipConstants.hub_accumulator_entity_name
+local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
+local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
+local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
+local HUB_DESTROYED_RUBBLE_ENTITY_NAME = ShipConstants.hub_destroyed_rubble_entity_name
 local HUB_POSITION = { x = 0, y = 0 }
 local HUB_DIRECTION = defines.direction.north
 local HUB_CLEAR_RADIUS = 4
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
 local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
-local HUB_UI_ROOT_NAME = "warpage_hub_ui"
-local HUB_UI_POWER_LABEL_NAME = "warpage_hub_ui_power_label"
-local HUB_UI_POWER_BAR_NAME = "warpage_hub_ui_power_bar"
-local HUB_UI_FLUID_TABLE_NAME = "warpage_hub_ui_fluid_table"
-local HUB_UI_FLUID_LEFT_ICON = "[virtual-signal=signal-left]"
-local HUB_UI_FLUID_RIGHT_ICON = "[virtual-signal=signal-right]"
-local HUB_UI_FLUID_EMPTY_ICON = "[virtual-signal=signal-deny]"
-local HUB_UI_FLUID_ICON_WIDTH = 22
-local HUB_UI_FLUID_BAR_WIDTH = 140
-local HUB_UI_FLUID_TOTALS_WIDTH = 88
-local HUB_UI_FLUID_EMPTY_BAR_COLOR = { r = 0.35, g = 0.35, b = 0.35 }
+local HUB_UI_ROOT_NAME = ShipConstants.hub_ui_root_name
 
 local HUB_UI_UPDATE_INTERVAL = 30
 local HUB_REPAIR_TEXT_LIFETIME = 2147483647
@@ -695,20 +687,20 @@ local function ensure_hub_ui(player)
 
   root.add({
     type = "label",
-    name = HUB_UI_POWER_LABEL_NAME,
+    name = ShipConstants.hub_ui_power_label_name,
     caption = ""
   })
 
   local power_bar = root.add({
     type = "progressbar",
-    name = HUB_UI_POWER_BAR_NAME,
+    name = ShipConstants.hub_ui_power_bar_name,
     value = 0
   })
   power_bar.style.horizontally_stretchable = true
 
   local fluid_table = root.add({
     type = "table",
-    name = HUB_UI_FLUID_TABLE_NAME,
+    name = ShipConstants.hub_ui_fluid_table_name,
     column_count = 4
   })
   fluid_table.style.horizontal_spacing = 6
@@ -751,8 +743,7 @@ end
 ---@param fluid_name string
 ---@return Color
 local function resolve_fluid_bar_color(fluid_name)
-  local runtime_game = require_game()
-  local fluid_prototype = runtime_game.fluid_prototypes[fluid_name]
+  local fluid_prototype = prototypes.fluid[fluid_name]
   if fluid_prototype == nil then
     error("Hub UI could not resolve fluid prototype '" .. fluid_name .. "'.")
   end
@@ -782,8 +773,8 @@ local function add_fluid_row(fluid_table, direction_icon, fluid_pipe)
     type = "label",
     caption = direction_icon
   })
-  direction_cell.style.minimal_width = HUB_UI_FLUID_ICON_WIDTH
-  direction_cell.style.maximal_width = HUB_UI_FLUID_ICON_WIDTH
+  direction_cell.style.minimal_width = 22
+  direction_cell.style.maximal_width = 22
   direction_cell.style.horizontal_align = "center"
 
   local amount_ratio = 0
@@ -796,8 +787,8 @@ local function add_fluid_row(fluid_table, direction_icon, fluid_pipe)
     end
   end
 
-  local fluid_icon = HUB_UI_FLUID_EMPTY_ICON
-  local bar_color = HUB_UI_FLUID_EMPTY_BAR_COLOR
+  local fluid_icon = ShipConstants.hub_ui_fluid_empty_icon
+  local bar_color = { r = 0.35, g = 0.35, b = 0.35 }
   if fluid_name ~= nil then
     fluid_icon = "[fluid=" .. fluid_name .. "]"
     bar_color = resolve_fluid_bar_color(fluid_name)
@@ -807,24 +798,24 @@ local function add_fluid_row(fluid_table, direction_icon, fluid_pipe)
     type = "label",
     caption = fluid_icon
   })
-  fluid_icon_cell.style.minimal_width = HUB_UI_FLUID_ICON_WIDTH
-  fluid_icon_cell.style.maximal_width = HUB_UI_FLUID_ICON_WIDTH
+  fluid_icon_cell.style.minimal_width = 22
+  fluid_icon_cell.style.maximal_width = 22
   fluid_icon_cell.style.horizontal_align = "center"
 
   local fluid_bar = fluid_table.add({
     type = "progressbar",
     value = amount_ratio
   })
-  fluid_bar.style.minimal_width = HUB_UI_FLUID_BAR_WIDTH
-  fluid_bar.style.maximal_width = HUB_UI_FLUID_BAR_WIDTH
+  fluid_bar.style.minimal_width = 140
+  fluid_bar.style.maximal_width = 140
   fluid_bar.style.color = bar_color
 
   local totals_cell = fluid_table.add({
     type = "label",
     caption = format_compact_int(amount) .. " / " .. format_compact_int(capacity)
   })
-  totals_cell.style.minimal_width = HUB_UI_FLUID_TOTALS_WIDTH
-  totals_cell.style.maximal_width = HUB_UI_FLUID_TOTALS_WIDTH
+  totals_cell.style.minimal_width = 88
+  totals_cell.style.maximal_width = 88
   totals_cell.style.horizontal_align = "right"
   totals_cell.style.font = "default-mono"
 end
@@ -845,14 +836,14 @@ local function update_hub_ui(player, hub_entity)
     error("Hub accumulator must expose numeric energy fields.")
   end
 
-  local power_label = root[HUB_UI_POWER_LABEL_NAME]
+  local power_label = root[ShipConstants.hub_ui_power_label_name]
   if power_label == nil then
     error("Hub UI is missing power label.")
   end
 
   power_label.caption = "Accumulator: " .. string.format("%.1fMJ / %.1fMJ", energy / 1000000, capacity / 1000000)
 
-  local power_bar = root[HUB_UI_POWER_BAR_NAME]
+  local power_bar = root[ShipConstants.hub_ui_power_bar_name]
   if power_bar == nil then
     error("Hub UI is missing power bar.")
   end
@@ -869,14 +860,14 @@ local function update_hub_ui(player, hub_entity)
     power_bar.value = ratio
   end
 
-  local fluid_table = root[HUB_UI_FLUID_TABLE_NAME]
+  local fluid_table = root[ShipConstants.hub_ui_fluid_table_name]
   if fluid_table == nil then
     error("Hub UI is missing fluid table.")
   end
 
   fluid_table.clear()
-  add_fluid_row(fluid_table, HUB_UI_FLUID_LEFT_ICON, left_pipe)
-  add_fluid_row(fluid_table, HUB_UI_FLUID_RIGHT_ICON, right_pipe)
+  add_fluid_row(fluid_table, ShipConstants.hub_ui_fluid_left_icon, left_pipe)
+  add_fluid_row(fluid_table, ShipConstants.hub_ui_fluid_right_icon, right_pipe)
 end
 
 local function reset_open_hub_state()
@@ -963,4 +954,46 @@ function Ship.bind(events)
   })
 end
 
-return Ship
+---@return boolean
+local function is_ship_tests_enabled()
+  local setting = settings.global[ShipConstants.ship_tests_setting_name]
+  if setting == nil then
+    error("Missing runtime-global setting '" .. ShipConstants.ship_tests_setting_name .. "'.")
+  end
+
+  if type(setting.value) ~= "boolean" then
+    error("Runtime-global setting '" .. ShipConstants.ship_tests_setting_name .. "' must be a boolean.")
+  end
+
+  return setting.value == true
+end
+
+local function ensure_storage_schema()
+  StorageSchema.ensure()
+end
+
+local function assert_storage_schema()
+  StorageSchema.assert_ready()
+end
+
+---@param context WarpageFeatureContext
+---@type WarpageStageRunner
+return function(context)
+  local events = context.events
+  if events == nil then
+    error(context.feature_id .. " requires context.events.")
+  end
+
+  events:bind({
+    on_init = ensure_storage_schema,
+    on_configuration_changed = ensure_storage_schema,
+    on_load = assert_storage_schema
+  })
+
+  if is_ship_tests_enabled() then
+    local ShipTests = require("tests.ship_tests")
+    ShipTests.bind(events)
+  end
+
+  Ship.bind(events)
+end
