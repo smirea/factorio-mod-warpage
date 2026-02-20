@@ -25,15 +25,14 @@ local HUB_DESTROYED_CONTAINER_SLOT_COUNT = 48
 ---@class WarpageShipRepairRequirement
 ---@field item_name string
 ---@field amount integer
----@field slots integer
 
 ---@type WarpageShipRepairRequirement[]
 local HUB_REPAIR_REQUIREMENTS = {
-  { item_name = "stone", amount = 200, slots = 4 },
-  { item_name = "coal", amount = 200, slots = 4 },
-  { item_name = "copper-ore", amount = 100, slots = 2 },
-  { item_name = "iron-plate", amount = 100, slots = 1 },
-  { item_name = "calcite", amount = 10, slots = 1 }
+  { item_name = "stone", amount = 200 },
+  { item_name = "coal", amount = 200 },
+  { item_name = "copper-ore", amount = 100 },
+  { item_name = "iron-plate", amount = 100 },
+  { item_name = "calcite", amount = 10 }
 }
 
 local open_hubs_by_player = {} ---@type table<integer, LuaEntity>
@@ -398,16 +397,32 @@ local function require_destroyed_hub_inventory(destroyed_hub_container)
   return inventory
 end
 
+---@param requirement WarpageShipRepairRequirement
+---@return integer
+local function compute_repair_requirement_slots(requirement)
+  if type(requirement.amount) ~= "number" or requirement.amount % 1 ~= 0 or requirement.amount < 1 then
+    error("Hub repair requirement '" .. requirement.item_name .. "' must define a positive integer amount.")
+  end
+
+  local item_prototype = prototypes.item[requirement.item_name]
+  if item_prototype == nil then
+    error("Hub repair requirement item '" .. requirement.item_name .. "' must exist in item prototypes.")
+  end
+
+  local stack_size = item_prototype.stack_size
+  if type(stack_size) ~= "number" or stack_size % 1 ~= 0 or stack_size < 1 then
+    error("Hub repair requirement item '" .. requirement.item_name .. "' must expose a positive integer stack size.")
+  end
+
+  return math.ceil(requirement.amount / stack_size)
+end
+
 ---@return integer
 local function compute_required_repair_slots()
   local total_slots = 0
 
   for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
-    if type(requirement.slots) ~= "number" or requirement.slots % 1 ~= 0 or requirement.slots < 1 then
-      error("Hub repair requirement '" .. requirement.item_name .. "' must define a positive integer slot count.")
-    end
-
-    total_slots = total_slots + requirement.slots
+    total_slots = total_slots + compute_repair_requirement_slots(requirement)
   end
 
   return total_slots + 1
@@ -439,11 +454,9 @@ local function configure_destroyed_hub_container(destroyed_hub_container)
 
   local slot_index = 1
   for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
-    if type(requirement.slots) ~= "number" or requirement.slots % 1 ~= 0 or requirement.slots < 1 then
-      error("Hub repair requirement '" .. requirement.item_name .. "' must define a positive integer slot count.")
-    end
+    local requirement_slots = compute_repair_requirement_slots(requirement)
 
-    for _ = 1, requirement.slots do
+    for _ = 1, requirement_slots do
       local set = inventory.set_filter(slot_index, requirement.item_name)
       if set ~= true then
         error(

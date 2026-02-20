@@ -25,15 +25,14 @@ local TEST_FEATURE_KEY = "ship_tests"
 ---@class WarpageShipTestsRepairRequirement
 ---@field item_name string
 ---@field amount integer
----@field slots integer
 
 ---@type WarpageShipTestsRepairRequirement[]
 local HUB_REPAIR_REQUIREMENTS = {
-  { item_name = "stone", amount = 200, slots = 4 },
-  { item_name = "coal", amount = 200, slots = 4 },
-  { item_name = "copper-ore", amount = 100, slots = 2 },
-  { item_name = "iron-plate", amount = 100, slots = 1 },
-  { item_name = "calcite", amount = 10, slots = 1 }
+  { item_name = "stone", amount = 200 },
+  { item_name = "coal", amount = 200 },
+  { item_name = "copper-ore", amount = 100 },
+  { item_name = "iron-plate", amount = 100 },
+  { item_name = "calcite", amount = 10 }
 }
 
 ---@class WarpageShipTestsFeatureState
@@ -416,6 +415,28 @@ local function assert_destroyed_hub_state()
   end
 end
 
+---@param requirement WarpageShipTestsRepairRequirement
+---@return integer
+local function compute_repair_requirement_slots(requirement)
+  if type(requirement.amount) ~= "number" or requirement.amount % 1 ~= 0 or requirement.amount < 1 then
+    error("Ship tests repair requirement '" .. requirement.item_name .. "' must define a positive integer amount.")
+  end
+
+  local item_prototype = prototypes.item[requirement.item_name]
+  if item_prototype == nil then
+    error("Ship tests repair requirement item '" .. requirement.item_name .. "' must exist in item prototypes.")
+  end
+
+  local stack_size = item_prototype.stack_size
+  if type(stack_size) ~= "number" or stack_size % 1 ~= 0 or stack_size < 1 then
+    error(
+      "Ship tests repair requirement item '" .. requirement.item_name .. "' must expose a positive integer stack size."
+    )
+  end
+
+  return math.ceil(requirement.amount / stack_size)
+end
+
 local function seed_destroyed_hub_repair_items()
   local surface = resolve_hub_surface()
   local container = find_destroyed_hub_container(surface)
@@ -459,7 +480,7 @@ local function seed_destroyed_hub_repair_items()
       end
     end
 
-    slot_index = slot_index + requirement.slots
+    slot_index = slot_index + compute_repair_requirement_slots(requirement)
   end
 end
 
