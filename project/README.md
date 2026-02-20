@@ -1,10 +1,12 @@
+This is an overview of the design document. See the various ./feature_*.md files for detailed info
+
 # Design Guidelines
 
 1. Planets are temporary and should be treated as such - mechanics should cause permanent destructive actions
 2. Lean in heavily on the warp theme - to a ridiculous extent
 3. Fun and fast paced - the game should give you tools to speed up progression, despite new challenges, there should never be a slog in progression and it should never be tedious
 4. Restriction breeds creativity: no chests, no logistic system, no conventional weapons (gun, flame)
-5. Challenging, but fair - I want this to be hard but explicitly no bullshit: no infinite waves that walk on water and spawn stompers when you're on green science, no forcing you into positions where you must lose progress to survive, yes to predictable increase in difficulty
+5. Challenging, but fair - I want this to be hard but explicitly no bullshit: no infinite waves that walk on water and spawn stompers when you're on green science, no forcing you into positions where you must lose progress to survive, yes to predictable increase in difficulty. Ideally difficulty adapts to performance, to a point (you should not get fucked over multiple times in a row, you shouldn't have an easy time too many times in a row)
 6. Single-player focus - optimized for solo, support multiplayer
 7. Promote less used mechanics: combat bots, mines, consumables, quality
 8. Throughput instead of storage - no chests but easy to gather resources, philosophy should be to go to a place and build/research as fast as much as possible
