@@ -1,5 +1,6 @@
 local common = require("core.utils.common")
 local CompoundEntity = require("core.utils.compound_entity")
+local FlyingText = require("core.utils.flying_text")
 
 local PLAYER_FORCE_NAME = "player"
 local HUB_SURFACE_NAME = "nauvis"
@@ -46,6 +47,16 @@ local HUB_REPAIR_REQUIREMENTS = {
 }
 
 local open_hubs_by_player = {} ---@type table<integer, LuaEntity>
+local hub_repair_status_text = nil ---@type WarpageFloatingTextHandle|nil
+
+local function destroy_hub_repair_status_text()
+  if hub_repair_status_text == nil then
+    return
+  end
+
+  hub_repair_status_text:destroy()
+  hub_repair_status_text = nil
+end
 
 ---@param entity LuaEntity
 local function lock_hub_entity(entity)
@@ -530,6 +541,8 @@ end
 ---@param destroyed_hub_container LuaEntity
 ---@param repair_status WarpageShipRepairStatus[]
 local function draw_destroyed_hub_repair_status(destroyed_hub_container, repair_status)
+  destroy_hub_repair_status_text()
+
   local lines = { "[font=default-bold]Hub Repair[/font]" }
   local has_missing_items = false
 
@@ -544,11 +557,11 @@ local function draw_destroyed_hub_repair_status(destroyed_hub_container, repair_
     lines[#lines + 1] = "Reconstruction ready"
   end
 
-  rendering.draw_text({
+  hub_repair_status_text = FlyingText.create({
     text = table.concat(lines, "\n"),
     surface = destroyed_hub_container.surface,
     target = destroyed_hub_container,
-    target_offset = { 0, -4.5 },
+    target_offset = { x = 0, y = -4.5 },
     color = HUB_REPAIR_TEXT_COLOR,
     alignment = "center",
     vertical_alignment = "bottom",
@@ -626,6 +639,7 @@ end
 local function update_hub_lifecycle()
   local surface, force, hub, destroyed_hub_container, destroyed_hub_rubble = ensure_hub_lifecycle_entities()
   if hub ~= nil then
+    destroy_hub_repair_status_text()
     return hub
   end
 
@@ -639,6 +653,7 @@ local function update_hub_lifecycle()
     return nil
   end
 
+  destroy_hub_repair_status_text()
   consume_hub_repair_items(destroyed_hub_container)
   destroy_entity_or_fail(destroyed_hub_rubble, "destroyed hub rubble")
   destroy_entity_or_fail(destroyed_hub_container, "destroyed hub container")
@@ -874,6 +889,7 @@ local function clear_open_hub_state_for_players()
   for _, player in pairs(runtime_game.players) do
     destroy_hub_ui(player)
   end
+  destroy_hub_repair_status_text()
   reset_open_hub_state()
 end
 
@@ -931,6 +947,7 @@ function Ship.bind(events)
       update_hub_lifecycle()
     end,
     on_load = function()
+      destroy_hub_repair_status_text()
       reset_open_hub_state()
     end,
     on_configuration_changed = function()
