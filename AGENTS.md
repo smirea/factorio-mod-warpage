@@ -1,6 +1,6 @@
 This is a factorio mod called "Warp Age"
 
-See `project.md` for high level goals, big picture, project scope
+See `project/README.md` for high level goals, big picture, and scope. See `project/feature_*.md` for feature details.
 
 When writing lua, always define proper types for everything by referencing the correct factorio entity and return types
 
@@ -14,6 +14,9 @@ Error on the side of simpler reusable code
 
 - This repo uses LuaLS + LuaCATS as the source-of-truth type system for Lua code.
 - Workspace LuaLS configuration lives in `.luarc.json`.
+- Generated Factorio LuaCATS stubs live in `.luals/factorio` and are included via `.luarc.json` workspace library settings.
+- Regenerate stubs when API docs/version changes with:
+  - `node ./scripts/generate-factorio-luacats-stubs.mjs`
 - Shared project type aliases/classes live in `types/warpage.lua`.
 - Prefer annotating function parameters/returns and structural tables at module boundaries, especially module registration tables, contexts, event registrations, and storage schemas.
 - When adding new typed shared structures, define them in `types/warpage.lua` first and then consume them from module/core modules.
@@ -25,7 +28,8 @@ Error on the side of simpler reusable code
 - Run luacheck before commit:
   - `luacheck control.lua data.lua data-updates.lua data-final-fixes.lua settings.lua settings-updates.lua settings-final-fixes.lua core modules tests types`
 - Run ship integration tests before commit on a dedicated test save with `warpage-enable-ship-tests=true`:
-  - `LAUNCH_ROOT=./.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=420 ./scripts/launch.sh warpage-ship-tests`
+  - `LAUNCH_ROOT=./.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=6000 ./scripts/launch.sh warpage-ship-tests`
+  - `UNTIL_TICK` must be greater than the current map tick of that save.
   - Verify `./.tmp/factorio-test-headless/write-data/factorio-current.log` contains `[warpage] ship tests passed`.
 - Run `HEADLESS=1 ./scripts/launch.sh` to check game boots up
 
@@ -35,8 +39,10 @@ Error on the side of simpler reusable code
 2. In that save, open Mod settings and set runtime-global `warpage-enable-ship-tests` to `true`.
 3. Save and quit.
 4. Run headless:
-   - `LAUNCH_ROOT=./.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=420 ./scripts/launch.sh warpage-ship-tests`
+   - `LAUNCH_ROOT=./.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=6000 ./scripts/launch.sh warpage-ship-tests`
+   - Ensure `UNTIL_TICK` is greater than the save's current map tick.
 5. Confirm log output includes `[warpage] ship tests passed` and no non-recoverable errors.
+6. Use a fresh/reset dedicated test save when validating the pass marker; the ship test state is persisted in storage.
 
 ## Git hooks
 
@@ -75,6 +81,7 @@ This repository contains a Factorio 2.0-ready scaffold with strict stage routing
 Modules do not use manifest files. Register module files directly in `core/feature_loader.lua`.
 
 - `control_modules`: runtime control stage runners.
+- Current control flow uses `modules.startup` as the control runner, and startup invokes ship setup.
 - `module_entity_module_paths`: module-owned entity prototype lists.
 - `module_recipe_module_paths`: module-owned recipe prototype lists.
 
@@ -101,11 +108,12 @@ Control-stage modules receive one context table with:
 ### Adding a new module
 
 1. Create module files directly (commonly `modules/<new_module>/control.lua`, `modules/<new_module>/entities.lua`, `modules/<new_module>/recipes.lua`).
-2. Manually register each new file path in `core/feature_loader.lua`.
-3. Put runtime-global settings in top-level `settings.lua` when needed.
-4. In control modules, register events through `context.events`.
-5. If runtime state is needed, initialize schema in `on_init` and validate in `on_load`.
-6. Run `HEADLESS=1 ./scripts/launch.sh` to make sure game boots up
+2. Register prototype modules in `core/feature_loader.lua` (`module_entity_module_paths` / `module_recipe_module_paths`) as needed.
+3. For runtime behavior, either wire the module from `modules/startup.lua` (preferred orchestration path) or add a control registration in `core/feature_loader.lua` intentionally.
+4. Put runtime-global settings in top-level `settings.lua` when needed.
+5. In control modules, register events through `context.events`.
+6. If runtime state is needed, initialize schema in `on_init` and validate in `on_load`.
+7. Run `HEADLESS=1 ./scripts/launch.sh` to make sure game boots up
 
 ### Launching for development
 
@@ -116,7 +124,7 @@ Control-stage modules receive one context table with:
   - profile: `.tmp/factorio-launch`
 - The script auto-detects Factorio binaries (standalone installs first, Steam fallback last). Override explicitly with `FACTORIO_BIN=/path/to/factorio`.
 - If the target save does not exist, it creates one automatically with the same debug mod set (`base` + `elevated-rails` + `quality` + `space-age` + `warpage`).
-- Run `HEADLESS=1 ./scripts/launch.sh` for a quick non-interactive startup check (`UNTIL_TICK` defaults to `120`).
+- Run `HEADLESS=1 ./scripts/launch.sh` for a quick non-interactive startup check (`UNTIL_TICK` defaults to `120`); if the save is already past that tick, increase `UNTIL_TICK`.
 
 ## Factorio references
 
