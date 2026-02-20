@@ -17,6 +17,15 @@
 ---@field x number
 ---@field y number
 
+---@class Color
+---@field r number
+---@field g number
+---@field b number
+---@field a? number
+
+---@class LuaFluidPrototype
+---@field base_color Color
+
 ---@class LuaFluidBox
 ---@field get_capacity fun(index: integer): number
 
@@ -80,6 +89,7 @@
 ---@field surfaces table<integer|string, LuaSurface>
 ---@field forces table<string, LuaForce>
 ---@field players table<integer, LuaPlayer>
+---@field fluid_prototypes table<string, LuaFluidPrototype>
 ---@field get_player fun(player_index: integer): LuaPlayer|nil
 
 ---@class WarpageFeatureManifest

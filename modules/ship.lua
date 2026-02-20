@@ -16,6 +16,13 @@ local HUB_UI_ROOT_NAME = "warpage_hub_ui"
 local HUB_UI_POWER_LABEL_NAME = "warpage_hub_ui_power_label"
 local HUB_UI_POWER_BAR_NAME = "warpage_hub_ui_power_bar"
 local HUB_UI_FLUID_TABLE_NAME = "warpage_hub_ui_fluid_table"
+local HUB_UI_FLUID_LEFT_ICON = "[virtual-signal=signal-left]"
+local HUB_UI_FLUID_RIGHT_ICON = "[virtual-signal=signal-right]"
+local HUB_UI_FLUID_EMPTY_ICON = "[virtual-signal=signal-deny]"
+local HUB_UI_FLUID_ICON_WIDTH = 22
+local HUB_UI_FLUID_BAR_WIDTH = 140
+local HUB_UI_FLUID_TOTALS_WIDTH = 88
+local HUB_UI_FLUID_EMPTY_BAR_COLOR = { r = 0.35, g = 0.35, b = 0.35 }
 
 local HUB_UI_UPDATE_INTERVAL = 30
 
@@ -334,9 +341,9 @@ local function ensure_hub_ui(player)
   local fluid_table = root.add({
     type = "table",
     name = HUB_UI_FLUID_TABLE_NAME,
-    column_count = 2
+    column_count = 4
   })
-  fluid_table.style.horizontal_spacing = 12
+  fluid_table.style.horizontal_spacing = 6
 
   return root
 end
@@ -352,33 +359,106 @@ local function extract_fluid(entity)
   return fluid_name, amount
 end
 
+---@param value number
+---@return string
+local function format_compact_int(value)
+  local rounded = math.floor(value + 0.5)
+  local sign = ""
+  if rounded < 0 then
+    sign = "-"
+    rounded = -rounded
+  end
+
+  if rounded >= 1000000 then
+    return sign .. tostring(math.floor(rounded / 1000000)) .. "M"
+  end
+
+  if rounded >= 1000 then
+    return sign .. tostring(math.floor(rounded / 1000)) .. "k"
+  end
+
+  return sign .. tostring(rounded)
+end
+
+---@param fluid_name string
+---@return Color
+local function resolve_fluid_bar_color(fluid_name)
+  local runtime_game = require_game()
+  local fluid_prototype = runtime_game.fluid_prototypes[fluid_name]
+  if fluid_prototype == nil then
+    error("Hub UI could not resolve fluid prototype '" .. fluid_name .. "'.")
+  end
+
+  local base_color = fluid_prototype.base_color
+  local red = base_color.r
+  local green = base_color.g
+  local blue = base_color.b
+  if type(red) ~= "number" or type(green) ~= "number" or type(blue) ~= "number" then
+    error("Hub fluid '" .. fluid_name .. "' must expose numeric base_color.")
+  end
+
+  return { r = red, g = green, b = blue }
+end
+
 ---@param fluid_table LuaGuiElement
----@param label string
+---@param direction_icon string
 ---@param fluid_pipe LuaEntity
-local function add_fluid_row(fluid_table, label, fluid_pipe)
+local function add_fluid_row(fluid_table, direction_icon, fluid_pipe)
   local fluid_name, amount = extract_fluid(fluid_pipe)
   local capacity = fluid_pipe.fluidbox.get_capacity(1)
   if type(capacity) ~= "number" then
     error("Hub fluid pipe must expose a numeric fluid capacity.")
   end
 
-  fluid_table.add({
+  local direction_cell = fluid_table.add({
     type = "label",
-    caption = label
+    caption = direction_icon
   })
+  direction_cell.style.minimal_width = HUB_UI_FLUID_ICON_WIDTH
+  direction_cell.style.maximal_width = HUB_UI_FLUID_ICON_WIDTH
+  direction_cell.style.horizontal_align = "center"
 
-  if fluid_name == nil then
-    fluid_table.add({
-      type = "label",
-      caption = "Empty (0 / " .. string.format("%.1f", capacity) .. ")"
-    })
-    return
+  local amount_ratio = 0
+  if capacity > 0 then
+    amount_ratio = amount / capacity
+    if amount_ratio < 0 then
+      amount_ratio = 0
+    elseif amount_ratio > 1 then
+      amount_ratio = 1
+    end
   end
 
-  fluid_table.add({
+  local fluid_icon = HUB_UI_FLUID_EMPTY_ICON
+  local bar_color = HUB_UI_FLUID_EMPTY_BAR_COLOR
+  if fluid_name ~= nil then
+    fluid_icon = "[fluid=" .. fluid_name .. "]"
+    bar_color = resolve_fluid_bar_color(fluid_name)
+  end
+
+  local fluid_icon_cell = fluid_table.add({
     type = "label",
-    caption = "[fluid=" .. fluid_name .. "] " .. string.format("%.1f / %.1f", amount, capacity)
+    caption = fluid_icon
   })
+  fluid_icon_cell.style.minimal_width = HUB_UI_FLUID_ICON_WIDTH
+  fluid_icon_cell.style.maximal_width = HUB_UI_FLUID_ICON_WIDTH
+  fluid_icon_cell.style.horizontal_align = "center"
+
+  local fluid_bar = fluid_table.add({
+    type = "progressbar",
+    value = amount_ratio
+  })
+  fluid_bar.style.minimal_width = HUB_UI_FLUID_BAR_WIDTH
+  fluid_bar.style.maximal_width = HUB_UI_FLUID_BAR_WIDTH
+  fluid_bar.style.color = bar_color
+
+  local totals_cell = fluid_table.add({
+    type = "label",
+    caption = format_compact_int(amount) .. " / " .. format_compact_int(capacity)
+  })
+  totals_cell.style.minimal_width = HUB_UI_FLUID_TOTALS_WIDTH
+  totals_cell.style.maximal_width = HUB_UI_FLUID_TOTALS_WIDTH
+  totals_cell.style.horizontal_align = "right"
+  totals_cell.style.font = "default-mono"
 end
 
 ---@param player LuaPlayer
@@ -427,8 +507,8 @@ local function update_hub_ui(player, hub_entity)
   end
 
   fluid_table.clear()
-  add_fluid_row(fluid_table, "Bottom Left", left_pipe)
-  add_fluid_row(fluid_table, "Bottom Right", right_pipe)
+  add_fluid_row(fluid_table, HUB_UI_FLUID_LEFT_ICON, left_pipe)
+  add_fluid_row(fluid_table, HUB_UI_FLUID_RIGHT_ICON, right_pipe)
 end
 
 local function reset_open_hub_state()
