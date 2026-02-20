@@ -11,6 +11,37 @@
 
 ---@alias WarpageEventId integer|string
 
+---@alias WarpageDirection integer
+
+---@class MapPosition
+---@field x number
+---@field y number
+
+---@class LuaForce
+---@field name string
+
+---@alias ForceIdentification string|LuaForce
+---@alias QualityID string
+
+---@class LuaEntity
+---@field valid boolean
+---@field name string
+---@field direction WarpageDirection
+---@field force LuaForce
+---@field surface LuaSurface
+---@field position MapPosition
+---@field quality? QualityID
+---@field destroy fun(): boolean
+---@field teleport fun(position: MapPosition): boolean
+
+---@class LuaSurface
+---@field name string
+---@field create_entity fun(options: table): LuaEntity|nil
+---@field find_entities_filtered fun(options: table): LuaEntity[]
+
+---@class LuaGameScript
+---@field surfaces table<integer, LuaSurface>
+
 ---@class WarpageFeatureManifest
 ---@field id string
 ---@field stages table<WarpageStage, string?>
@@ -83,3 +114,39 @@
 
 ---@class WarpageStorageGlobal
 ---@field warpage? WarpageStorageRoot
+
+---@class WarpageCompoundEntityPartDefinition
+---@field id string
+---@field entity_name string
+---@field offset MapPosition
+---@field direction? WarpageDirection
+---@field direction_relative? boolean
+---@field force? ForceIdentification
+---@field quality? QualityID
+---@field create_build_effect_smoke? boolean
+---@field on_ready? fun(entity: LuaEntity, main_entity: LuaEntity)
+
+---@class WarpageCompoundEntityDefinition
+---@field id string
+---@field main_entity_name string
+---@field parts WarpageCompoundEntityPartDefinition[]
+---@field matches_main_entity? fun(entity: LuaEntity): boolean
+---@field on_main_entity_ready? fun(entity: LuaEntity)
+---@field on_main_entity_pre_destroy? fun(entity: LuaEntity)
+
+---@class WarpageCompoundEntityPlacement
+---@field surface LuaSurface
+---@field position MapPosition
+---@field force ForceIdentification
+---@field direction? WarpageDirection
+---@field quality? QualityID
+---@field create_build_effect_smoke? boolean
+
+---@class WarpageCompoundEntity
+---@field new fun(definition: WarpageCompoundEntityDefinition): WarpageCompoundEntity
+---@field bind fun(self: WarpageCompoundEntity, events: WarpageScopedBinding)
+---@field is_main_entity fun(self: WarpageCompoundEntity, entity: LuaEntity|nil): boolean
+---@field place fun(self: WarpageCompoundEntity, placement: WarpageCompoundEntityPlacement): LuaEntity
+---@field sync fun(self: WarpageCompoundEntity, main_entity: LuaEntity): LuaEntity[]
+---@field reposition fun(self: WarpageCompoundEntity, main_entity, position, direction?): LuaEntity[]
+---@field cleanup fun(self: WarpageCompoundEntity, main_entity: LuaEntity)

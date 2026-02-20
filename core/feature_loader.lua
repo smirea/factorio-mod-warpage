@@ -1,3 +1,5 @@
+local common = require("core.utils.common")
+
 ---@type string[]
 local feature_names = require("feature_index")
 
@@ -12,22 +14,6 @@ local VALID_STAGES = {
   control = true
 }
 
----@param value unknown
----@param name string
-local function ensure_table(value, name)
-  if type(value) ~= "table" then
-    error(name .. " must be a table.")
-  end
-end
-
----@param value unknown
----@param name string
-local function ensure_non_empty_string(value, name)
-  if type(value) ~= "string" or value == "" then
-    error(name .. " must be a non-empty string.")
-  end
-end
-
 ---@param stage unknown
 local function ensure_valid_stage(stage)
   if type(stage) ~= "string" or not VALID_STAGES[stage] then
@@ -39,13 +25,13 @@ end
 ---@param seen_ids table<string, true>
 ---@return WarpageLoadedFeature
 local function load_feature(feature_folder_name, seen_ids)
-  ensure_non_empty_string(feature_folder_name, "feature index entry")
+  common.ensure_non_empty_string(feature_folder_name, "feature index entry")
   ---@cast feature_folder_name string
 
   local feature_module_path = "features." .. feature_folder_name .. ".feature"
   local feature_manifest = require(feature_module_path)
-  ensure_table(feature_manifest, feature_module_path)
-  ensure_non_empty_string(feature_manifest.id, feature_module_path .. ".id")
+  common.ensure_table(feature_manifest, feature_module_path)
+  common.ensure_non_empty_string(feature_manifest.id, feature_module_path .. ".id")
   ---@cast feature_manifest WarpageFeatureManifest
 
   if seen_ids[feature_manifest.id] then
@@ -54,12 +40,12 @@ local function load_feature(feature_folder_name, seen_ids)
   seen_ids[feature_manifest.id] = true
 
   local stages = feature_manifest.stages or {}
-  ensure_table(stages, feature_module_path .. ".stages")
+  common.ensure_table(stages, feature_module_path .. ".stages")
 
   for stage_name, stage_module_path in pairs(stages) do
     ensure_valid_stage(stage_name)
     ---@cast stage_name WarpageStage
-    ensure_non_empty_string(stage_module_path, feature_module_path .. ".stages." .. stage_name)
+    common.ensure_non_empty_string(stage_module_path, feature_module_path .. ".stages." .. stage_name)
   end
 
   return {
@@ -71,7 +57,7 @@ end
 
 ---@return WarpageLoadedFeature[]
 local function load_features()
-  ensure_table(feature_names, "feature_index")
+  common.ensure_table(feature_names, "feature_index")
 
   local features = {} ---@type WarpageLoadedFeature[]
   local seen_ids = {} ---@type table<string, true>
@@ -125,7 +111,7 @@ function FeatureLoader.run_stage(stage, context)
   ---@cast stage WarpageStage
 
   local base_context = context or {}
-  ensure_table(base_context, "context")
+  common.ensure_table(base_context, "context")
   ---@cast base_context WarpageBaseContext
 
   for _, feature in ipairs(load_features()) do

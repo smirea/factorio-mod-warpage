@@ -4,6 +4,8 @@ See `project.md` for high level goals, big picture, project scope
 
 When writing lua, always define proper types for everything by referencing the correct factorio entity and return types
 
+When writing new functionality check ./core and especially ./core/utils first to see what can be re-used and how to work within the existing framework
+
 ## Typing and static checks
 
 - This repo uses LuaLS + LuaCATS as the source-of-truth type system for Lua code.
@@ -48,6 +50,12 @@ This repository contains a Factorio 2.0-ready scaffold with strict stage routing
 - `core/runtime.lua` creates the shared event bus and invokes runtime feature handlers.
 - `core/event_bus.lua` provides source-scoped runtime bindings per feature.
 - `core/storage_schema.lua` enforces persistent storage structure early.
+
+### Core utils
+
+- `core/utils/common.lua` contains shared fail-fast helpers. Import once as `local common = require("core.utils.common")` and call helpers directly (`common.ensure_table(...)`, etc).
+- `core/utils/compound_entity.lua` handles compound-entity placement, syncing, cleanup, and event wiring.
+- For compound entities in control stage, bind through feature-scoped events (`compound:bind(context.events)`) so event registration remains source-scoped.
 
 ### Feature contract
 

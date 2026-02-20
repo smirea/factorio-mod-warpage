@@ -1,3 +1,5 @@
+local common = require("core.utils.common")
+
 ---@class WarpageEventBusImpl: WarpageEventBus
 local EventBus = {}
 EventBus.__index = EventBus
@@ -6,19 +8,9 @@ EventBus.__index = EventBus
 local ScopedBinding = {}
 ScopedBinding.__index = ScopedBinding
 
----@param value unknown
----@param name string
-local function ensure_table(value, name)
-  if type(value) ~= "table" then
-    error(name .. " must be a table.")
-  end
-end
-
 ---@param source unknown
 local function ensure_source(source)
-  if type(source) ~= "string" or source == "" then
-    error("Handler source must be a non-empty string.")
-  end
+  common.ensure_non_empty_string(source, "Handler source")
 end
 
 ---@param handler unknown
@@ -263,7 +255,7 @@ end
 
 ---@param registration unknown
 function ScopedBinding:bind(registration)
-  ensure_table(registration, "registration")
+  common.ensure_table(registration, "registration")
   ---@cast registration WarpageEventRegistration
 
   if registration.on_init ~= nil then
@@ -279,7 +271,7 @@ function ScopedBinding:bind(registration)
   end
 
   if registration.events ~= nil then
-    ensure_table(registration.events, "registration.events")
+    common.ensure_table(registration.events, "registration.events")
     for _, event_id in ipairs(sorted_keys(registration.events)) do
       local handler = registration.events[event_id]
       if handler ~= nil then
@@ -289,7 +281,7 @@ function ScopedBinding:bind(registration)
   end
 
   if registration.nth_tick ~= nil then
-    ensure_table(registration.nth_tick, "registration.nth_tick")
+    common.ensure_table(registration.nth_tick, "registration.nth_tick")
     for _, tick in ipairs(sorted_keys(registration.nth_tick)) do
       local handler = registration.nth_tick[tick]
       if handler ~= nil then
