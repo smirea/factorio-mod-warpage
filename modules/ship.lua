@@ -9,8 +9,8 @@ local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
 local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
 local HUB_POSITION = { x = 0, y = 0 }
 local HUB_DIRECTION = defines.direction.north
-local HUB_PIPE_LEFT_OFFSET = { x = -3, y = 3 }
-local HUB_PIPE_RIGHT_OFFSET = { x = 3, y = 3 }
+local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
+local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
 local LEGACY_HUB_ACCUMULATOR_OFFSETS = {
   { x = -2, y = 0 },
   { x = 2, y = 0 }
