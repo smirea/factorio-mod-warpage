@@ -11,10 +11,6 @@ local HUB_POSITION = { x = 0, y = 0 }
 local HUB_DIRECTION = defines.direction.north
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
 local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
-local LEGACY_HUB_ACCUMULATOR_OFFSETS = {
-  { x = -2, y = 0 },
-  { x = 2, y = 0 }
-}
 local HUB_UI_ROOT_NAME = "warpage_hub_ui"
 local HUB_UI_POWER_LABEL_NAME = "warpage_hub_ui_power_label"
 local HUB_UI_POWER_BAR_NAME = "warpage_hub_ui_power_bar"
@@ -46,30 +42,6 @@ local function offset_from_main(main_entity, offset)
     x = main_entity.position.x + rotated.x,
     y = main_entity.position.y + rotated.y
   }
-end
-
----@param main_entity LuaEntity
-local function remove_legacy_hub_accumulators(main_entity)
-  for _, legacy_offset in ipairs(LEGACY_HUB_ACCUMULATOR_OFFSETS) do
-    local legacy_position = offset_from_main(main_entity, legacy_offset)
-    local legacy_entities = main_entity.surface.find_entities_filtered({
-      name = "accumulator",
-      position = legacy_position,
-      force = main_entity.force
-    })
-
-    for _, legacy_entity in ipairs(legacy_entities) do
-      if legacy_entity.valid and common.positions_match(legacy_entity.position, legacy_position) then
-        legacy_entity.destroy()
-      end
-    end
-  end
-end
-
----@param entity LuaEntity
-local function prepare_hub_main_entity(entity)
-  lock_hub_entity(entity)
-  remove_legacy_hub_accumulators(entity)
 end
 
 ---@param main_entity LuaEntity
@@ -193,7 +165,7 @@ local hub_compound = CompoundEntity.new({
   matches_main_entity = function(entity)
     return entity.force.name == PLAYER_FORCE_NAME and common.positions_match(entity.position, HUB_POSITION)
   end,
-  on_main_entity_ready = prepare_hub_main_entity
+  on_main_entity_ready = lock_hub_entity
 })
 
 ---@class Ship
