@@ -224,20 +224,11 @@
 ---@field reposition fun(self: WarpageCompoundEntity, main_entity, position, direction?): LuaEntity[]
 ---@field cleanup fun(self: WarpageCompoundEntity, main_entity: LuaEntity)
 
----@class WarpageFloatingTextOptions
+---@class WarpageHolographicTextOptions
 ---@field text string|table
 ---@field surface LuaSurface
----@field target LuaEntity|MapPosition
+---@field target LuaEntity
 ---@field target_offset? MapPosition
----@field color? Color
----@field alignment? "left"|"center"|"right"
----@field vertical_alignment? "top"|"center"|"bottom"
----@field use_rich_text? boolean
 ---@field time_to_live? integer
----@field players? table<integer, LuaPlayer>
----@field forces? table<integer, LuaForce>
----@field scale? number
----@field only_in_alt_mode? boolean
 
----@class WarpageFloatingTextHandle
----@field destroy fun(self: WarpageFloatingTextHandle)
+---@alias WarpageCleanupFn fun()

@@ -2,6 +2,7 @@ local Common = {}
 
 local DIRECTION_COUNT = 8
 local DEFAULT_POSITION_EPSILON = 0.0001
+local HOLOGRAPHIC_TEXT_ENTITY_NAME = "compi-speech-bubble"
 
 ---@param value unknown
 ---@param name string
@@ -160,6 +161,72 @@ function Common.optional_event_id(event_name)
   end
 
   return event_id
+end
+
+---@param options WarpageHolographicTextOptions
+---@return WarpageCleanupFn, MapPosition
+function Common.create_holographic_text(options)
+  Common.ensure_table(options, "options")
+  if options.text == nil then
+    error("options.text is required.")
+  end
+
+  if options.surface == nil then
+    error("options.surface is required.")
+  end
+
+  if options.target == nil then
+    error("options.target is required.")
+  end
+
+  if options.target.valid ~= true then
+    error("options.target must be a valid LuaEntity.")
+  end
+
+  if options.target.surface ~= options.surface then
+    error("options.target.surface must match options.surface.")
+  end
+
+  local target_offset = options.target_offset
+  if target_offset == nil then
+    target_offset = { x = 0, y = 0 }
+  else
+    Common.ensure_position(target_offset, "options.target_offset")
+  end
+
+  local lifetime = options.time_to_live
+  if lifetime ~= nil and (type(lifetime) ~= "number" or lifetime % 1 ~= 0 or lifetime < 1) then
+    error("options.time_to_live must be a positive integer when provided.")
+  end
+
+  local map_position = {
+    x = options.target.position.x + target_offset.x,
+    y = options.target.position.y + target_offset.y
+  }
+
+  local speech_bubble = options.surface.create_entity({
+    name = HOLOGRAPHIC_TEXT_ENTITY_NAME,
+    position = map_position,
+    target = options.target,
+    text = options.text,
+    lifetime = lifetime
+  })
+  if speech_bubble == nil then
+    error("surface.create_entity(...) must return a speech bubble entity.")
+  end
+
+  local function cleanup()
+    if speech_bubble.valid ~= true then
+      return
+    end
+
+    local destroyed = speech_bubble.destroy()
+    if destroyed ~= true and speech_bubble.valid then
+      error("Failed to destroy holographic text entity.")
+    end
+  end
+
+  return cleanup, map_position
 end
 
 return Common

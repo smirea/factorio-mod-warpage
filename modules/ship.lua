@@ -1,6 +1,5 @@
 local common = require("core.utils.common")
 local CompoundEntity = require("core.utils.compound_entity")
-local FlyingText = require("core.utils.flying_text")
 
 local PLAYER_FORCE_NAME = "player"
 local HUB_SURFACE_NAME = "nauvis"
@@ -28,9 +27,8 @@ local HUB_UI_FLUID_TOTALS_WIDTH = 88
 local HUB_UI_FLUID_EMPTY_BAR_COLOR = { r = 0.35, g = 0.35, b = 0.35 }
 
 local HUB_UI_UPDATE_INTERVAL = 30
-local HUB_REPAIR_TEXT_LIFETIME = HUB_UI_UPDATE_INTERVAL + 5
+local HUB_REPAIR_TEXT_LIFETIME = 2147483647
 local HUB_DESTROYED_CONTAINER_SLOT_COUNT = 48
-local HUB_REPAIR_TEXT_COLOR = { r = 0.95, g = 0.9, b = 0.8 }
 
 ---@class WarpageShipRepairRequirement
 ---@field item_name string
@@ -47,15 +45,16 @@ local HUB_REPAIR_REQUIREMENTS = {
 }
 
 local open_hubs_by_player = {} ---@type table<integer, LuaEntity>
-local hub_repair_status_text = nil ---@type WarpageFloatingTextHandle|nil
+local hub_repair_status_text_cleanup = nil ---@type WarpageCleanupFn|nil
+local hub_repair_status_text_value = nil ---@type string|nil
 
 local function destroy_hub_repair_status_text()
-  if hub_repair_status_text == nil then
-    return
+  if hub_repair_status_text_cleanup ~= nil then
+    hub_repair_status_text_cleanup()
+    hub_repair_status_text_cleanup = nil
   end
 
-  hub_repair_status_text:destroy()
-  hub_repair_status_text = nil
+  hub_repair_status_text_value = nil
 end
 
 ---@param entity LuaEntity
@@ -541,33 +540,33 @@ end
 ---@param destroyed_hub_container LuaEntity
 ---@param repair_status WarpageShipRepairStatus[]
 local function draw_destroyed_hub_repair_status(destroyed_hub_container, repair_status)
-  destroy_hub_repair_status_text()
-
-  local lines = { "[font=default-bold]Hub Repair[/font]" }
-  local has_missing_items = false
+  local lines = {} ---@type string[]
 
   for _, entry in ipairs(repair_status) do
     if entry.remaining > 0 then
-      has_missing_items = true
-      lines[#lines + 1] = "[item=" .. entry.item_name .. "] " .. tostring(entry.remaining) .. " remaining"
+      lines[#lines + 1] = "[item=" .. entry.item_name .. "] " .. tostring(entry.remaining)
     end
   end
 
-  if not has_missing_items then
-    lines[#lines + 1] = "Reconstruction ready"
+  if #lines == 0 then
+    destroy_hub_repair_status_text()
+    return
   end
 
-  hub_repair_status_text = FlyingText.create({
-    text = table.concat(lines, "\n"),
+  local text = table.concat(lines, " ")
+  if hub_repair_status_text_cleanup ~= nil and hub_repair_status_text_value == text then
+    return
+  end
+
+  destroy_hub_repair_status_text()
+  hub_repair_status_text_cleanup = common.create_holographic_text({
+    text = text,
     surface = destroyed_hub_container.surface,
     target = destroyed_hub_container,
     target_offset = { x = 0, y = -4.5 },
-    color = HUB_REPAIR_TEXT_COLOR,
-    alignment = "center",
-    vertical_alignment = "bottom",
-    use_rich_text = true,
     time_to_live = HUB_REPAIR_TEXT_LIFETIME
   })
+  hub_repair_status_text_value = text
 end
 
 ---@param entity LuaEntity
