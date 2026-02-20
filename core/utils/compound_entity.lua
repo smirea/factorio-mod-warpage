@@ -269,6 +269,7 @@ function CompoundEntity:_ensure_part_entity(main_entity, part)
 
   local existing_entities = find_part_entities(main_entity, part, expected_position, expected_force)
   local part_entity = existing_entities[1] ---@type LuaEntity|nil
+  local created = false
 
   for index = 2, #existing_entities do
     local duplicate = existing_entities[index]
@@ -284,12 +285,13 @@ function CompoundEntity:_ensure_part_entity(main_entity, part)
 
   if part_entity == nil then
     part_entity = self:_create_part_entity(main_entity, part, expected_position, expected_direction, expected_force)
+    created = true
   elseif expected_direction ~= nil and part_entity.direction ~= expected_direction then
     part_entity.direction = expected_direction
   end
 
   if part.on_ready ~= nil then
-    part.on_ready(part_entity, main_entity)
+    part.on_ready(part_entity, main_entity, created)
   end
 
   return part_entity

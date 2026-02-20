@@ -96,8 +96,19 @@ end
 
 ---@param entity LuaEntity
 ---@param main_entity LuaEntity
-local function prepare_hub_accumulator(entity, main_entity)
+---@param created boolean
+local function prepare_hub_accumulator(entity, main_entity, created)
   lock_hub_part(entity, main_entity)
+  if not created then
+    return
+  end
+
+  local capacity = entity.electric_buffer_size
+  if type(capacity) ~= "number" then
+    error("Hub accumulator must expose numeric electric_buffer_size.")
+  end
+
+  entity.energy = capacity
 end
 
 ---@param entity LuaEntity

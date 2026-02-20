@@ -162,7 +162,7 @@
 ---@field force? ForceIdentification
 ---@field quality? QualityID
 ---@field create_build_effect_smoke? boolean
----@field on_ready? fun(entity: LuaEntity, main_entity: LuaEntity)
+---@field on_ready? fun(entity: LuaEntity, main_entity: LuaEntity, created: boolean)
 
 ---@class WarpageCompoundEntityDefinition
 ---@field id string
