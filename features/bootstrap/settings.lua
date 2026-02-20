@@ -1,4 +1,5 @@
-return function()
+---@type WarpageStageRunner
+return function(_context)
   data:extend({
     {
       type = "bool-setting",

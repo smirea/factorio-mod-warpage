@@ -1,10 +1,12 @@
 local StorageSchema = require("core.storage_schema")
 
+---@return boolean
 local function is_debug_mode_enabled()
   local setting = settings.global["warpage-debug-mode"]
   return setting ~= nil and setting.value == true
 end
 
+---@param message string
 local function debug_log(message)
   if is_debug_mode_enabled() then
     log("[warpage] " .. message)
@@ -29,6 +31,7 @@ local function assert_bootstrap_state()
   end
 end
 
+---@param context WarpageFeatureContext
 return function(context)
   local events = context.events
   if events == nil then

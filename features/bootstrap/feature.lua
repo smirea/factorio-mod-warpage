@@ -1,3 +1,4 @@
+---@type WarpageFeatureManifest
 return {
   id = "bootstrap",
   stages = {

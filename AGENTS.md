@@ -2,6 +2,32 @@ This is a factorio mod called "Warp Age"
 
 See `project.md` for high level goals, big picture, project scope
 
+When writing lua, always define proper types for everything by referencing the correct factorio entity and return types
+
+## Typing and static checks
+
+- This repo uses LuaLS + LuaCATS as the source-of-truth type system for Lua code.
+- Workspace LuaLS configuration lives in `.luarc.json`.
+- Shared project type aliases/classes live in `types/warpage.lua`.
+- Prefer annotating function parameters/returns and structural tables at module boundaries, especially feature manifests, contexts, event registrations, and storage schemas.
+- When adding new typed shared structures, define them in `types/warpage.lua` first and then consume them from feature/core modules.
+- Keep fail-fast behavior: validate required structure early and raise errors immediately when contracts are invalid.
+
+## Required local verification
+
+- Run LuaLS checks before commit:
+  - `/Users/stefan/.local/share/nvim/mason/packages/lua-language-server/lua-language-server --configpath .luarc.json --check . --checklevel=Warning`
+- Run luacheck before commit:
+  - `luacheck control.lua data.lua data-updates.lua data-final-fixes.lua settings.lua settings-updates.lua settings-final-fixes.lua feature_index.lua core features types`
+- Run lefthook before commit:
+  - `lefthook run pre-commit`
+
+## Git hooks
+
+- Pre-commit is managed via `lefthook.yml`.
+- The `luals-staged` pre-commit command checks only staged `.lua` files using `scripts/check-lua-staged.sh`.
+- `scripts/check-lua-staged.sh` resolves `lua-language-server` from PATH, `LUA_LANGUAGE_SERVER_BIN`, Mason install, or Cursor extension install.
+
 ## Mod architecture
 
 This repository contains a Factorio 2.0-ready scaffold with strict stage routing and feature-local modules.

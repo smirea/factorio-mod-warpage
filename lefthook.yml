@@ -1,0 +1,5 @@
+pre-commit:
+  commands:
+    luals-staged:
+      glob: "*.lua"
+      run: ./scripts/check-lua-staged.sh {staged_files}
