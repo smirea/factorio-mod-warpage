@@ -13,6 +13,8 @@ Hub entities currently used:
 - Hidden centered power pole: `warpage-hub-power-pole`
 - Hidden centered accumulator: `warpage-hub-accumulator`
 - Fluid tank pipes (bottom-left and bottom-right): `warpage-hub-fluid-pipe`
+- Destroyed-hub repair container: `warpage-destroyed-hub-container`
+- Destroyed-hub rubble visual: `warpage-destroyed-hub-rubble`
 
 Note: at the very beginning of the game, the hub starts off destroyed and the first task is to rebuild it.
 

@@ -152,6 +152,7 @@ local function make_destroyed_hub_container_prototype()
   prototype.minable = nil
   prototype.max_health = 1000000
   prototype.inventory_size = 48
+  prototype.inventory_type = "with_filters_and_bar"
   prototype.fast_replaceable_group = nil
   prototype.order = "z[warpage]-d[destroyed-hub-container]"
 

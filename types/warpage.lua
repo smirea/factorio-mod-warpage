@@ -29,6 +29,19 @@
 ---@class LuaFluidBox
 ---@field get_capacity fun(index: integer): number
 
+---@class LuaItemStack
+---@field set_stack fun(stack: table): boolean
+
+---@class LuaInventory
+---@field supports_filters fun(): boolean
+---@field supports_bar fun(): boolean
+---@field set_filter fun(index: integer, filter: string|nil): boolean
+---@field set_bar fun(bar: integer|nil)
+---@field get_item_count fun(item?: string): integer
+---@field remove fun(items: table): integer
+---@field insert fun(items: table): integer
+---@field [integer] LuaItemStack
+
 ---@class LuaWireConnector
 ---@field valid boolean
 ---@field is_connected_to fun(target: LuaWireConnector, origin?: integer): boolean
@@ -77,6 +90,7 @@
 ---@field teleport fun(position: MapPosition): boolean
 ---@field get_fluid_contents fun(): table<string, number>
 ---@field insert_fluid fun(fluid: table): number
+---@field get_inventory fun(inventory: integer): LuaInventory|nil
 ---@field get_wire_connector fun(wire_connector_id: integer, or_create: boolean): LuaWireConnector|nil
 
 ---@class LuaSurface

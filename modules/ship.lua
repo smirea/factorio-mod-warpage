@@ -7,6 +7,8 @@ local HUB_MAIN_ENTITY_NAME = "cargo-landing-pad"
 local HUB_ACCUMULATOR_ENTITY_NAME = "warpage-hub-accumulator"
 local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
 local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
+local HUB_DESTROYED_CONTAINER_ENTITY_NAME = "warpage-destroyed-hub-container"
+local HUB_DESTROYED_RUBBLE_ENTITY_NAME = "warpage-destroyed-hub-rubble"
 local HUB_POSITION = { x = 0, y = 0 }
 local HUB_DIRECTION = defines.direction.north
 local HUB_CLEAR_RADIUS = 4
@@ -25,6 +27,23 @@ local HUB_UI_FLUID_TOTALS_WIDTH = 88
 local HUB_UI_FLUID_EMPTY_BAR_COLOR = { r = 0.35, g = 0.35, b = 0.35 }
 
 local HUB_UI_UPDATE_INTERVAL = 30
+local HUB_REPAIR_TEXT_LIFETIME = HUB_UI_UPDATE_INTERVAL + 5
+local HUB_DESTROYED_CONTAINER_SLOT_COUNT = 48
+local HUB_REPAIR_TEXT_COLOR = { r = 0.95, g = 0.9, b = 0.8 }
+
+---@class WarpageShipRepairRequirement
+---@field item_name string
+---@field amount integer
+---@field slots integer
+
+---@type WarpageShipRepairRequirement[]
+local HUB_REPAIR_REQUIREMENTS = {
+  { item_name = "stone", amount = 200, slots = 4 },
+  { item_name = "coal", amount = 200, slots = 4 },
+  { item_name = "copper-ore", amount = 100, slots = 2 },
+  { item_name = "iron-plate", amount = 100, slots = 1 },
+  { item_name = "calcite", amount = 10, slots = 1 }
+}
 
 local open_hubs_by_player = {} ---@type table<integer, LuaEntity>
 
@@ -37,6 +56,12 @@ end
 ---@param entity LuaEntity
 ---@param _main_entity LuaEntity
 local function lock_hub_part(entity, _main_entity)
+  entity.destructible = false
+  entity.minable = false
+end
+
+---@param entity LuaEntity
+local function lock_destroyed_hub_container(entity)
   entity.destructible = false
   entity.minable = false
 end
@@ -234,13 +259,70 @@ local function find_existing_hub(surface, force)
     force = force
   })
 
+  local matched = {} ---@type LuaEntity[]
   for _, entity in ipairs(candidates) do
     if hub_compound:is_main_entity(entity) then
-      return entity
+      matched[#matched + 1] = entity
     end
   end
 
-  return nil
+  if #matched > 1 then
+    error("Expected at most one hub main entity at the hub origin, got " .. tostring(#matched) .. ".")
+  end
+
+  return matched[1]
+end
+
+---@param surface LuaSurface
+---@return LuaEntity|nil
+local function find_destroyed_hub_container(surface)
+  local area = {
+    { HUB_POSITION.x - 1, HUB_POSITION.y - 1 },
+    { HUB_POSITION.x + 1, HUB_POSITION.y + 1 }
+  }
+  local candidates = surface.find_entities_filtered({
+    name = HUB_DESTROYED_CONTAINER_ENTITY_NAME,
+    area = area
+  })
+
+  local matched = {} ---@type LuaEntity[]
+  for _, entity in ipairs(candidates) do
+    if entity.valid then
+      matched[#matched + 1] = entity
+    end
+  end
+
+  if #matched > 1 then
+    error("Expected at most one destroyed hub container at the hub origin, got " .. tostring(#matched) .. ".")
+  end
+
+  return matched[1]
+end
+
+---@param surface LuaSurface
+---@return LuaEntity|nil
+local function find_destroyed_hub_rubble(surface)
+  local area = {
+    { HUB_POSITION.x - 1, HUB_POSITION.y - 1 },
+    { HUB_POSITION.x + 1, HUB_POSITION.y + 1 }
+  }
+  local candidates = surface.find_entities_filtered({
+    name = HUB_DESTROYED_RUBBLE_ENTITY_NAME,
+    area = area
+  })
+
+  local matched = {} ---@type LuaEntity[]
+  for _, entity in ipairs(candidates) do
+    if entity.valid then
+      matched[#matched + 1] = entity
+    end
+  end
+
+  if #matched > 1 then
+    error("Expected at most one destroyed hub rubble entity at the hub origin, got " .. tostring(#matched) .. ".")
+  end
+
+  return matched[1]
 end
 
 ---@param surface LuaSurface
@@ -270,16 +352,10 @@ local function clear_hub_placement_area(surface, center)
   end
 end
 
+---@param surface LuaSurface
+---@param force LuaForce
 ---@return LuaEntity
-local function ensure_initial_hub()
-  local surface = resolve_hub_surface()
-  local force = resolve_player_force()
-  local existing_hub = find_existing_hub(surface, force)
-  if existing_hub ~= nil then
-    hub_compound:sync(existing_hub)
-    return existing_hub
-  end
-
+local function place_hub(surface, force)
   clear_hub_placement_area(surface, HUB_POSITION)
 
   return hub_compound:place({
@@ -289,6 +365,272 @@ local function ensure_initial_hub()
     direction = HUB_DIRECTION,
     create_build_effect_smoke = false
   })
+end
+
+---@param destroyed_hub_container LuaEntity
+---@return LuaInventory
+local function require_destroyed_hub_inventory(destroyed_hub_container)
+  local inventory = destroyed_hub_container.get_inventory(defines.inventory.chest)
+  if inventory == nil then
+    error("Destroyed hub container must expose a chest inventory.")
+  end
+
+  if inventory.supports_filters() ~= true then
+    error("Destroyed hub container inventory must support filters.")
+  end
+
+  if inventory.supports_bar() ~= true then
+    error("Destroyed hub container inventory must support bar limits.")
+  end
+
+  return inventory
+end
+
+---@return integer
+local function compute_required_repair_slots()
+  local total_slots = 0
+
+  for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
+    if type(requirement.slots) ~= "number" or requirement.slots % 1 ~= 0 or requirement.slots < 1 then
+      error("Hub repair requirement '" .. requirement.item_name .. "' must define a positive integer slot count.")
+    end
+
+    total_slots = total_slots + requirement.slots
+  end
+
+  return total_slots
+end
+
+---@param destroyed_hub_container LuaEntity
+local function configure_destroyed_hub_container(destroyed_hub_container)
+  local inventory = require_destroyed_hub_inventory(destroyed_hub_container)
+  local required_slots = compute_required_repair_slots()
+
+  if required_slots > HUB_DESTROYED_CONTAINER_SLOT_COUNT then
+    error(
+      "Hub repair slot requirements exceed destroyed hub inventory size: required="
+        .. tostring(required_slots)
+        .. ", size="
+        .. tostring(HUB_DESTROYED_CONTAINER_SLOT_COUNT)
+        .. "."
+    )
+  end
+
+  for slot_index = 1, HUB_DESTROYED_CONTAINER_SLOT_COUNT do
+    local cleared = inventory.set_filter(slot_index, nil)
+    if cleared ~= true then
+      error("Failed to clear destroyed hub inventory filter slot " .. tostring(slot_index) .. ".")
+    end
+  end
+
+  inventory.set_bar(required_slots)
+
+  local slot_index = 1
+  for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
+    if type(requirement.slots) ~= "number" or requirement.slots % 1 ~= 0 or requirement.slots < 1 then
+      error("Hub repair requirement '" .. requirement.item_name .. "' must define a positive integer slot count.")
+    end
+
+    for _ = 1, requirement.slots do
+      local set = inventory.set_filter(slot_index, requirement.item_name)
+      if set ~= true then
+        error(
+          "Failed to set destroyed hub inventory filter slot "
+            .. tostring(slot_index)
+            .. " to item '"
+            .. requirement.item_name
+            .. "'."
+        )
+      end
+      slot_index = slot_index + 1
+    end
+  end
+end
+
+---@param surface LuaSurface
+---@param force LuaForce
+---@return LuaEntity, LuaEntity
+local function create_destroyed_hub(surface, force)
+  clear_hub_placement_area(surface, HUB_POSITION)
+
+  local destroyed_hub_container = surface.create_entity({
+    name = HUB_DESTROYED_CONTAINER_ENTITY_NAME,
+    position = HUB_POSITION,
+    force = force,
+    create_build_effect_smoke = false
+  })
+  if destroyed_hub_container == nil then
+    error("Unable to create destroyed hub container at the hub origin.")
+  end
+
+  local destroyed_hub_rubble = surface.create_entity({
+    name = HUB_DESTROYED_RUBBLE_ENTITY_NAME,
+    position = HUB_POSITION
+  })
+  if destroyed_hub_rubble == nil then
+    error("Unable to create destroyed hub rubble at the hub origin.")
+  end
+
+  lock_destroyed_hub_container(destroyed_hub_container)
+  configure_destroyed_hub_container(destroyed_hub_container)
+
+  return destroyed_hub_container, destroyed_hub_rubble
+end
+
+---@class WarpageShipRepairStatus
+---@field item_name string
+---@field required integer
+---@field current integer
+---@field remaining integer
+
+---@param destroyed_hub_container LuaEntity
+---@return boolean, WarpageShipRepairStatus[]
+local function collect_hub_repair_status(destroyed_hub_container)
+  local inventory = require_destroyed_hub_inventory(destroyed_hub_container)
+  local repair_complete = true
+  local status = {} ---@type WarpageShipRepairStatus[]
+
+  for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
+    local current = inventory.get_item_count(requirement.item_name)
+    if type(current) ~= "number" then
+      error("Destroyed hub inventory count for '" .. requirement.item_name .. "' must be numeric.")
+    end
+
+    local remaining = requirement.amount - current
+    if remaining < 0 then
+      remaining = 0
+    end
+
+    if remaining > 0 then
+      repair_complete = false
+    end
+
+    status[#status + 1] = {
+      item_name = requirement.item_name,
+      required = requirement.amount,
+      current = current,
+      remaining = remaining
+    }
+  end
+
+  return repair_complete, status
+end
+
+---@param destroyed_hub_container LuaEntity
+---@param repair_status WarpageShipRepairStatus[]
+local function draw_destroyed_hub_repair_status(destroyed_hub_container, repair_status)
+  local lines = { "[font=default-bold]Hub Repair[/font]" }
+  local has_missing_items = false
+
+  for _, entry in ipairs(repair_status) do
+    if entry.remaining > 0 then
+      has_missing_items = true
+      lines[#lines + 1] = "[item=" .. entry.item_name .. "] " .. tostring(entry.remaining) .. " remaining"
+    end
+  end
+
+  if not has_missing_items then
+    lines[#lines + 1] = "Reconstruction ready"
+  end
+
+  rendering.draw_text({
+    text = table.concat(lines, "\n"),
+    surface = destroyed_hub_container.surface,
+    target = destroyed_hub_container,
+    target_offset = { 0, -4.5 },
+    color = HUB_REPAIR_TEXT_COLOR,
+    alignment = "center",
+    vertical_alignment = "bottom",
+    use_rich_text = true,
+    time_to_live = HUB_REPAIR_TEXT_LIFETIME
+  })
+end
+
+---@param entity LuaEntity
+---@param description string
+local function destroy_entity_or_fail(entity, description)
+  if entity.valid ~= true then
+    return
+  end
+
+  local destroyed = entity.destroy()
+  if destroyed ~= true and entity.valid then
+    error("Unable to destroy " .. description .. " at the hub origin.")
+  end
+end
+
+---@param destroyed_hub_container LuaEntity
+local function consume_hub_repair_items(destroyed_hub_container)
+  local inventory = require_destroyed_hub_inventory(destroyed_hub_container)
+  for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
+    local removed = inventory.remove({
+      name = requirement.item_name,
+      count = requirement.amount
+    })
+    if removed ~= requirement.amount then
+      error(
+        "Failed to consume hub repair item '"
+          .. requirement.item_name
+          .. "': expected "
+          .. tostring(requirement.amount)
+          .. ", removed "
+          .. tostring(removed)
+          .. "."
+      )
+    end
+  end
+end
+
+---@return LuaSurface, LuaForce, LuaEntity|nil, LuaEntity|nil, LuaEntity|nil
+local function ensure_hub_lifecycle_entities()
+  local surface = resolve_hub_surface()
+  local force = resolve_player_force()
+  local existing_hub = find_existing_hub(surface, force)
+
+  local destroyed_hub_container = find_destroyed_hub_container(surface)
+  local destroyed_hub_rubble = find_destroyed_hub_rubble(surface)
+
+  if existing_hub ~= nil then
+    if destroyed_hub_container ~= nil or destroyed_hub_rubble ~= nil then
+      error("Hub main entity and destroyed hub entities cannot coexist at the hub origin.")
+    end
+
+    hub_compound:sync(existing_hub)
+    return surface, force, existing_hub, nil, nil
+  end
+
+  if destroyed_hub_container == nil and destroyed_hub_rubble == nil then
+    destroyed_hub_container, destroyed_hub_rubble = create_destroyed_hub(surface, force)
+  elseif destroyed_hub_container == nil or destroyed_hub_rubble == nil then
+    error("Destroyed hub state is invalid: container and rubble must either both exist or both be absent.")
+  end
+
+  lock_destroyed_hub_container(destroyed_hub_container)
+  configure_destroyed_hub_container(destroyed_hub_container)
+  return surface, force, nil, destroyed_hub_container, destroyed_hub_rubble
+end
+
+---@return LuaEntity|nil
+local function update_hub_lifecycle()
+  local surface, force, hub, destroyed_hub_container, destroyed_hub_rubble = ensure_hub_lifecycle_entities()
+  if hub ~= nil then
+    return hub
+  end
+
+  if destroyed_hub_container == nil or destroyed_hub_rubble == nil then
+    error("Destroyed hub lifecycle update requires both container and rubble entities.")
+  end
+
+  local repair_complete, repair_status = collect_hub_repair_status(destroyed_hub_container)
+  draw_destroyed_hub_repair_status(destroyed_hub_container, repair_status)
+  if not repair_complete then
+    return nil
+  end
+
+  consume_hub_repair_items(destroyed_hub_container)
+  destroy_entity_or_fail(destroyed_hub_rubble, "destroyed hub rubble")
+  destroy_entity_or_fail(destroyed_hub_container, "destroyed hub container")
+  return place_hub(surface, force)
 end
 
 ---@param player LuaPlayer
@@ -574,18 +916,19 @@ function Ship.bind(events)
   events:bind({
     on_init = function()
       clear_open_hub_state_for_players()
-      ensure_initial_hub()
+      update_hub_lifecycle()
     end,
     on_load = function()
       reset_open_hub_state()
     end,
     on_configuration_changed = function()
       clear_open_hub_state_for_players()
-      ensure_initial_hub()
+      update_hub_lifecycle()
     end,
     events = event_handlers,
     nth_tick = {
       [HUB_UI_UPDATE_INTERVAL] = function()
+        update_hub_lifecycle()
         update_open_hub_uis()
       end
     }

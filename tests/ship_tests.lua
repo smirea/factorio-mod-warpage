@@ -7,6 +7,8 @@ local HUB_MAIN_ENTITY_NAME = "cargo-landing-pad"
 local HUB_ACCUMULATOR_ENTITY_NAME = "warpage-hub-accumulator"
 local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
 local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
+local HUB_DESTROYED_CONTAINER_ENTITY_NAME = "warpage-destroyed-hub-container"
+local HUB_DESTROYED_RUBBLE_ENTITY_NAME = "warpage-destroyed-hub-rubble"
 local HUB_POSITION = { x = 0, y = 0 }
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
 local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
@@ -16,9 +18,24 @@ local TEST_TILE_RADIUS = 32
 local TEST_NTH_TICK = 1
 local TEST_FEATURE_KEY = "ship_tests"
 
+---@class WarpageShipTestsRepairRequirement
+---@field item_name string
+---@field amount integer
+---@field slots integer
+
+---@type WarpageShipTestsRepairRequirement[]
+local HUB_REPAIR_REQUIREMENTS = {
+  { item_name = "stone", amount = 200, slots = 4 },
+  { item_name = "coal", amount = 200, slots = 4 },
+  { item_name = "copper-ore", amount = 100, slots = 2 },
+  { item_name = "iron-plate", amount = 100, slots = 1 },
+  { item_name = "calcite", amount = 10, slots = 1 }
+}
+
 ---@class WarpageShipTestsFeatureState
 ---@field enabled boolean
 ---@field completed boolean
+---@field repair_seeded boolean
 
 ---@class ShipTests
 ---@field bind fun(events: WarpageScopedBinding)
@@ -128,7 +145,8 @@ local function ensure_test_state()
   if state == nil then
     state = {
       enabled = true,
-      completed = false
+      completed = false,
+      repair_seeded = false
     }
     root.features[TEST_FEATURE_KEY] = state
     return state
@@ -144,6 +162,10 @@ local function ensure_test_state()
 
   if type(state.completed) ~= "boolean" then
     error("storage.features." .. TEST_FEATURE_KEY .. ".completed must be a boolean.")
+  end
+
+  if type(state.repair_seeded) ~= "boolean" then
+    error("storage.features." .. TEST_FEATURE_KEY .. ".repair_seeded must be a boolean.")
   end
 
   return state
@@ -167,6 +189,10 @@ local function assert_test_state()
 
   if type(state.completed) ~= "boolean" then
     error("storage.features." .. TEST_FEATURE_KEY .. ".completed must be a boolean.")
+  end
+
+  if type(state.repair_seeded) ~= "boolean" then
+    error("storage.features." .. TEST_FEATURE_KEY .. ".repair_seeded must be a boolean.")
   end
 
   return state
@@ -209,9 +235,51 @@ local function find_hub_part(main_entity, entity_name, offset)
 end
 
 ---@param surface LuaSurface
+---@param force LuaForce|nil
+---@param entity_name string
+---@return LuaEntity|nil
+local function find_unique_entity_at_hub_origin(surface, force, entity_name)
+  local area = {
+    { HUB_POSITION.x - 1, HUB_POSITION.y - 1 },
+    { HUB_POSITION.x + 1, HUB_POSITION.y + 1 }
+  }
+  local find_options = {
+    name = entity_name,
+    area = area
+  }
+  if force ~= nil then
+    find_options.force = force
+  end
+
+  local candidates = surface.find_entities_filtered(find_options)
+  local matched = {} ---@type LuaEntity[]
+  for _, candidate in ipairs(candidates) do
+    if candidate.valid then
+      matched[#matched + 1] = candidate
+    end
+  end
+
+  if #matched > 1 then
+    error(
+      "Ship tests expected at most one entity '"
+        .. entity_name
+        .. "' at {x="
+        .. tostring(HUB_POSITION.x)
+        .. ", y="
+        .. tostring(HUB_POSITION.y)
+        .. "}, got "
+        .. tostring(#matched)
+        .. "."
+    )
+  end
+
+  return matched[1]
+end
+
+---@param surface LuaSurface
 ---@param force LuaForce
----@return LuaEntity
-local function find_main_hub(surface, force)
+---@return LuaEntity|nil
+local function find_main_hub_optional(surface, force)
   local candidates = surface.find_entities_filtered({
     name = HUB_MAIN_ENTITY_NAME,
     position = HUB_POSITION,
@@ -225,11 +293,45 @@ local function find_main_hub(surface, force)
     end
   end
 
-  if #matched ~= 1 then
-    error("Ship tests expected exactly one hub main entity, got " .. tostring(#matched) .. ".")
+  if #matched > 1 then
+    error("Ship tests expected at most one hub main entity, got " .. tostring(#matched) .. ".")
   end
 
   return matched[1]
+end
+
+---@param surface LuaSurface
+---@param force LuaForce
+---@return LuaEntity
+local function find_main_hub(surface, force)
+  local hub = find_main_hub_optional(surface, force)
+  if hub == nil then
+    error("Ship tests expected one hub main entity, got 0.")
+  end
+
+  return hub
+end
+
+---@param surface LuaSurface
+---@return LuaEntity
+local function find_destroyed_hub_container(surface)
+  local container = find_unique_entity_at_hub_origin(surface, nil, HUB_DESTROYED_CONTAINER_ENTITY_NAME)
+  if container == nil then
+    error("Ship tests expected destroyed hub container at the hub origin.")
+  end
+
+  return container
+end
+
+---@param surface LuaSurface
+---@return LuaEntity
+local function find_destroyed_hub_rubble(surface)
+  local rubble = find_unique_entity_at_hub_origin(surface, nil, HUB_DESTROYED_RUBBLE_ENTITY_NAME)
+  if rubble == nil then
+    error("Ship tests expected destroyed hub rubble at the hub origin.")
+  end
+
+  return rubble
 end
 
 ---@param source LuaEntity
@@ -273,6 +375,75 @@ local function prepare_test_environment()
   fill_test_tiles(surface, HUB_POSITION, TEST_TILE_RADIUS)
 end
 
+local function assert_destroyed_hub_state()
+  local surface = resolve_hub_surface()
+  local force = resolve_hub_force()
+
+  local hub = find_main_hub_optional(surface, force)
+  if hub ~= nil then
+    error("Ship tests expected no hub main entity before repair completion.")
+  end
+
+  local container = find_destroyed_hub_container(surface)
+  find_destroyed_hub_rubble(surface)
+
+  if container.destructible ~= false then
+    error("Ship tests expected destroyed hub container to be non-destructible.")
+  end
+
+  if container.minable ~= false then
+    error("Ship tests expected destroyed hub container to be non-minable.")
+  end
+
+end
+
+local function seed_destroyed_hub_repair_items()
+  local surface = resolve_hub_surface()
+  local container = find_destroyed_hub_container(surface)
+  local inventory = container.get_inventory(defines.inventory.chest)
+  if inventory == nil then
+    error("Ship tests expected destroyed hub container to expose a chest inventory.")
+  end
+
+  local slot_index = 1
+  for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
+    if requirement.item_name == "calcite" then
+      local stack = inventory[slot_index]
+      if stack == nil then
+        error("Ship tests could not resolve calcite repair slot in destroyed hub inventory.")
+      end
+
+      local set = stack.set_stack({
+        name = requirement.item_name,
+        count = requirement.amount,
+        quality = "normal"
+      })
+      if set ~= true then
+        error("Ship tests could not directly set calcite stack into destroyed hub inventory.")
+      end
+    else
+      local inserted = inventory.insert({
+        name = requirement.item_name,
+        count = requirement.amount,
+        quality = "normal"
+      })
+      if inserted ~= requirement.amount then
+        error(
+          "Ship tests could not seed destroyed hub requirement item '"
+            .. requirement.item_name
+            .. "': expected "
+            .. tostring(requirement.amount)
+            .. ", inserted "
+            .. tostring(inserted)
+            .. "."
+        )
+      end
+    end
+
+    slot_index = slot_index + requirement.slots
+  end
+end
+
 local function run_ship_hub_assertions()
   local surface = resolve_hub_surface()
   local force = resolve_hub_force()
@@ -305,6 +476,16 @@ local function run_ship_hub_assertions()
   assert_wire_connection(right_pipe, power_pole, defines.wire_connector_id.circuit_green)
   assert_pipe_accepts_fluid(left_pipe, "water", 250)
   assert_pipe_accepts_fluid(right_pipe, "crude-oil", 250)
+
+  local destroyed_container = find_unique_entity_at_hub_origin(surface, force, HUB_DESTROYED_CONTAINER_ENTITY_NAME)
+  if destroyed_container ~= nil then
+    error("Ship tests expected destroyed hub container to be removed after repair completion.")
+  end
+
+  local destroyed_rubble = find_unique_entity_at_hub_origin(surface, nil, HUB_DESTROYED_RUBBLE_ENTITY_NAME)
+  if destroyed_rubble ~= nil then
+    error("Ship tests expected destroyed hub rubble to be removed after repair completion.")
+  end
 end
 
 ---@param events WarpageScopedBinding
@@ -323,6 +504,7 @@ function ShipTests.bind(events)
       local state = ensure_test_state()
       state.enabled = true
       state.completed = false
+      state.repair_seeded = false
       prepare_test_environment()
     end,
     on_configuration_changed = function()
@@ -333,6 +515,7 @@ function ShipTests.bind(events)
       local state = ensure_test_state()
       state.enabled = true
       state.completed = false
+      state.repair_seeded = false
       prepare_test_environment()
     end,
     on_load = function()
@@ -342,6 +525,18 @@ function ShipTests.bind(events)
       [TEST_NTH_TICK] = function()
         local state = assert_test_state()
         if state == nil or state.enabled ~= true or state.completed == true then
+          return
+        end
+
+        if state.repair_seeded ~= true then
+          assert_destroyed_hub_state()
+          seed_destroyed_hub_repair_items()
+          state.repair_seeded = true
+          return
+        end
+
+        local hub = find_main_hub_optional(resolve_hub_surface(), resolve_hub_force())
+        if hub == nil then
           return
         end
 
