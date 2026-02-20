@@ -69,3 +69,40 @@ Control-stage modules receive one context table with:
 - The script uses `/Users/stefan/code/factorio-mods/warpage_0.1.0` as the canonical symlink and validates it points to this repository.
 - If the target save does not exist, it creates one automatically with the same debug mod set (`base` + `elevated-rails` + `quality` + `space-age` + `warpage`).
 - Run `HEADLESS=1 ./scripts/launch.sh` for a quick non-interactive startup check (`UNTIL_TICK` defaults to `120`).
+
+## Factorio references
+
+Use these as source-of-truth references when implementing mechanics, prototypes, settings, and runtime scripting.
+
+### Official API docs (primary source of truth)
+
+- Runtime API index: https://lua-api.factorio.com/latest/
+- Prototype API index: https://lua-api.factorio.com/latest/index-prototype.html
+- Auxiliary docs index: https://lua-api.factorio.com/latest/index-auxiliary.html
+- Data lifecycle: https://lua-api.factorio.com/latest/auxiliary/data-lifecycle.html
+- Mod structure: https://lua-api.factorio.com/latest/auxiliary/mod-structure.html
+- Storage (persistent state): https://lua-api.factorio.com/latest/auxiliary/storage.html
+- Libraries/`require()` behavior: https://lua-api.factorio.com/latest/auxiliary/libraries.html
+- Events enum reference: https://lua-api.factorio.com/latest/defines.html#defines.events
+
+### Factorio wiki (secondary reference)
+
+- Modding tutorial: https://wiki.factorio.com/Tutorial:Modding_tutorial/Gangsir
+- Scripting tutorial: https://wiki.factorio.com/Tutorial:Scripting
+- Localisation tutorial: https://wiki.factorio.com/Tutorial:Localisation
+- Scenario system: https://wiki.factorio.com/Scenario_system
+- `data.raw` reference page: https://wiki.factorio.com/Data.raw
+- Command-line parameters: https://wiki.factorio.com/Command_line_parameters
+
+### Other useful official sources
+
+- Mod Portal: https://mods.factorio.com/
+- Official forums: https://forums.factorio.com/
+
+### Local offline docs (from installed Factorio)
+
+- Runtime docs: `<factorio.app>/Contents/doc-html/index-runtime.html`
+- Prototype docs: `<factorio.app>/Contents/doc-html/index-prototype.html`
+- Auxiliary docs: `<factorio.app>/Contents/doc-html/index-auxiliary.html`
+
+When there is any conflict, prefer the official `lua-api.factorio.com` docs over wiki/community content.
