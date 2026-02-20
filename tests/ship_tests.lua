@@ -6,6 +6,7 @@ local HUB_SURFACE_NAME = ShipConstants.hub_surface_name
 local HUB_FORCE_NAME = ShipConstants.player_force_name
 local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
 local HUB_ACCUMULATOR_ENTITY_NAME = ShipConstants.hub_accumulator_entity_name
+local HUB_ROBOPORT_ENTITY_NAME = ShipConstants.hub_roboport_entity_name
 local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
 local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
 local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
@@ -523,6 +524,7 @@ local function run_ship_hub_assertions()
   end
 
   local accumulator = find_hub_part(hub, HUB_ACCUMULATOR_ENTITY_NAME, { x = 0, y = 0 })
+  local roboport = find_hub_part(hub, HUB_ROBOPORT_ENTITY_NAME, { x = 0, y = 0 })
   local power_pole = find_hub_part(hub, HUB_POWER_POLE_ENTITY_NAME, { x = 0, y = 0 })
   local left_pipe = find_hub_part(hub, HUB_FLUID_PIPE_ENTITY_NAME, HUB_PIPE_LEFT_OFFSET)
   local right_pipe = find_hub_part(hub, HUB_FLUID_PIPE_ENTITY_NAME, HUB_PIPE_RIGHT_OFFSET)
@@ -533,8 +535,22 @@ local function run_ship_hub_assertions()
     error("Ship tests expected accumulator energy fields to be numeric.")
   end
 
-  if energy < capacity then
-    error("Ship tests expected accumulator to start fully charged.")
+  if energy <= 0 then
+    error("Ship tests expected hub accumulator to retain a positive charge.")
+  end
+
+  if energy > capacity then
+    error("Ship tests expected hub accumulator charge to not exceed capacity.")
+  end
+
+  local robot_inventory = roboport.get_inventory(defines.inventory.roboport_robot)
+  if robot_inventory == nil then
+    error("Ship tests expected hub roboport to expose robot inventory.")
+  end
+
+  local logistic_network = force.find_logistic_network_by_position(hub.position, hub.surface)
+  if logistic_network == nil then
+    error("Ship tests expected hub roboport to create a logistic network at the hub origin.")
   end
 
   assert_wire_connection(left_pipe, power_pole, defines.wire_connector_id.circuit_green)

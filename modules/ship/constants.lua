@@ -9,6 +9,7 @@ local ShipConstants = {
   ship_tests_setting_name = Constants.prefixed_setting_name("enable-ship-tests"),
   hub_main_entity_name = "cargo-landing-pad",
   hub_accumulator_entity_name = Constants.prefixed_entity_name("hub-accumulator"),
+  hub_roboport_entity_name = Constants.prefixed_entity_name("hub-roboport"),
   hub_power_pole_entity_name = Constants.prefixed_entity_name("hub-power-pole"),
   hub_fluid_pipe_entity_name = Constants.prefixed_entity_name("hub-fluid-pipe"),
   hub_destroyed_container_entity_name = Constants.prefixed_entity_name("destroyed-hub-container"),

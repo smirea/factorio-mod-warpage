@@ -31,6 +31,7 @@
 ---@field ship_tests_setting_name string
 ---@field hub_main_entity_name string
 ---@field hub_accumulator_entity_name string
+---@field hub_roboport_entity_name string
 ---@field hub_power_pole_entity_name string
 ---@field hub_fluid_pipe_entity_name string
 ---@field hub_destroyed_container_entity_name string

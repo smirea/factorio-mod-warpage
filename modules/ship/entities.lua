@@ -3,6 +3,7 @@ local Constants = require("__warpage__/constants")
 local ShipConstants = require("modules.ship.constants")
 
 local HUB_ACCUMULATOR_ENTITY_NAME = ShipConstants.hub_accumulator_entity_name
+local HUB_ROBOPORT_ENTITY_NAME = ShipConstants.hub_roboport_entity_name
 local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
 local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
 local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
@@ -81,6 +82,24 @@ local function make_hub_power_pole_prototype()
 end
 
 ---@return table
+local function make_hub_roboport_prototype()
+  local prototype = copy_entity_prototype("roboport", "roboport")
+
+  prototype.name = HUB_ROBOPORT_ENTITY_NAME
+  prototype.flags = { "placeable-neutral", "placeable-off-grid", "not-on-map" }
+  prototype.hidden = true
+  prototype.hidden_in_factoriopedia = true
+  prototype.selectable_in_game = false
+  prototype.minable = nil
+  prototype.fast_replaceable_group = nil
+  prototype.collision_box = { { 0, 0 }, { 0, 0 } }
+  prototype.selection_box = { { 0, 0 }, { 0, 0 } }
+  prototype.order = "z[" .. MOD_NAMESPACE .. "]-c[hub-roboport]"
+
+  return prototype
+end
+
+---@return table
 local function make_hub_fluid_pipe_prototype()
   local prototype = copy_entity_prototype("storage-tank", "storage-tank")
 
@@ -141,7 +160,7 @@ local function make_hub_fluid_pipe_prototype()
       scale = 0.5
     }
   }
-  prototype.order = "z[" .. MOD_NAMESPACE .. "]-c[hub-fluid-pipe]"
+  prototype.order = "z[" .. MOD_NAMESPACE .. "]-d[hub-fluid-pipe]"
 
   return prototype
 end
@@ -172,7 +191,7 @@ local function make_destroyed_hub_container_prototype()
       util.empty_sprite()
     }
   }
-  prototype.order = "z[" .. MOD_NAMESPACE .. "]-d[destroyed-hub-container]"
+  prototype.order = "z[" .. MOD_NAMESPACE .. "]-e[destroyed-hub-container]"
 
   return prototype
 end
@@ -187,7 +206,7 @@ local function make_destroyed_hub_rubble_prototype()
   prototype.expires = false
   prototype.remove_on_entity_placement = false
   prototype.remove_on_tile_placement = false
-  prototype.order = "z[" .. MOD_NAMESPACE .. "]-e[destroyed-hub-rubble]"
+  prototype.order = "z[" .. MOD_NAMESPACE .. "]-f[destroyed-hub-rubble]"
 
   return prototype
 end
@@ -196,6 +215,7 @@ end
 return {
   make_hub_accumulator_prototype(),
   make_hub_power_pole_prototype(),
+  make_hub_roboport_prototype(),
   make_hub_fluid_pipe_prototype(),
   make_destroyed_hub_container_prototype(),
   make_destroyed_hub_rubble_prototype()

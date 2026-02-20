@@ -7,6 +7,7 @@ local PLAYER_FORCE_NAME = ShipConstants.player_force_name
 local HUB_SURFACE_NAME = ShipConstants.hub_surface_name
 local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
 local HUB_ACCUMULATOR_ENTITY_NAME = ShipConstants.hub_accumulator_entity_name
+local HUB_ROBOPORT_ENTITY_NAME = ShipConstants.hub_roboport_entity_name
 local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
 local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
 local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
@@ -176,6 +177,15 @@ local hub_part_definitions = {
   {
     id = "hub-power-pole",
     entity_name = HUB_POWER_POLE_ENTITY_NAME,
+    offset = { x = 0, y = 0 },
+    direction = defines.direction.north,
+    direction_relative = false,
+    create_build_effect_smoke = false,
+    on_ready = lock_hub_part
+  },
+  {
+    id = "hub-roboport",
+    entity_name = HUB_ROBOPORT_ENTITY_NAME,
     offset = { x = 0, y = 0 },
     direction = defines.direction.north,
     direction_relative = false,
