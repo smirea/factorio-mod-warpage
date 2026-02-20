@@ -17,17 +17,16 @@ Error on the side of simpler reusable code
 - Shared project type aliases/classes live in `types/warpage.lua`.
 - Prefer annotating function parameters/returns and structural tables at module boundaries, especially feature manifests, contexts, event registrations, and storage schemas.
 - When adding new typed shared structures, define them in `types/warpage.lua` first and then consume them from feature/core modules.
-- Keep fail-fast behavior: validate required structure early and raise errors immediately when contracts are invalid.
 
 ## Required local verification
 
 - Run LuaLS checks before commit:
-  - `/Users/stefan/.local/share/nvim/mason/packages/lua-language-server/lua-language-server --configpath .luarc.json --check . --checklevel=Warning`
+  - `lua-language-server --configpath .luarc.json --check . --checklevel=Warning`
 - Run luacheck before commit:
   - `luacheck control.lua data.lua data-updates.lua data-final-fixes.lua settings.lua settings-updates.lua settings-final-fixes.lua core modules tests types`
 - Run ship integration tests before commit on a dedicated test save with `warpage-enable-ship-tests=true`:
-  - `LAUNCH_ROOT=/Users/stefan/code/factorio-mod-warpage/.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=420 ./scripts/launch.sh warpage-ship-tests`
-  - Verify `/Users/stefan/code/factorio-mod-warpage/.tmp/factorio-test-headless/write-data/factorio-current.log` contains `[warpage] ship tests passed`.
+  - `LAUNCH_ROOT=./.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=420 ./scripts/launch.sh warpage-ship-tests`
+  - Verify `./.tmp/factorio-test-headless/write-data/factorio-current.log` contains `[warpage] ship tests passed`.
 - Run `HEADLESS=1 ./scripts/launch.sh` to check game boots up
 
 ## Running Ship Tests
@@ -36,7 +35,7 @@ Error on the side of simpler reusable code
 2. In that save, open Mod settings and set runtime-global `warpage-enable-ship-tests` to `true`.
 3. Save and quit.
 4. Run headless:
-   - `LAUNCH_ROOT=/Users/stefan/code/factorio-mod-warpage/.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=420 ./scripts/launch.sh warpage-ship-tests`
+   - `LAUNCH_ROOT=./.tmp/factorio-test-headless HEADLESS=1 UNTIL_TICK=420 ./scripts/launch.sh warpage-ship-tests`
 5. Confirm log output includes `[warpage] ship tests passed` and no non-recoverable errors.
 
 ## Git hooks
@@ -115,7 +114,6 @@ Control-stage modules receive one context table with:
   - flags: `--verbose` and `--disable-audio`
   - profile: `.tmp/factorio-launch`
 - The script auto-detects Factorio binaries (standalone installs first, Steam fallback last). Override explicitly with `FACTORIO_BIN=/path/to/factorio`.
-- The script uses `/Users/stefan/code/factorio-mods/warpage_0.1.0` as the canonical symlink and validates it points to this repository.
 - If the target save does not exist, it creates one automatically with the same debug mod set (`base` + `elevated-rails` + `quality` + `space-age` + `warpage`).
 - Run `HEADLESS=1 ./scripts/launch.sh` for a quick non-interactive startup check (`UNTIL_TICK` defaults to `120`).
 
