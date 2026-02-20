@@ -343,6 +343,7 @@ end
 ---@param player LuaPlayer
 ---@param hub_entity LuaEntity
 local function update_hub_ui(player, hub_entity)
+  hub_compound:sync(hub_entity)
   local root = ensure_hub_ui(player)
 
   local accumulator = find_hub_part(hub_entity, HUB_ACCUMULATOR_ENTITY_NAME, { x = 0, y = 0 })
@@ -423,6 +424,7 @@ local function handle_gui_opened(event)
     return
   end
 
+  hub_compound:sync(opened_entity)
   open_hubs_by_player[player.index] = opened_entity
   update_hub_ui(player, opened_entity)
 end
