@@ -58,9 +58,14 @@ Control-stage modules receive one context table with:
 4. In control modules, register events through `context.events`.
 5. If runtime state is needed, initialize schema in `on_init` and validate in `on_load`.
 
-### Smoke testing
+### Launching for development
 
-- Run `./scripts/smoke_test.sh`.
-- The script expects a Factorio binary at `/Users/stefan/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/MacOS/factorio` unless overridden by `FACTORIO_BIN`.
+- Run `./scripts/launch.sh` to launch Factorio with the mod in minimal debug mode.
+- Defaults:
+  - save name: `warpage-test`
+  - flags: `--verbose` and `--disable-audio`
+  - profile: `.tmp/factorio-launch`
+- The script auto-detects Factorio binaries (standalone installs first, Steam fallback last). Override explicitly with `FACTORIO_BIN=/path/to/factorio`.
 - The script uses `/Users/stefan/code/factorio-mods/warpage_0.1.0` as the canonical symlink and validates it points to this repository.
-- It creates an isolated temporary profile under `.tmp/factorio-smoke`, runs map create + load in headless mode, and fails on mod-load/runtime errors.
+- If the target save does not exist, it creates one automatically with the same debug mod set (`base` + `elevated-rails` + `quality` + `space-age` + `warpage`).
+- Run `HEADLESS=1 ./scripts/launch.sh` for a quick non-interactive startup check (`UNTIL_TICK` defaults to `120`).

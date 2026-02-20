@@ -1,0 +1,55 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Factorio Mod Debug: Warpage Test",
+      "type": "factoriomod",
+      "request": "launch",
+      "modsPath": "${workspaceFolder}/.tmp/factorio-launch/mods",
+      "adjustMods": {
+        "elevated-rails": true,
+        "quality": true,
+        "space-age": true,
+        "warpage": true
+      },
+      "disableExtraMods": true,
+      "hookControl": [
+        "warpage"
+      ],
+      "factorioArgs": [
+        "--config",
+        "${workspaceFolder}/.tmp/factorio-launch/config.ini",
+        "--disable-audio",
+        "--verbose",
+        "--load-game",
+        "${workspaceFolder}/.tmp/factorio-launch/write-data/saves/warpage-test.zip"
+      ]
+    },
+    {
+      "name": "Factorio Mod Debug: Warpage Test (Settings+Data)",
+      "type": "factoriomod",
+      "request": "launch",
+      "modsPath": "${workspaceFolder}/.tmp/factorio-launch/mods",
+      "adjustMods": {
+        "elevated-rails": true,
+        "quality": true,
+        "space-age": true,
+        "warpage": true
+      },
+      "disableExtraMods": true,
+      "hookControl": [
+        "warpage"
+      ],
+      "hookSettings": true,
+      "hookData": true,
+      "factorioArgs": [
+        "--config",
+        "${workspaceFolder}/.tmp/factorio-launch/config.ini",
+        "--disable-audio",
+        "--verbose",
+        "--load-game",
+        "${workspaceFolder}/.tmp/factorio-launch/write-data/saves/warpage-test.zip"
+      ]
+    }
+  ]
+}
