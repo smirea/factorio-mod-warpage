@@ -67,12 +67,14 @@
 ---@field destroy fun(): boolean
 ---@field teleport fun(position: MapPosition): boolean
 ---@field get_fluid_contents fun(): table<string, number>
+---@field insert_fluid fun(fluid: table): number
 ---@field get_wire_connector fun(wire_connector_id: integer, or_create: boolean): LuaWireConnector|nil
 
 ---@class LuaSurface
 ---@field name string
 ---@field create_entity fun(options: table): LuaEntity|nil
 ---@field find_entities_filtered fun(options: table): LuaEntity[]
+---@field set_tiles fun(tiles: table[])
 
 ---@class LuaGameScript
 ---@field surfaces table<integer|string, LuaSurface>

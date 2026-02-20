@@ -1,5 +1,6 @@
 local StorageSchema = require("core.storage_schema")
 local Ship = require("modules.ship")
+local ShipTests = require("tests.ship_tests")
 
 ---@return boolean
 local function is_debug_mode_enabled()
@@ -53,5 +54,6 @@ return function(context)
     end
   })
 
+  ShipTests.bind(events)
   Ship.bind(events)
 end
