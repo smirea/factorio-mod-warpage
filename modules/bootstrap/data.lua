@@ -3,6 +3,8 @@ local util = require("__core__/lualib/util")
 local HUB_ACCUMULATOR_ENTITY_NAME = "warpage-hub-accumulator"
 local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
 local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
+local HUB_DESTROYED_CONTAINER_ENTITY_NAME = "warpage-destroyed-hub-container"
+local HUB_DESTROYED_RUBBLE_ENTITY_NAME = "warpage-destroyed-hub-rubble"
 
 ---@param entity_type string
 ---@param prototype_name string
@@ -140,11 +142,42 @@ local function make_hub_fluid_pipe_prototype()
   return prototype
 end
 
+---@return table
+local function make_destroyed_hub_container_prototype()
+  local prototype = copy_entity_prototype("container", "steel-chest")
+
+  prototype.name = HUB_DESTROYED_CONTAINER_ENTITY_NAME
+  prototype.icon = "__base__/graphics/icons/cargo-landing-pad.png"
+  prototype.flags = { "placeable-neutral", "player-creation" }
+  prototype.minable = nil
+  prototype.max_health = 1000000
+  prototype.inventory_size = 48
+  prototype.fast_replaceable_group = nil
+  prototype.order = "z[warpage]-d[destroyed-hub-container]"
+
+  return prototype
+end
+
+---@return table
+local function make_destroyed_hub_rubble_prototype()
+  local prototype = copy_entity_prototype("corpse", "cargo-landing-pad-remnants")
+
+  prototype.name = HUB_DESTROYED_RUBBLE_ENTITY_NAME
+  prototype.time_before_removed = 60 * 60 * 24 * 365 * 100
+  prototype.time_before_shading_off = 60 * 60 * 24 * 365 * 100
+  prototype.expires = false
+  prototype.order = "z[warpage]-e[destroyed-hub-rubble]"
+
+  return prototype
+end
+
 ---@type WarpageStageRunner
 return function(_context)
   data:extend({
     make_hub_accumulator_prototype(),
     make_hub_power_pole_prototype(),
-    make_hub_fluid_pipe_prototype()
+    make_hub_fluid_pipe_prototype(),
+    make_destroyed_hub_container_prototype(),
+    make_destroyed_hub_rubble_prototype()
   })
 end
