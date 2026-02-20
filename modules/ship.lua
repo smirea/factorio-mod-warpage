@@ -9,6 +9,7 @@ local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
 local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
 local HUB_POSITION = { x = 0, y = 0 }
 local HUB_DIRECTION = defines.direction.north
+local HUB_CLEAR_RADIUS = 4
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
 local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
 local HUB_UI_ROOT_NAME = "warpage_hub_ui"
@@ -235,6 +236,33 @@ local function find_existing_hub(surface, force)
   return nil
 end
 
+---@param surface LuaSurface
+---@param center MapPosition
+local function clear_hub_placement_area(surface, center)
+  local area = {
+    { center.x - HUB_CLEAR_RADIUS, center.y - HUB_CLEAR_RADIUS },
+    { center.x + HUB_CLEAR_RADIUS, center.y + HUB_CLEAR_RADIUS }
+  }
+
+  local entities = surface.find_entities_filtered({ area = area })
+  for _, entity in ipairs(entities) do
+    if entity.valid then
+      local destroyed = entity.destroy()
+      if destroyed ~= true and entity.valid then
+        error(
+          "Unable to clear entity '"
+            .. entity.name
+            .. "' at {x="
+            .. tostring(entity.position.x)
+            .. ", y="
+            .. tostring(entity.position.y)
+            .. "} before hub placement."
+        )
+      end
+    end
+  end
+end
+
 ---@return LuaEntity
 local function ensure_initial_hub()
   local surface = resolve_hub_surface()
@@ -244,6 +272,8 @@ local function ensure_initial_hub()
     hub_compound:sync(existing_hub)
     return existing_hub
   end
+
+  clear_hub_placement_area(surface, HUB_POSITION)
 
   return hub_compound:place({
     surface = surface,
