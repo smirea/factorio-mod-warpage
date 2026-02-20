@@ -141,14 +141,6 @@ end
 
 ---@param entity LuaEntity
 ---@param main_entity LuaEntity
-local function prepare_hub_power_pole(entity, main_entity)
-  lock_hub_part(entity, main_entity)
-  local hub_accumulator = find_hub_part(main_entity, HUB_ACCUMULATOR_ENTITY_NAME, { x = 0, y = 0 })
-  connect_wire(entity, hub_accumulator, defines.wire_connector_id.pole_copper)
-end
-
----@param entity LuaEntity
----@param main_entity LuaEntity
 local function prepare_hub_fluid_pipe(entity, main_entity)
   lock_hub_part(entity, main_entity)
   local hub_power_pole = find_hub_part(main_entity, HUB_POWER_POLE_ENTITY_NAME, { x = 0, y = 0 })
@@ -172,7 +164,7 @@ local hub_part_definitions = {
     direction = defines.direction.north,
     direction_relative = false,
     create_build_effect_smoke = false,
-    on_ready = prepare_hub_power_pole
+    on_ready = lock_hub_part
   },
   {
     id = "hub-fluid-pipe-bottom-left",
