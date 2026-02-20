@@ -130,11 +130,16 @@ end
 ---@param main_entity unknown
 ---@return LuaEntity
 function CompoundEntity:_assert_main_entity(main_entity)
-  if type(main_entity) ~= "table" or not main_entity.valid then
+  local main_entity_type = type(main_entity)
+  if main_entity_type ~= "table" and main_entity_type ~= "userdata" then
     error("main_entity must be a valid LuaEntity.")
   end
 
   ---@cast main_entity LuaEntity
+  if main_entity.valid ~= true or type(main_entity.name) ~= "string" then
+    error("main_entity must be a valid LuaEntity.")
+  end
+
   if not self:is_main_entity(main_entity) then
     error(
       "Entity '"
@@ -340,10 +345,15 @@ function CompoundEntity:place(placement)
   common.ensure_table(placement, "placement")
 
   local surface = placement.surface
-  if type(surface) ~= "table" or type(surface.create_entity) ~= "function" then
+  local surface_type = type(surface)
+  if surface_type ~= "table" and surface_type ~= "userdata" then
     error("placement.surface must be a valid LuaSurface.")
   end
+
   ---@cast surface LuaSurface
+  if type(surface.create_entity) ~= "function" or type(surface.find_entities_filtered) ~= "function" then
+    error("placement.surface must be a valid LuaSurface.")
+  end
 
   if placement.force == nil then
     error("placement.force is required.")

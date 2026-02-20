@@ -1,7 +1,9 @@
 local common = require("core.utils.common")
 
 ---@type string[]
-local feature_names = require("feature_index")
+local feature_names = {
+  "bootstrap"
+}
 
 ---@type table<WarpageStage, true>
 local VALID_STAGES = {
@@ -25,7 +27,7 @@ end
 ---@param seen_ids table<string, true>
 ---@return WarpageLoadedFeature
 local function load_feature(feature_folder_name, seen_ids)
-  common.ensure_non_empty_string(feature_folder_name, "feature index entry")
+  common.ensure_non_empty_string(feature_folder_name, "feature list entry")
   ---@cast feature_folder_name string
 
   local feature_module_path = "modules." .. feature_folder_name .. ".feature"
@@ -57,7 +59,7 @@ end
 
 ---@return WarpageLoadedFeature[]
 local function load_features()
-  common.ensure_table(feature_names, "feature_index")
+  common.ensure_table(feature_names, "feature list")
 
   local features = {} ---@type WarpageLoadedFeature[]
   local seen_ids = {} ---@type table<string, true>

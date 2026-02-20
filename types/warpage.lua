@@ -30,6 +30,8 @@
 ---@field force LuaForce
 ---@field surface LuaSurface
 ---@field position MapPosition
+---@field minable? boolean
+---@field destructible? boolean
 ---@field quality? QualityID
 ---@field destroy fun(): boolean
 ---@field teleport fun(position: MapPosition): boolean
@@ -40,7 +42,8 @@
 ---@field find_entities_filtered fun(options: table): LuaEntity[]
 
 ---@class LuaGameScript
----@field surfaces table<integer, LuaSurface>
+---@field surfaces table<integer|string, LuaSurface>
+---@field forces table<string, LuaForce>
 
 ---@class WarpageFeatureManifest
 ---@field id string

@@ -6,6 +6,8 @@ When writing lua, always define proper types for everything by referencing the c
 
 When writing new functionality check ./core and especially ./core/utils first to see what can be re-used and how to work within the existing framework
 
+NEVER EVER use fallbacks. Things that should exist, should exist.
+
 ## Typing and static checks
 
 - This repo uses LuaLS + LuaCATS as the source-of-truth type system for Lua code.
@@ -20,9 +22,8 @@ When writing new functionality check ./core and especially ./core/utils first to
 - Run LuaLS checks before commit:
   - `/Users/stefan/.local/share/nvim/mason/packages/lua-language-server/lua-language-server --configpath .luarc.json --check . --checklevel=Warning`
 - Run luacheck before commit:
-  - `luacheck control.lua data.lua data-updates.lua data-final-fixes.lua settings.lua settings-updates.lua settings-final-fixes.lua feature_index.lua core modules types`
-- Run lefthook before commit:
-  - `lefthook run pre-commit`
+  - `luacheck control.lua data.lua data-updates.lua data-final-fixes.lua settings.lua settings-updates.lua settings-final-fixes.lua core modules types`
+- Run `HEADLESS=1 ./scripts/launch.sh` to check game boots up
 
 ## Git hooks
 
@@ -45,8 +46,7 @@ This repository contains a Factorio 2.0-ready scaffold with strict stage routing
 
 ### Core framework
 
-- `feature_index.lua` defines feature load order.
-- `core/feature_loader.lua` validates feature manifests, validates stage keys, and dispatches stage handlers.
+- `core/feature_loader.lua` defines feature load order, validates feature manifests/stage keys, and dispatches stage handlers.
 - `core/runtime.lua` creates the shared event bus and invokes runtime feature handlers.
 - `core/event_bus.lua` provides source-scoped runtime bindings per feature.
 - `core/storage_schema.lua` enforces persistent storage structure early.
@@ -88,9 +88,10 @@ Control-stage modules receive one context table with:
 
 1. Create `modules/<new_feature>/feature.lua` with `id` and `stages`.
 2. Add any stage modules referenced by `stages`.
-3. Add `<new_feature>` to `feature_index.lua`.
+3. Add `<new_feature>` to the `feature_names` list in `core/feature_loader.lua`.
 4. In control modules, register events through `context.events`.
 5. If runtime state is needed, initialize schema in `on_init` and validate in `on_load`.
+6. Run `HEADLESS=1 ./scripts/launch.sh` to make sure game boots up
 
 ### Launching for development
 

@@ -1,4 +1,5 @@
 local StorageSchema = require("core.storage_schema")
+local Ship = require("modules.ship")
 
 ---@return boolean
 local function is_debug_mode_enabled()
@@ -51,4 +52,6 @@ return function(context)
       assert_bootstrap_state()
     end
   })
+
+  Ship.bind(events)
 end
