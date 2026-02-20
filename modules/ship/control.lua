@@ -11,7 +11,7 @@ local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
 local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
 local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
 local HUB_DESTROYED_RUBBLE_ENTITY_NAME = ShipConstants.hub_destroyed_rubble_entity_name
-local HUB_POSITION = { x = 0, y = 0 }
+local HUB_POSITION = ShipConstants.hub_position
 local HUB_DIRECTION = defines.direction.north
 local HUB_CLEAR_RADIUS = 4
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }

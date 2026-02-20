@@ -4,6 +4,8 @@ local Constants = require("__warpage__/constants")
 local ShipConstants = {
   player_force_name = "player",
   hub_surface_name = "nauvis",
+  hub_position = { x = 0, y = 0 },
+  ship_entrance_position = { x = 0, y = 5 },
   ship_tests_setting_name = Constants.prefixed_setting_name("enable-ship-tests"),
   hub_main_entity_name = "cargo-landing-pad",
   hub_accumulator_entity_name = Constants.prefixed_entity_name("hub-accumulator"),

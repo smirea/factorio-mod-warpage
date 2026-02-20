@@ -26,6 +26,8 @@
 ---@class WarpageShipConstants
 ---@field player_force_name string
 ---@field hub_surface_name string
+---@field hub_position MapPosition
+---@field ship_entrance_position MapPosition
 ---@field ship_tests_setting_name string
 ---@field hub_main_entity_name string
 ---@field hub_accumulator_entity_name string
@@ -97,6 +99,14 @@
 
 ---@class WarpageFeatureStorage
 ---@field [string] unknown
+
+---@class WarpageStartupFeatureState
+---@field configured_player_indices table<integer, true>
+
+---@class WarpageStartupItemStack
+---@field name string
+---@field count integer
+---@field quality? QualityID
 
 ---@class WarpageStorageRoot
 ---@field schema_version integer

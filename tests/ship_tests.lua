@@ -13,14 +13,27 @@ local HUB_DESTROYED_RUBBLE_ENTITY_NAME = ShipConstants.hub_destroyed_rubble_enti
 local HUB_POSITION = { x = 0, y = 0 }
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
 local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
-local HUB_COLLISION_HALF_EXTENT = 3.9
-local HUB_SELECTION_HALF_EXTENT = 4
 local POSITION_EPSILON = 0.001
 
 local TEST_TILE_NAME = "stone-path"
 local TEST_TILE_RADIUS = 32
 local TEST_NTH_TICK = 30
 local TEST_FEATURE_KEY = "ship_tests"
+local FREEPLAY_INTERFACE_NAME = "freeplay"
+
+---@type string[]
+local STARTUP_FORBIDDEN_ITEMS = {
+  "stone-furnace",
+  "iron-plate"
+}
+
+---@type integer[]
+local PLAYER_INVENTORY_IDS = {
+  defines.inventory.character_main,
+  defines.inventory.character_guns,
+  defines.inventory.character_ammo,
+  defines.inventory.character_trash
+}
 
 ---@class WarpageShipTestsRepairRequirement
 ---@field item_name string
@@ -327,6 +340,16 @@ local function find_destroyed_hub_rubble(surface)
   return rubble
 end
 
+---@return LuaEntityPrototype
+local function require_hub_main_prototype()
+  local prototype = prototypes.entity[HUB_MAIN_ENTITY_NAME]
+  if prototype == nil then
+    error("Ship tests require prototype '" .. HUB_MAIN_ENTITY_NAME .. "'.")
+  end
+
+  return prototype
+end
+
 ---@param source LuaEntity
 ---@param target LuaEntity
 ---@param wire_connector_id integer
@@ -390,14 +413,16 @@ local function assert_destroyed_hub_state()
 
   local collision_box = container.prototype.collision_box
   local collision_width = collision_box.right_bottom.x - collision_box.left_top.x
-  local expected_collision_width = HUB_COLLISION_HALF_EXTENT * 2
+  local expected_collision_box = require_hub_main_prototype().collision_box
+  local expected_collision_width = expected_collision_box.right_bottom.x - expected_collision_box.left_top.x
   if math.abs(collision_width - expected_collision_width) > POSITION_EPSILON then
     error("Ship tests expected destroyed hub collision width to match cargo landing pad bounds.")
   end
 
   local selection_box = container.prototype.selection_box
   local selection_width = selection_box.right_bottom.x - selection_box.left_top.x
-  local expected_selection_width = HUB_SELECTION_HALF_EXTENT * 2
+  local expected_selection_box = require_hub_main_prototype().selection_box
+  local expected_selection_width = expected_selection_box.right_bottom.x - expected_selection_box.left_top.x
   if math.abs(selection_width - expected_selection_width) > POSITION_EPSILON then
     error("Ship tests expected destroyed hub selection width to match cargo landing pad bounds.")
   end
@@ -528,6 +553,60 @@ local function run_ship_hub_assertions()
   end
 end
 
+local function assert_forbidden_startup_items_removed_from_players()
+  local runtime_game = require_game()
+  if #runtime_game.players < 1 then
+    return
+  end
+
+  for _, player in pairs(runtime_game.players) do
+    for _, inventory_id in ipairs(PLAYER_INVENTORY_IDS) do
+      local inventory = player.get_inventory(inventory_id)
+      if inventory == nil then
+        error("Ship tests expected player '" .. player.name .. "' to have inventory " .. tostring(inventory_id) .. ".")
+      end
+
+      for _, item_name in ipairs(STARTUP_FORBIDDEN_ITEMS) do
+        local count = inventory.get_item_count(item_name)
+        if count ~= 0 then
+          error(
+            "Ship tests expected startup item '"
+              .. item_name
+              .. "' to be removed from player '"
+              .. player.name
+              .. "' inventory "
+              .. tostring(inventory_id)
+              .. ", found "
+              .. tostring(count)
+              .. "."
+          )
+        end
+      end
+    end
+  end
+end
+
+local function assert_forbidden_startup_items_removed_from_freeplay()
+  local freeplay_interface = remote.interfaces[FREEPLAY_INTERFACE_NAME]
+  if freeplay_interface == nil then
+    error("Ship tests expected freeplay remote interface.")
+  end
+
+  if freeplay_interface.get_created_items == nil then
+    error("Ship tests expected freeplay.get_created_items remote method.")
+  end
+
+  local created_items = remote.call(FREEPLAY_INTERFACE_NAME, "get_created_items")
+  common.ensure_table(created_items, "freeplay.created_items")
+  ---@cast created_items table<string, unknown>
+
+  for _, item_name in ipairs(STARTUP_FORBIDDEN_ITEMS) do
+    if created_items[item_name] ~= nil then
+      error("Ship tests expected freeplay created items to exclude '" .. item_name .. "'.")
+    end
+  end
+end
+
 ---@param events WarpageScopedBinding
 function ShipTests.bind(events)
   common.ensure_table(events, "events")
@@ -559,6 +638,9 @@ function ShipTests.bind(events)
         if state == nil or state.enabled ~= true or state.completed == true then
           return
         end
+
+        assert_forbidden_startup_items_removed_from_freeplay()
+        assert_forbidden_startup_items_removed_from_players()
 
         if state.repair_seeded ~= true then
           assert_destroyed_hub_state()

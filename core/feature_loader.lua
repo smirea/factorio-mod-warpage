@@ -15,8 +15,8 @@ local VALID_STAGES = {
 ---@type WarpageControlModuleRegistration[]
 local control_modules = {
   {
-    id = "ship",
-    module_path = "modules.ship.control"
+    id = "startup",
+    module_path = "modules.startup"
   }
 }
 
