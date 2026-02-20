@@ -12,6 +12,9 @@ local HUB_DESTROYED_RUBBLE_ENTITY_NAME = "warpage-destroyed-hub-rubble"
 local HUB_POSITION = { x = 0, y = 0 }
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
 local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
+local HUB_COLLISION_HALF_EXTENT = 3.9
+local HUB_SELECTION_HALF_EXTENT = 4
+local POSITION_EPSILON = 0.001
 
 local TEST_TILE_NAME = "stone-path"
 local TEST_TILE_RADIUS = 32
@@ -375,7 +378,7 @@ local function assert_destroyed_hub_state()
   end
 
   local container = find_destroyed_hub_container(surface)
-  find_destroyed_hub_rubble(surface)
+  local rubble = find_destroyed_hub_rubble(surface)
 
   if container.destructible ~= false then
     error("Ship tests expected destroyed hub container to be non-destructible.")
@@ -385,6 +388,39 @@ local function assert_destroyed_hub_state()
     error("Ship tests expected destroyed hub container to be non-minable.")
   end
 
+  local collision_box = container.collision_box
+  if collision_box == nil then
+    error("Ship tests expected destroyed hub container collision_box.")
+  end
+
+  local collision_width = collision_box.right_bottom.x - collision_box.left_top.x
+  local expected_collision_width = HUB_COLLISION_HALF_EXTENT * 2
+  if math.abs(collision_width - expected_collision_width) > POSITION_EPSILON then
+    error("Ship tests expected destroyed hub collision width to match cargo landing pad bounds.")
+  end
+
+  local selection_box = container.selection_box
+  if selection_box == nil then
+    error("Ship tests expected destroyed hub container selection_box.")
+  end
+
+  local selection_width = selection_box.right_bottom.x - selection_box.left_top.x
+  local expected_selection_width = HUB_SELECTION_HALF_EXTENT * 2
+  if math.abs(selection_width - expected_selection_width) > POSITION_EPSILON then
+    error("Ship tests expected destroyed hub selection width to match cargo landing pad bounds.")
+  end
+
+  if rubble.type ~= "corpse" then
+    error("Ship tests expected destroyed hub rubble to be a corpse entity.")
+  end
+
+  if rubble.corpse_expires ~= false then
+    error("Ship tests expected destroyed hub rubble to never expire.")
+  end
+
+  if rubble.corpse_immune_to_entity_placement ~= true then
+    error("Ship tests expected destroyed hub rubble to be immune to entity placement.")
+  end
 end
 
 local function seed_destroyed_hub_repair_items()

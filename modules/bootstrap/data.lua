@@ -3,6 +3,7 @@ local util = require("__core__/lualib/util")
 local HUB_ACCUMULATOR_ENTITY_NAME = "warpage-hub-accumulator"
 local HUB_POWER_POLE_ENTITY_NAME = "warpage-hub-power-pole"
 local HUB_FLUID_PIPE_ENTITY_NAME = "warpage-hub-fluid-pipe"
+local HUB_MAIN_ENTITY_NAME = "cargo-landing-pad"
 local HUB_DESTROYED_CONTAINER_ENTITY_NAME = "warpage-destroyed-hub-container"
 local HUB_DESTROYED_RUBBLE_ENTITY_NAME = "warpage-destroyed-hub-rubble"
 
@@ -145,6 +146,13 @@ end
 ---@return table
 local function make_destroyed_hub_container_prototype()
   local prototype = copy_entity_prototype("container", "steel-chest")
+  local main_hub_prototype = copy_entity_prototype("cargo-landing-pad", HUB_MAIN_ENTITY_NAME)
+  if main_hub_prototype.collision_box == nil then
+    error("Expected cargo landing pad collision_box to exist.")
+  end
+  if main_hub_prototype.selection_box == nil then
+    error("Expected cargo landing pad selection_box to exist.")
+  end
 
   prototype.name = HUB_DESTROYED_CONTAINER_ENTITY_NAME
   prototype.icon = "__base__/graphics/icons/cargo-landing-pad.png"
@@ -154,6 +162,13 @@ local function make_destroyed_hub_container_prototype()
   prototype.inventory_size = 48
   prototype.inventory_type = "with_filters_and_bar"
   prototype.fast_replaceable_group = nil
+  prototype.collision_box = main_hub_prototype.collision_box
+  prototype.selection_box = main_hub_prototype.selection_box
+  prototype.picture = {
+    layers = {
+      util.empty_sprite()
+    }
+  }
   prototype.order = "z[warpage]-d[destroyed-hub-container]"
 
   return prototype
@@ -167,6 +182,8 @@ local function make_destroyed_hub_rubble_prototype()
   prototype.time_before_removed = 60 * 60 * 24 * 365 * 100
   prototype.time_before_shading_off = 60 * 60 * 24 * 365 * 100
   prototype.expires = false
+  prototype.remove_on_entity_placement = false
+  prototype.remove_on_tile_placement = false
   prototype.order = "z[warpage]-e[destroyed-hub-rubble]"
 
   return prototype

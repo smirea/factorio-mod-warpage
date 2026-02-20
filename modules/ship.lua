@@ -66,6 +66,16 @@ local function lock_destroyed_hub_container(entity)
   entity.minable = false
 end
 
+---@param entity LuaEntity
+local function configure_destroyed_hub_rubble(entity)
+  if entity.type ~= "corpse" then
+    error("Destroyed hub rubble must be a corpse entity.")
+  end
+
+  entity.corpse_expires = false
+  entity.corpse_immune_to_entity_placement = true
+end
+
 ---@param main_entity LuaEntity
 ---@param offset MapPosition
 ---@return MapPosition
@@ -398,7 +408,7 @@ local function compute_required_repair_slots()
     total_slots = total_slots + requirement.slots
   end
 
-  return total_slots
+  return total_slots + 1
 end
 
 ---@param destroyed_hub_container LuaEntity
@@ -472,6 +482,7 @@ local function create_destroyed_hub(surface, force)
   end
 
   lock_destroyed_hub_container(destroyed_hub_container)
+  configure_destroyed_hub_rubble(destroyed_hub_rubble)
   configure_destroyed_hub_container(destroyed_hub_container)
 
   return destroyed_hub_container, destroyed_hub_rubble
@@ -606,6 +617,7 @@ local function ensure_hub_lifecycle_entities()
   end
 
   lock_destroyed_hub_container(destroyed_hub_container)
+  configure_destroyed_hub_rubble(destroyed_hub_rubble)
   configure_destroyed_hub_container(destroyed_hub_container)
   return surface, force, nil, destroyed_hub_container, destroyed_hub_rubble
 end

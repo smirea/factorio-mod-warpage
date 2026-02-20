@@ -23,6 +23,10 @@
 ---@field b number
 ---@field a? number
 
+---@class BoundingBox
+---@field left_top MapPosition
+---@field right_bottom MapPosition
+
 ---@class LuaFluidPrototype
 ---@field base_color Color
 
@@ -76,16 +80,21 @@
 ---@class LuaEntity
 ---@field valid boolean
 ---@field name string
+---@field type string
 ---@field direction WarpageDirection
 ---@field force LuaForce
 ---@field surface LuaSurface
 ---@field position MapPosition
+---@field collision_box? BoundingBox
+---@field selection_box? BoundingBox
 ---@field fluidbox LuaFluidBox
 ---@field minable? boolean
 ---@field destructible? boolean
 ---@field quality? QualityID
 ---@field energy? number
 ---@field electric_buffer_size? number
+---@field corpse_expires? boolean
+---@field corpse_immune_to_entity_placement? boolean
 ---@field destroy fun(): boolean
 ---@field teleport fun(position: MapPosition): boolean
 ---@field get_fluid_contents fun(): table<string, number>

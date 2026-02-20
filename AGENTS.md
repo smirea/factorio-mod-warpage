@@ -6,7 +6,9 @@ When writing lua, always define proper types for everything by referencing the c
 
 When writing new functionality check ./core and especially ./core/utils first to see what can be re-used and how to work within the existing framework
 
-NEVER EVER use fallbacks. Things that should exist, should exist.
+NEVER EVER use fallbacks. Things that should exist, should exist. rely on the type system and don't double check what should be there
+
+Error on the side of simpler reusable code
 
 ## Typing and static checks
 
