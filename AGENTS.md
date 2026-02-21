@@ -6,12 +6,13 @@ See `project/README.md` for high level goals, big picture, and scope. See `proje
 
 1. When writing lua, always define proper types for everything by referencing the correct factorio entity and return types
 2. When writing new functionality check ./core and especially ./core/utils first to see what can be re-used and how to work within the existing framework
-3. NEVER EVER use fallbacks. Things that should exist, should exist. rely on the type system and don't double check what should be there
+3. Do not add explicit guard checks for guaranteed invariants. If something should exist by design (known surfaces, entities, forces, settings, schema fields), use it directly and let native errors surface. Optional arguments and intentionally optional compatibility paths are fine. Rely on the type system, do not verify that the type system is working at runtime, assume it is (for example, don't check that the shape of a table matches its type if the type is detailed)
 4. Error on the side of simpler reusable code
 5. Do not alias variables for the sake of aliasing. Especially prevalent for imports
   - bad example: `local someImportNs = require('some.import.ns'); local foo = someImportNs.foo; foo();`
   - good example: `local someImportNs = require('some.import.ns'); someImportNs.foo();`
 6. use hoisted constants mindfully. hoist constants for important configuration, avoid hoisting for any sort of value
+7. Do not create pass-through wrappers. If a local function only forwards to another call, call the target directly.
 
 # Typing and static checks
 
@@ -67,7 +68,6 @@ See `project/README.md` for high level goals, big picture, and scope. See `proje
 - `core/feature_loader.lua` defines explicit module registrations per stage and dispatches stage handlers.
 - `core/runtime.lua` creates the shared event bus and invokes runtime feature handlers.
 - `core/event_bus.lua` provides source-scoped runtime bindings per feature.
-- `core/storage_schema.lua` enforces persistent storage structure early.
 
 ## Core utils
 

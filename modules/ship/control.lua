@@ -1,23 +1,11 @@
 local common = require("core.utils.common")
 local CompoundEntity = require("core.utils.compound_entity")
-local StorageSchema = require("core.storage_schema")
 local ShipConstants = require("modules.ship.constants")
 
-local PLAYER_FORCE_NAME = ShipConstants.player_force_name
-local HUB_SURFACE_NAME = ShipConstants.hub_surface_name
-local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
-local HUB_ACCUMULATOR_ENTITY_NAME = ShipConstants.hub_accumulator_entity_name
-local HUB_ROBOPORT_ENTITY_NAME = ShipConstants.hub_roboport_entity_name
-local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
-local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
-local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
-local HUB_DESTROYED_RUBBLE_ENTITY_NAME = ShipConstants.hub_destroyed_rubble_entity_name
-local HUB_POSITION = ShipConstants.hub_position
 local HUB_DIRECTION = defines.direction.north
 local HUB_CLEAR_RADIUS = 4
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
 local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
-local HUB_UI_ROOT_NAME = ShipConstants.hub_ui_root_name
 
 local HUB_UI_UPDATE_INTERVAL = 30
 local HUB_REPAIR_TEXT_LIFETIME = 2147483647
@@ -75,10 +63,6 @@ end
 
 ---@param entity LuaEntity
 local function configure_destroyed_hub_rubble(entity)
-  if entity.type ~= "corpse" then
-    error("Destroyed hub rubble must be a corpse entity.")
-  end
-
   entity.corpse_expires = false
   entity.corpse_immune_to_entity_placement = true
 end
@@ -128,14 +112,7 @@ end
 ---@param wire_connector_id integer
 local function connect_wire(source, target, wire_connector_id)
   local source_connector = source.get_wire_connector(wire_connector_id, true)
-  if source_connector == nil or source_connector.valid ~= true then
-    error("Source entity '" .. source.name .. "' is missing wire connector " .. tostring(wire_connector_id) .. ".")
-  end
-
   local target_connector = target.get_wire_connector(wire_connector_id, true)
-  if target_connector == nil or target_connector.valid ~= true then
-    error("Target entity '" .. target.name .. "' is missing wire connector " .. tostring(wire_connector_id) .. ".")
-  end
 
   if source_connector.is_connected_to(target_connector, defines.wire_origin.script) then
     return
@@ -153,26 +130,21 @@ local function prepare_hub_accumulator(entity, main_entity, created)
     return
   end
 
-  local capacity = entity.electric_buffer_size
-  if type(capacity) ~= "number" then
-    error("Hub accumulator must expose numeric electric_buffer_size.")
-  end
-
-  entity.energy = capacity
+  entity.energy = entity.electric_buffer_size
 end
 
 ---@param entity LuaEntity
 ---@param main_entity LuaEntity
 local function prepare_hub_fluid_pipe(entity, main_entity)
   lock_hub_part(entity, main_entity)
-  local hub_power_pole = find_hub_part(main_entity, HUB_POWER_POLE_ENTITY_NAME, { x = 0, y = 0 })
+  local hub_power_pole = find_hub_part(main_entity, ShipConstants.hub_power_pole_entity_name, { x = 0, y = 0 })
   connect_wire(entity, hub_power_pole, defines.wire_connector_id.circuit_green)
 end
 
 local hub_part_definitions = {
   {
     id = "hub-accumulator",
-    entity_name = HUB_ACCUMULATOR_ENTITY_NAME,
+    entity_name = ShipConstants.hub_accumulator_entity_name,
     offset = { x = 0, y = 0 },
     direction = defines.direction.north,
     direction_relative = false,
@@ -181,7 +153,7 @@ local hub_part_definitions = {
   },
   {
     id = "hub-power-pole",
-    entity_name = HUB_POWER_POLE_ENTITY_NAME,
+    entity_name = ShipConstants.hub_power_pole_entity_name,
     offset = { x = 0, y = 0 },
     direction = defines.direction.north,
     direction_relative = false,
@@ -190,7 +162,7 @@ local hub_part_definitions = {
   },
   {
     id = "hub-roboport",
-    entity_name = HUB_ROBOPORT_ENTITY_NAME,
+    entity_name = ShipConstants.hub_roboport_entity_name,
     offset = { x = 0, y = 0 },
     direction = defines.direction.north,
     direction_relative = false,
@@ -199,7 +171,7 @@ local hub_part_definitions = {
   },
   {
     id = "hub-fluid-pipe-bottom-left",
-    entity_name = HUB_FLUID_PIPE_ENTITY_NAME,
+    entity_name = ShipConstants.hub_fluid_pipe_entity_name,
     offset = HUB_PIPE_LEFT_OFFSET,
     direction = defines.direction.north,
     direction_relative = false,
@@ -208,7 +180,7 @@ local hub_part_definitions = {
   },
   {
     id = "hub-fluid-pipe-bottom-right",
-    entity_name = HUB_FLUID_PIPE_ENTITY_NAME,
+    entity_name = ShipConstants.hub_fluid_pipe_entity_name,
     offset = HUB_PIPE_RIGHT_OFFSET,
     direction = defines.direction.north,
     direction_relative = false,
@@ -219,10 +191,11 @@ local hub_part_definitions = {
 
 local hub_compound = CompoundEntity.new({
   id = "ship_hub",
-  main_entity_name = HUB_MAIN_ENTITY_NAME,
+  main_entity_name = ShipConstants.hub_main_entity_name,
   parts = hub_part_definitions,
   matches_main_entity = function(entity)
-    return entity.force.name == PLAYER_FORCE_NAME and common.positions_match(entity.position, HUB_POSITION)
+    return entity.force.name == ShipConstants.player_force_name
+      and common.positions_match(entity.position, ShipConstants.hub_position)
   end,
   on_main_entity_ready = lock_hub_entity
 })
@@ -231,57 +204,13 @@ local hub_compound = CompoundEntity.new({
 ---@field bind fun(events: WarpageScopedBinding)
 local Ship = {}
 
----@return LuaGameScript
-local function require_game()
-  if game == nil then
-    error("Ship module requires runtime game context.")
-  end
-
-  return game
-end
-
----@return LuaForce
-local function resolve_player_force()
-  local runtime_game = require_game()
-  local force = runtime_game.forces[PLAYER_FORCE_NAME]
-  if force == nil then
-    error("Ship hub requires force '" .. PLAYER_FORCE_NAME .. "'.")
-  end
-
-  return force
-end
-
----@return LuaSurface
-local function resolve_hub_surface()
-  local runtime_game = require_game()
-
-  local surface = runtime_game.surfaces[HUB_SURFACE_NAME]
-  if surface == nil then
-    error("Ship hub requires surface '" .. HUB_SURFACE_NAME .. "'.")
-  end
-
-  return surface
-end
-
----@param player_index integer
----@return LuaPlayer
-local function resolve_player(player_index)
-  local runtime_game = require_game()
-  local player = runtime_game.get_player(player_index)
-  if player == nil or player.valid ~= true then
-    error("Unable to resolve player '" .. tostring(player_index) .. "'.")
-  end
-
-  return player
-end
-
 ---@param surface LuaSurface
 ---@param force LuaForce
 ---@return LuaEntity|nil
 local function find_existing_hub(surface, force)
   local candidates = surface.find_entities_filtered({
-    name = HUB_MAIN_ENTITY_NAME,
-    position = HUB_POSITION,
+    name = ShipConstants.hub_main_entity_name,
+    position = ShipConstants.hub_position,
     force = force
   })
 
@@ -303,11 +232,11 @@ end
 ---@return LuaEntity|nil
 local function find_destroyed_hub_container(surface)
   local area = {
-    { HUB_POSITION.x - 1, HUB_POSITION.y - 1 },
-    { HUB_POSITION.x + 1, HUB_POSITION.y + 1 }
+    { ShipConstants.hub_position.x - 1, ShipConstants.hub_position.y - 1 },
+    { ShipConstants.hub_position.x + 1, ShipConstants.hub_position.y + 1 }
   }
   local candidates = surface.find_entities_filtered({
-    name = HUB_DESTROYED_CONTAINER_ENTITY_NAME,
+    name = ShipConstants.hub_destroyed_container_entity_name,
     area = area
   })
 
@@ -329,11 +258,11 @@ end
 ---@return LuaEntity|nil
 local function find_destroyed_hub_rubble(surface)
   local area = {
-    { HUB_POSITION.x - 1, HUB_POSITION.y - 1 },
-    { HUB_POSITION.x + 1, HUB_POSITION.y + 1 }
+    { ShipConstants.hub_position.x - 1, ShipConstants.hub_position.y - 1 },
+    { ShipConstants.hub_position.x + 1, ShipConstants.hub_position.y + 1 }
   }
   local candidates = surface.find_entities_filtered({
-    name = HUB_DESTROYED_RUBBLE_ENTITY_NAME,
+    name = ShipConstants.hub_destroyed_rubble_entity_name,
     area = area
   })
 
@@ -382,54 +311,21 @@ end
 ---@param force LuaForce
 ---@return LuaEntity
 local function place_hub(surface, force)
-  clear_hub_placement_area(surface, HUB_POSITION)
+  clear_hub_placement_area(surface, ShipConstants.hub_position)
 
   return hub_compound:place({
     surface = surface,
-    position = HUB_POSITION,
+    position = ShipConstants.hub_position,
     force = force,
     direction = HUB_DIRECTION,
     create_build_effect_smoke = false
   })
 end
 
----@param destroyed_hub_container LuaEntity
----@return LuaInventory
-local function require_destroyed_hub_inventory(destroyed_hub_container)
-  local inventory = destroyed_hub_container.get_inventory(defines.inventory.chest)
-  if inventory == nil then
-    error("Destroyed hub container must expose a chest inventory.")
-  end
-
-  if inventory.supports_filters() ~= true then
-    error("Destroyed hub container inventory must support filters.")
-  end
-
-  if inventory.supports_bar() ~= true then
-    error("Destroyed hub container inventory must support bar limits.")
-  end
-
-  return inventory
-end
-
 ---@param requirement WarpageShipRepairRequirement
 ---@return integer
 local function compute_repair_requirement_slots(requirement)
-  if type(requirement.amount) ~= "number" or requirement.amount % 1 ~= 0 or requirement.amount < 1 then
-    error("Hub repair requirement '" .. requirement.item_name .. "' must define a positive integer amount.")
-  end
-
-  local item_prototype = prototypes.item[requirement.item_name]
-  if item_prototype == nil then
-    error("Hub repair requirement item '" .. requirement.item_name .. "' must exist in item prototypes.")
-  end
-
-  local stack_size = item_prototype.stack_size
-  if type(stack_size) ~= "number" or stack_size % 1 ~= 0 or stack_size < 1 then
-    error("Hub repair requirement item '" .. requirement.item_name .. "' must expose a positive integer stack size.")
-  end
-
-  return math.ceil(requirement.amount / stack_size)
+  return math.ceil(requirement.amount / prototypes.item[requirement.item_name].stack_size)
 end
 
 ---@return integer
@@ -445,7 +341,7 @@ end
 
 ---@param destroyed_hub_container LuaEntity
 local function configure_destroyed_hub_container(destroyed_hub_container)
-  local inventory = require_destroyed_hub_inventory(destroyed_hub_container)
+  local inventory = destroyed_hub_container.get_inventory(defines.inventory.chest)
   local required_slots = compute_required_repair_slots()
 
   if required_slots > HUB_DESTROYED_CONTAINER_SLOT_COUNT then
@@ -491,11 +387,11 @@ end
 ---@param force LuaForce
 ---@return LuaEntity, LuaEntity
 local function create_destroyed_hub(surface, force)
-  clear_hub_placement_area(surface, HUB_POSITION)
+  clear_hub_placement_area(surface, ShipConstants.hub_position)
 
   local destroyed_hub_container = surface.create_entity({
-    name = HUB_DESTROYED_CONTAINER_ENTITY_NAME,
-    position = HUB_POSITION,
+    name = ShipConstants.hub_destroyed_container_entity_name,
+    position = ShipConstants.hub_position,
     force = force,
     create_build_effect_smoke = false
   })
@@ -504,8 +400,8 @@ local function create_destroyed_hub(surface, force)
   end
 
   local destroyed_hub_rubble = surface.create_entity({
-    name = HUB_DESTROYED_RUBBLE_ENTITY_NAME,
-    position = HUB_POSITION
+    name = ShipConstants.hub_destroyed_rubble_entity_name,
+    position = ShipConstants.hub_position
   })
   if destroyed_hub_rubble == nil then
     error("Unable to create destroyed hub rubble at the hub origin.")
@@ -527,14 +423,7 @@ local function count_item_across_qualities(inventory, item_name)
   ---@cast quality_counts table<string, integer>
 
   local total = 0
-  for quality_name, count in pairs(quality_counts) do
-    common.ensure_non_empty_string(quality_name, "quality_name")
-    if prototypes.quality[quality_name] == nil then
-      error("Missing quality prototype '" .. quality_name .. "' while counting '" .. item_name .. "'.")
-    end
-    if type(count) ~= "number" or count % 1 ~= 0 or count < 0 then
-      error("Quality count for '" .. item_name .. "' quality '" .. quality_name .. "' must be a non-negative integer.")
-    end
+  for _, count in pairs(quality_counts) do
     total = total + count
   end
 
@@ -546,10 +435,6 @@ end
 ---@param target_count integer
 ---@return integer
 local function remove_item_across_qualities(inventory, item_name, target_count)
-  if type(target_count) ~= "number" or target_count % 1 ~= 0 or target_count < 0 then
-    error("target_count must be a non-negative integer.")
-  end
-
   local quality_counts = inventory.get_item_quality_counts(item_name)
   common.ensure_table(quality_counts, "inventory.get_item_quality_counts('" .. item_name .. "')")
   ---@cast quality_counts table<string, integer>
@@ -560,13 +445,6 @@ local function remove_item_across_qualities(inventory, item_name, target_count)
       break
     end
 
-    common.ensure_non_empty_string(quality_name, "quality_name")
-    if prototypes.quality[quality_name] == nil then
-      error("Missing quality prototype '" .. quality_name .. "' while removing '" .. item_name .. "'.")
-    end
-    if type(quality_count) ~= "number" or quality_count % 1 ~= 0 or quality_count < 0 then
-      error("Quality count for '" .. item_name .. "' quality '" .. quality_name .. "' must be a non-negative integer.")
-    end
     if quality_count > 0 then
       local remove_target = math.min(target_count - removed_total, quality_count)
       local removed = inventory.remove({
@@ -574,9 +452,6 @@ local function remove_item_across_qualities(inventory, item_name, target_count)
         count = remove_target,
         quality = quality_name
       })
-      if type(removed) ~= "number" or removed % 1 ~= 0 or removed < 0 or removed > remove_target then
-        error("Inventory remove returned an invalid count for '" .. item_name .. "' quality '" .. quality_name .. "'.")
-      end
       removed_total = removed_total + removed
     end
   end
@@ -588,26 +463,15 @@ end
 ---@return WarpageShipStoredStack[]
 local function snapshot_inventory_stacks(inventory)
   local stacks = {} ---@type WarpageShipStoredStack[]
-  for slot_index = 1, #inventory do
-    local stack = inventory[slot_index]
-    if stack == nil then
-      error("Expected destroyed hub inventory slot '" .. tostring(slot_index) .. "' to exist.")
-    end
+  for index = 1, #inventory do
+    local stack = inventory[index]
     if stack.valid_for_read then
-      local count = stack.count
-      if type(count) ~= "number" or count % 1 ~= 0 or count < 1 then
-        error("Destroyed hub stack count in slot '" .. tostring(slot_index) .. "' must be a positive integer.")
-      end
-
       local quality_name = stack.quality.name
       common.ensure_non_empty_string(quality_name, "stack.quality.name")
-      if prototypes.quality[quality_name] == nil then
-        error("Missing quality prototype '" .. quality_name .. "' while snapshotting destroyed hub inventory.")
-      end
 
       stacks[#stacks + 1] = {
         name = stack.name,
-        count = count,
+        count = stack.count,
         quality = quality_name
       }
     end
@@ -617,34 +481,14 @@ local function snapshot_inventory_stacks(inventory)
 end
 
 ---@param hub_entity LuaEntity
----@param inventory_id integer
----@param description string
----@return LuaInventory
-local function require_hub_inventory(hub_entity, inventory_id, description)
-  local inventory = hub_entity.get_inventory(inventory_id)
-  if inventory == nil then
-    error(description .. " is missing inventory '" .. tostring(inventory_id) .. "'.")
-  end
-  return inventory
-end
-
----@param hub_entity LuaEntity
 ---@param stacks WarpageShipStoredStack[]
 local function transfer_stacks_to_hub_storage(hub_entity, stacks)
   if #stacks == 0 then
     return
   end
 
-  local main_inventory = require_hub_inventory(
-    hub_entity,
-    defines.inventory.cargo_landing_pad_main,
-    "Hub main entity"
-  )
-  local trash_inventory = require_hub_inventory(
-    hub_entity,
-    defines.inventory.cargo_landing_pad_trash,
-    "Hub main entity"
-  )
+  local main_inventory = hub_entity.get_inventory(defines.inventory.cargo_landing_pad_main)
+  local trash_inventory = hub_entity.get_inventory(defines.inventory.cargo_landing_pad_trash)
 
   for _, stack in ipairs(stacks) do
     local inserted_main = main_inventory.insert({
@@ -689,7 +533,7 @@ end
 ---@param destroyed_hub_container LuaEntity
 ---@return boolean, WarpageShipRepairStatus[]
 local function collect_hub_repair_status(destroyed_hub_container)
-  local inventory = require_destroyed_hub_inventory(destroyed_hub_container)
+  local inventory = destroyed_hub_container.get_inventory(defines.inventory.chest)
   local repair_complete = true
   local status = {} ---@type WarpageShipRepairStatus[]
 
@@ -763,7 +607,7 @@ end
 
 ---@param destroyed_hub_container LuaEntity
 local function consume_hub_repair_items(destroyed_hub_container)
-  local inventory = require_destroyed_hub_inventory(destroyed_hub_container)
+  local inventory = destroyed_hub_container.get_inventory(defines.inventory.chest)
   for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
     local removed = remove_item_across_qualities(inventory, requirement.item_name, requirement.amount)
     if removed ~= requirement.amount then
@@ -782,8 +626,8 @@ end
 
 ---@return LuaSurface, LuaForce, LuaEntity|nil, LuaEntity|nil, LuaEntity|nil
 local function ensure_hub_lifecycle_entities()
-  local surface = resolve_hub_surface()
-  local force = resolve_player_force()
+  local surface = game.surfaces[ShipConstants.hub_surface_name]
+  local force = game.forces[ShipConstants.player_force_name]
   local existing_hub = find_existing_hub(surface, force)
 
   local destroyed_hub_container = find_destroyed_hub_container(surface)
@@ -830,7 +674,7 @@ local function update_hub_lifecycle()
 
   destroy_hub_repair_status_text()
   consume_hub_repair_items(destroyed_hub_container)
-  local leftover_stacks = snapshot_inventory_stacks(require_destroyed_hub_inventory(destroyed_hub_container))
+  local leftover_stacks = snapshot_inventory_stacks(destroyed_hub_container.get_inventory(defines.inventory.chest))
   destroy_entity_or_fail(destroyed_hub_rubble, "destroyed hub rubble")
   destroy_entity_or_fail(destroyed_hub_container, "destroyed hub container")
   local rebuilt_hub = place_hub(surface, force)
@@ -840,12 +684,12 @@ end
 
 ---@param player LuaPlayer
 local function destroy_hub_ui(player)
-  local relative_root = player.gui.relative[HUB_UI_ROOT_NAME]
+  local relative_root = player.gui.relative[ShipConstants.hub_ui_root_name]
   if relative_root ~= nil then
     relative_root.destroy()
   end
 
-  local screen_root = player.gui.screen[HUB_UI_ROOT_NAME]
+  local screen_root = player.gui.screen[ShipConstants.hub_ui_root_name]
   if screen_root ~= nil then
     screen_root.destroy()
   end
@@ -854,14 +698,14 @@ end
 ---@param player LuaPlayer
 ---@return LuaGuiElement
 local function ensure_hub_ui(player)
-  local root = player.gui.relative[HUB_UI_ROOT_NAME]
+  local root = player.gui.relative[ShipConstants.hub_ui_root_name]
   if root ~= nil then
     return root
   end
 
   root = player.gui.relative.add({
     type = "frame",
-    name = HUB_UI_ROOT_NAME,
+    name = ShipConstants.hub_ui_root_name,
     direction = "vertical",
     caption = "Hub",
     anchor = {
@@ -930,20 +774,8 @@ end
 ---@param fluid_name string
 ---@return Color
 local function resolve_fluid_bar_color(fluid_name)
-  local fluid_prototype = prototypes.fluid[fluid_name]
-  if fluid_prototype == nil then
-    error("Hub UI could not resolve fluid prototype '" .. fluid_name .. "'.")
-  end
-
-  local base_color = fluid_prototype.base_color
-  local red = base_color.r
-  local green = base_color.g
-  local blue = base_color.b
-  if type(red) ~= "number" or type(green) ~= "number" or type(blue) ~= "number" then
-    error("Hub fluid '" .. fluid_name .. "' must expose numeric base_color.")
-  end
-
-  return { r = red, g = green, b = blue }
+  local base_color = prototypes.fluid[fluid_name].base_color
+  return { r = base_color.r, g = base_color.g, b = base_color.b }
 end
 
 ---@param fluid_table LuaGuiElement
@@ -952,9 +784,6 @@ end
 local function add_fluid_row(fluid_table, direction_icon, fluid_pipe)
   local fluid_name, amount = extract_fluid(fluid_pipe)
   local capacity = fluid_pipe.fluidbox.get_capacity(1)
-  if type(capacity) ~= "number" then
-    error("Hub fluid pipe must expose a numeric fluid capacity.")
-  end
 
   local direction_cell = fluid_table.add({
     type = "label",
@@ -1013,27 +842,18 @@ local function update_hub_ui(player, hub_entity)
   hub_compound:sync(hub_entity)
   local root = ensure_hub_ui(player)
 
-  local accumulator = find_hub_part(hub_entity, HUB_ACCUMULATOR_ENTITY_NAME, { x = 0, y = 0 })
-  local left_pipe = find_hub_part(hub_entity, HUB_FLUID_PIPE_ENTITY_NAME, HUB_PIPE_LEFT_OFFSET)
-  local right_pipe = find_hub_part(hub_entity, HUB_FLUID_PIPE_ENTITY_NAME, HUB_PIPE_RIGHT_OFFSET)
+  local accumulator = find_hub_part(hub_entity, ShipConstants.hub_accumulator_entity_name, { x = 0, y = 0 })
+  local left_pipe = find_hub_part(hub_entity, ShipConstants.hub_fluid_pipe_entity_name, HUB_PIPE_LEFT_OFFSET)
+  local right_pipe = find_hub_part(hub_entity, ShipConstants.hub_fluid_pipe_entity_name, HUB_PIPE_RIGHT_OFFSET)
 
   local energy = accumulator.energy
   local capacity = accumulator.electric_buffer_size
-  if type(energy) ~= "number" or type(capacity) ~= "number" then
-    error("Hub accumulator must expose numeric energy fields.")
-  end
 
   local power_label = root[ShipConstants.hub_ui_power_label_name]
-  if power_label == nil then
-    error("Hub UI is missing power label.")
-  end
 
   power_label.caption = "Accumulator: " .. string.format("%.1fMJ / %.1fMJ", energy / 1000000, capacity / 1000000)
 
   local power_bar = root[ShipConstants.hub_ui_power_bar_name]
-  if power_bar == nil then
-    error("Hub UI is missing power bar.")
-  end
 
   if capacity <= 0 then
     power_bar.value = 0
@@ -1048,9 +868,6 @@ local function update_hub_ui(player, hub_entity)
   end
 
   local fluid_table = root[ShipConstants.hub_ui_fluid_table_name]
-  if fluid_table == nil then
-    error("Hub UI is missing fluid table.")
-  end
 
   fluid_table.clear()
   add_fluid_row(fluid_table, ShipConstants.hub_ui_fluid_left_icon, left_pipe)
@@ -1062,8 +879,7 @@ local function reset_open_hub_state()
 end
 
 local function clear_open_hub_state_for_players()
-  local runtime_game = require_game()
-  for _, player in pairs(runtime_game.players) do
+  for _, player in pairs(game.players) do
     destroy_hub_ui(player)
   end
   destroy_hub_repair_status_text()
@@ -1072,7 +888,7 @@ end
 
 local function update_open_hub_uis()
   for player_index, hub_entity in pairs(open_hubs_by_player) do
-    local player = resolve_player(player_index)
+    local player = game.get_player(player_index)
     if hub_entity.valid ~= true or not hub_compound:is_main_entity(hub_entity) then
       open_hubs_by_player[player_index] = nil
       destroy_hub_ui(player)
@@ -1084,7 +900,7 @@ end
 
 ---@param event table
 local function handle_gui_opened(event)
-  local player = resolve_player(event.player_index)
+  local player = game.get_player(event.player_index)
   local opened_entity = event.entity
   if not hub_compound:is_main_entity(opened_entity) then
     open_hubs_by_player[player.index] = nil
@@ -1099,7 +915,7 @@ end
 
 ---@param event table
 local function handle_gui_closed(event)
-  local player = resolve_player(event.player_index)
+  local player = game.get_player(event.player_index)
   open_hubs_by_player[player.index] = nil
   destroy_hub_ui(player)
 end
@@ -1107,9 +923,6 @@ end
 ---@param events WarpageScopedBinding
 function Ship.bind(events)
   common.ensure_table(events, "events")
-  if type(events.bind) ~= "function" then
-    error("events must define bind(registration).")
-  end
 
   hub_compound:bind(events)
 
@@ -1141,43 +954,12 @@ function Ship.bind(events)
   })
 end
 
----@return boolean
-local function is_ship_tests_enabled()
-  local setting = settings.global[ShipConstants.ship_tests_setting_name]
-  if setting == nil then
-    error("Missing runtime-global setting '" .. ShipConstants.ship_tests_setting_name .. "'.")
-  end
-
-  if type(setting.value) ~= "boolean" then
-    error("Runtime-global setting '" .. ShipConstants.ship_tests_setting_name .. "' must be a boolean.")
-  end
-
-  return setting.value == true
-end
-
-local function ensure_storage_schema()
-  StorageSchema.ensure()
-end
-
-local function assert_storage_schema()
-  StorageSchema.assert_ready()
-end
-
 ---@param context WarpageFeatureContext
 ---@type WarpageStageRunner
 return function(context)
   local events = context.events
-  if events == nil then
-    error(context.feature_id .. " requires context.events.")
-  end
 
-  events:bind({
-    on_init = ensure_storage_schema,
-    on_configuration_changed = ensure_storage_schema,
-    on_load = assert_storage_schema
-  })
-
-  if is_ship_tests_enabled() then
+  if settings.global[ShipConstants.ship_tests_setting_name].value == true then
     local ShipTests = require("tests.ship_tests")
     ShipTests.bind(events)
   end

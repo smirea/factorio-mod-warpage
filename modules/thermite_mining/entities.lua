@@ -1,20 +1,11 @@
 local util = require("__core__/lualib/util")
 local ThermiteConstants = require("modules.thermite_mining.constants")
 
-local THERMITE_ITEM_NAME = ThermiteConstants.item_name
-local THERMITE_PROJECTILE_NAME = ThermiteConstants.projectile_name
-local THERMITE_TOOLTIP_ANCHOR_ENTITY_NAME = ThermiteConstants.tooltip_anchor_entity_name
-local THERMITE_IMPACT_EFFECT_ID = ThermiteConstants.impact_effect_id
 
 ---@return table
 local function make_thermite_projectile()
-  local base_projectile = data.raw.projectile["grenade"]
-  if base_projectile == nil then
-    error("Expected data.raw.projectile.grenade to exist.")
-  end
-
-  local projectile = util.table.deepcopy(base_projectile)
-  projectile.name = THERMITE_PROJECTILE_NAME
+  local projectile = util.table.deepcopy(data.raw.projectile["grenade"])
+  projectile.name = ThermiteConstants.projectile_name
   projectile.action = {
     {
       type = "direct",
@@ -23,7 +14,7 @@ local function make_thermite_projectile()
         target_effects = {
           {
             type = "script",
-            effect_id = THERMITE_IMPACT_EFFECT_ID
+            effect_id = ThermiteConstants.impact_effect_id
           }
         }
       }
@@ -38,7 +29,7 @@ end
 local function make_thermite_capsule()
   return {
     type = "capsule",
-    name = THERMITE_ITEM_NAME,
+    name = ThermiteConstants.item_name,
     icon = ThermiteConstants.item_icon_path,
     icon_size = 64,
     capsule_action = {
@@ -56,7 +47,7 @@ local function make_thermite_capsule()
             type = "direct",
             action_delivery = {
               type = "projectile",
-              projectile = THERMITE_PROJECTILE_NAME,
+              projectile = ThermiteConstants.projectile_name,
               starting_speed = 0.3
             }
           }
@@ -73,7 +64,7 @@ end
 local function make_thermite_tooltip_anchor()
   return {
     type = "simple-entity-with-owner",
-    name = THERMITE_TOOLTIP_ANCHOR_ENTITY_NAME,
+    name = ThermiteConstants.tooltip_anchor_entity_name,
     icon = ThermiteConstants.item_icon_path,
     icon_size = 64,
     flags = {

@@ -2,37 +2,19 @@ local util = require("__core__/lualib/util")
 local Constants = require("__warpage__/constants")
 local ShipConstants = require("modules.ship.constants")
 
-local HUB_ACCUMULATOR_ENTITY_NAME = ShipConstants.hub_accumulator_entity_name
-local HUB_ROBOPORT_ENTITY_NAME = ShipConstants.hub_roboport_entity_name
-local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
-local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
-local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
-local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
-local HUB_DESTROYED_RUBBLE_ENTITY_NAME = ShipConstants.hub_destroyed_rubble_entity_name
-local MOD_NAMESPACE = Constants.mod_namespace
 
 ---@param entity_type string
 ---@param prototype_name string
 ---@return table
 local function copy_entity_prototype(entity_type, prototype_name)
-  local prototypes_by_type = data.raw[entity_type]
-  if prototypes_by_type == nil then
-    error("Expected data.raw." .. entity_type .. " to exist.")
-  end
-
-  local prototype = prototypes_by_type[prototype_name]
-  if prototype == nil then
-    error("Expected data.raw." .. entity_type .. "." .. prototype_name .. " to exist.")
-  end
-
-  return util.table.deepcopy(prototype)
+  return util.table.deepcopy(data.raw[entity_type][prototype_name])
 end
 
 ---@return table
 local function make_hub_accumulator_prototype()
   local prototype = copy_entity_prototype("accumulator", "accumulator")
 
-  prototype.name = HUB_ACCUMULATOR_ENTITY_NAME
+  prototype.name = ShipConstants.hub_accumulator_entity_name
   prototype.flags = { "placeable-neutral", "placeable-off-grid", "not-on-map" }
   prototype.hidden = true
   prototype.hidden_in_factoriopedia = true
@@ -48,7 +30,7 @@ local function make_hub_accumulator_prototype()
   prototype.close_sound = nil
   prototype.draw_copper_wires = false
   prototype.draw_circuit_wires = false
-  prototype.order = "z[" .. MOD_NAMESPACE .. "]-a[hub-accumulator]"
+  prototype.order = "z[" .. Constants.mod_namespace .. "]-a[hub-accumulator]"
 
   return prototype
 end
@@ -57,7 +39,7 @@ end
 local function make_hub_power_pole_prototype()
   local prototype = copy_entity_prototype("electric-pole", "small-electric-pole")
 
-  prototype.name = HUB_POWER_POLE_ENTITY_NAME
+  prototype.name = ShipConstants.hub_power_pole_entity_name
   prototype.flags = { "placeable-neutral", "placeable-off-grid", "not-on-map" }
   prototype.hidden = true
   prototype.hidden_in_factoriopedia = true
@@ -76,7 +58,7 @@ local function make_hub_power_pole_prototype()
   prototype.auto_connect_up_to_n_wires = 0
   prototype.draw_copper_wires = false
   prototype.draw_circuit_wires = false
-  prototype.order = "z[" .. MOD_NAMESPACE .. "]-b[hub-power-pole]"
+  prototype.order = "z[" .. Constants.mod_namespace .. "]-b[hub-power-pole]"
 
   return prototype
 end
@@ -85,7 +67,7 @@ end
 local function make_hub_roboport_prototype()
   local prototype = copy_entity_prototype("roboport", "roboport")
 
-  prototype.name = HUB_ROBOPORT_ENTITY_NAME
+  prototype.name = ShipConstants.hub_roboport_entity_name
   prototype.flags = { "placeable-neutral", "placeable-off-grid", "not-on-map" }
   prototype.hidden = true
   prototype.hidden_in_factoriopedia = true
@@ -94,7 +76,7 @@ local function make_hub_roboport_prototype()
   prototype.fast_replaceable_group = nil
   prototype.collision_box = { { 0, 0 }, { 0, 0 } }
   prototype.selection_box = { { 0, 0 }, { 0, 0 } }
-  prototype.order = "z[" .. MOD_NAMESPACE .. "]-c[hub-roboport]"
+  prototype.order = "z[" .. Constants.mod_namespace .. "]-c[hub-roboport]"
 
   return prototype
 end
@@ -103,7 +85,7 @@ end
 local function make_hub_fluid_pipe_prototype()
   local prototype = copy_entity_prototype("storage-tank", "storage-tank")
 
-  prototype.name = HUB_FLUID_PIPE_ENTITY_NAME
+  prototype.name = ShipConstants.hub_fluid_pipe_entity_name
   prototype.icon = "__base__/graphics/icons/pipe.png"
   prototype.flags = { "placeable-neutral", "placeable-player", "player-creation" }
   prototype.hidden = true
@@ -160,7 +142,7 @@ local function make_hub_fluid_pipe_prototype()
       scale = 0.5
     }
   }
-  prototype.order = "z[" .. MOD_NAMESPACE .. "]-d[hub-fluid-pipe]"
+  prototype.order = "z[" .. Constants.mod_namespace .. "]-d[hub-fluid-pipe]"
 
   return prototype
 end
@@ -168,15 +150,9 @@ end
 ---@return table
 local function make_destroyed_hub_container_prototype()
   local prototype = copy_entity_prototype("container", "steel-chest")
-  local main_hub_prototype = copy_entity_prototype("cargo-landing-pad", HUB_MAIN_ENTITY_NAME)
-  if main_hub_prototype.collision_box == nil then
-    error("Expected cargo landing pad collision_box to exist.")
-  end
-  if main_hub_prototype.selection_box == nil then
-    error("Expected cargo landing pad selection_box to exist.")
-  end
+  local main_hub_prototype = copy_entity_prototype("cargo-landing-pad", ShipConstants.hub_main_entity_name)
 
-  prototype.name = HUB_DESTROYED_CONTAINER_ENTITY_NAME
+  prototype.name = ShipConstants.hub_destroyed_container_entity_name
   prototype.icon = "__base__/graphics/icons/cargo-landing-pad.png"
   prototype.flags = { "placeable-neutral", "player-creation" }
   prototype.minable = nil
@@ -191,7 +167,7 @@ local function make_destroyed_hub_container_prototype()
       util.empty_sprite()
     }
   }
-  prototype.order = "z[" .. MOD_NAMESPACE .. "]-e[destroyed-hub-container]"
+  prototype.order = "z[" .. Constants.mod_namespace .. "]-e[destroyed-hub-container]"
 
   return prototype
 end
@@ -200,7 +176,7 @@ end
 local function make_destroyed_hub_rubble_prototype()
   local prototype = copy_entity_prototype("corpse", "cargo-landing-pad-remnants")
 
-  prototype.name = HUB_DESTROYED_RUBBLE_ENTITY_NAME
+  prototype.name = ShipConstants.hub_destroyed_rubble_entity_name
   prototype.time_before_removed = 60 * 60 * 24 * 365 * 100
   prototype.time_before_shading_off = 60 * 60 * 24 * 365 * 100
   prototype.expires = false
@@ -213,7 +189,7 @@ local function make_destroyed_hub_rubble_prototype()
     "not-on-map",
     "not-selectable-in-game"
   }
-  prototype.order = "z[" .. MOD_NAMESPACE .. "]-f[destroyed-hub-rubble]"
+  prototype.order = "z[" .. Constants.mod_namespace .. "]-f[destroyed-hub-rubble]"
 
   return prototype
 end

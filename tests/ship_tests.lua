@@ -1,16 +1,6 @@
 local common = require("core.utils.common")
-local StorageSchema = require("core.storage_schema")
 local ShipConstants = require("modules.ship.constants")
 
-local HUB_SURFACE_NAME = ShipConstants.hub_surface_name
-local HUB_FORCE_NAME = ShipConstants.player_force_name
-local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
-local HUB_ACCUMULATOR_ENTITY_NAME = ShipConstants.hub_accumulator_entity_name
-local HUB_ROBOPORT_ENTITY_NAME = ShipConstants.hub_roboport_entity_name
-local HUB_POWER_POLE_ENTITY_NAME = ShipConstants.hub_power_pole_entity_name
-local HUB_FLUID_PIPE_ENTITY_NAME = ShipConstants.hub_fluid_pipe_entity_name
-local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
-local HUB_DESTROYED_RUBBLE_ENTITY_NAME = ShipConstants.hub_destroyed_rubble_entity_name
 local HUB_POSITION = { x = 0, y = 0 }
 local HUB_PIPE_LEFT_OFFSET = { x = -2.5, y = 3.5 }
 local HUB_PIPE_RIGHT_OFFSET = { x = 3.5, y = 3.5 }
@@ -69,9 +59,9 @@ end
 ---@return LuaSurface
 local function resolve_hub_surface()
   local runtime_game = require_game()
-  local surface = runtime_game.surfaces[HUB_SURFACE_NAME]
+  local surface = runtime_game.surfaces[ShipConstants.hub_surface_name]
   if surface == nil then
-    error("Ship tests require surface '" .. HUB_SURFACE_NAME .. "'.")
+    error("Ship tests require surface '" .. ShipConstants.hub_surface_name .. "'.")
   end
 
   return surface
@@ -80,9 +70,9 @@ end
 ---@return LuaForce
 local function resolve_hub_force()
   local runtime_game = require_game()
-  local force = runtime_game.forces[HUB_FORCE_NAME]
+  local force = runtime_game.forces[ShipConstants.player_force_name]
   if force == nil then
-    error("Ship tests require force '" .. HUB_FORCE_NAME .. "'.")
+    error("Ship tests require force '" .. ShipConstants.player_force_name .. "'.")
   end
 
   return force
@@ -146,7 +136,7 @@ end
 
 ---@return WarpageShipTestsFeatureState
 local function ensure_test_state()
-  local runtime_storage = StorageSchema.ensure()
+  local runtime_storage = storage ---@type WarpageStorage
   local state = runtime_storage.ship_tests
   if state == nil then
     state = {
@@ -158,47 +148,15 @@ local function ensure_test_state()
     return state
   end
 
-  if type(state) ~= "table" then
-    error("storage.ship_tests must be a table.")
-  end
-
-  if type(state.enabled) ~= "boolean" then
-    error("storage.ship_tests.enabled must be a boolean.")
-  end
-
-  if type(state.completed) ~= "boolean" then
-    error("storage.ship_tests.completed must be a boolean.")
-  end
-
-  if type(state.repair_seeded) ~= "boolean" then
-    error("storage.ship_tests.repair_seeded must be a boolean.")
-  end
-
   return state
 end
 
 ---@return WarpageShipTestsFeatureState|nil
 local function assert_test_state()
-  local runtime_storage = StorageSchema.assert_ready()
+  local runtime_storage = storage --[[@as WarpageStorage]]
   local state = runtime_storage.ship_tests
   if state == nil then
     return nil
-  end
-
-  if type(state) ~= "table" then
-    error("storage.ship_tests must be a table.")
-  end
-
-  if type(state.enabled) ~= "boolean" then
-    error("storage.ship_tests.enabled must be a boolean.")
-  end
-
-  if type(state.completed) ~= "boolean" then
-    error("storage.ship_tests.completed must be a boolean.")
-  end
-
-  if type(state.repair_seeded) ~= "boolean" then
-    error("storage.ship_tests.repair_seeded must be a boolean.")
   end
 
   return state
@@ -287,7 +245,7 @@ end
 ---@return LuaEntity|nil
 local function find_main_hub_optional(surface, force)
   local candidates = surface.find_entities_filtered({
-    name = HUB_MAIN_ENTITY_NAME,
+    name = ShipConstants.hub_main_entity_name,
     position = HUB_POSITION,
     force = force
   })
@@ -321,7 +279,7 @@ end
 ---@param surface LuaSurface
 ---@return LuaEntity
 local function find_destroyed_hub_container(surface)
-  local container = find_unique_entity_at_hub_origin(surface, nil, HUB_DESTROYED_CONTAINER_ENTITY_NAME)
+  local container = find_unique_entity_at_hub_origin(surface, nil, ShipConstants.hub_destroyed_container_entity_name)
   if container == nil then
     error("Ship tests expected destroyed hub container at the hub origin.")
   end
@@ -332,7 +290,7 @@ end
 ---@param surface LuaSurface
 ---@return LuaEntity
 local function find_destroyed_hub_rubble(surface)
-  local rubble = find_unique_entity_at_hub_origin(surface, nil, HUB_DESTROYED_RUBBLE_ENTITY_NAME)
+  local rubble = find_unique_entity_at_hub_origin(surface, nil, ShipConstants.hub_destroyed_rubble_entity_name)
   if rubble == nil then
     error("Ship tests expected destroyed hub rubble at the hub origin.")
   end
@@ -342,9 +300,9 @@ end
 
 ---@return LuaEntityPrototype
 local function require_hub_main_prototype()
-  local prototype = prototypes.entity[HUB_MAIN_ENTITY_NAME]
+  local prototype = prototypes.entity[ShipConstants.hub_main_entity_name]
   if prototype == nil then
-    error("Ship tests require prototype '" .. HUB_MAIN_ENTITY_NAME .. "'.")
+    error("Ship tests require prototype '" .. ShipConstants.hub_main_entity_name .. "'.")
   end
 
   return prototype
@@ -539,11 +497,11 @@ local function run_ship_hub_assertions()
     error("Ship tests expected hub to be non-minable.")
   end
 
-  local accumulator = find_hub_part(hub, HUB_ACCUMULATOR_ENTITY_NAME, { x = 0, y = 0 })
-  local roboport = find_hub_part(hub, HUB_ROBOPORT_ENTITY_NAME, { x = 0, y = 0 })
-  local power_pole = find_hub_part(hub, HUB_POWER_POLE_ENTITY_NAME, { x = 0, y = 0 })
-  local left_pipe = find_hub_part(hub, HUB_FLUID_PIPE_ENTITY_NAME, HUB_PIPE_LEFT_OFFSET)
-  local right_pipe = find_hub_part(hub, HUB_FLUID_PIPE_ENTITY_NAME, HUB_PIPE_RIGHT_OFFSET)
+  local accumulator = find_hub_part(hub, ShipConstants.hub_accumulator_entity_name, { x = 0, y = 0 })
+  local roboport = find_hub_part(hub, ShipConstants.hub_roboport_entity_name, { x = 0, y = 0 })
+  local power_pole = find_hub_part(hub, ShipConstants.hub_power_pole_entity_name, { x = 0, y = 0 })
+  local left_pipe = find_hub_part(hub, ShipConstants.hub_fluid_pipe_entity_name, HUB_PIPE_LEFT_OFFSET)
+  local right_pipe = find_hub_part(hub, ShipConstants.hub_fluid_pipe_entity_name, HUB_PIPE_RIGHT_OFFSET)
 
   local capacity = accumulator.electric_buffer_size
   local energy = accumulator.energy
@@ -574,12 +532,20 @@ local function run_ship_hub_assertions()
   assert_pipe_accepts_fluid(left_pipe, "water", 250)
   assert_pipe_accepts_fluid(right_pipe, "crude-oil", 250)
 
-  local destroyed_container = find_unique_entity_at_hub_origin(surface, force, HUB_DESTROYED_CONTAINER_ENTITY_NAME)
+  local destroyed_container = find_unique_entity_at_hub_origin(
+    surface,
+    force,
+    ShipConstants.hub_destroyed_container_entity_name
+  )
   if destroyed_container ~= nil then
     error("Ship tests expected destroyed hub container to be removed after repair completion.")
   end
 
-  local destroyed_rubble = find_unique_entity_at_hub_origin(surface, nil, HUB_DESTROYED_RUBBLE_ENTITY_NAME)
+  local destroyed_rubble = find_unique_entity_at_hub_origin(
+    surface,
+    nil,
+    ShipConstants.hub_destroyed_rubble_entity_name
+  )
   if destroyed_rubble ~= nil then
     error("Ship tests expected destroyed hub rubble to be removed after repair completion.")
   end

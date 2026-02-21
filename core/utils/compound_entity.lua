@@ -344,32 +344,7 @@ end
 ---@param placement WarpageCompoundEntityPlacement
 ---@return LuaEntity
 function CompoundEntity:place(placement)
-  common.ensure_table(placement, "placement")
-
   local surface = placement.surface
-  local surface_type = type(surface)
-  if surface_type ~= "table" and surface_type ~= "userdata" then
-    error("placement.surface must be a valid LuaSurface.")
-  end
-
-  ---@cast surface LuaSurface
-  if type(surface.create_entity) ~= "function" or type(surface.find_entities_filtered) ~= "function" then
-    error("placement.surface must be a valid LuaSurface.")
-  end
-
-  if placement.force == nil then
-    error("placement.force is required.")
-  end
-
-  common.ensure_position(placement.position, "placement.position")
-
-  if placement.direction ~= nil then
-    common.ensure_direction(placement.direction, "placement.direction")
-  end
-
-  if placement.create_build_effect_smoke ~= nil then
-    common.ensure_boolean(placement.create_build_effect_smoke, "placement.create_build_effect_smoke")
-  end
 
   local create_options = {
     name = self._definition.main_entity_name,
@@ -438,10 +413,6 @@ function CompoundEntity:reposition(main_entity, position, direction)
 end
 
 function CompoundEntity:_sync_existing_main_entities()
-  if game == nil then
-    error("CompoundEntity sync requires runtime game context.")
-  end
-
   for _, surface in pairs(game.surfaces) do
     local main_entities = surface.find_entities_filtered({
       name = self._definition.main_entity_name
@@ -481,11 +452,6 @@ end
 function CompoundEntity:bind(events)
   if self._bound then
     error("CompoundEntity '" .. self._definition.id .. "' is already bound.")
-  end
-
-  common.ensure_table(events, "events")
-  if type(events.bind) ~= "function" then
-    error("events must define bind(registration).")
   end
 
   local event_handlers = {} ---@type table<WarpageEventId, fun(event: table)>

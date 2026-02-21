@@ -127,7 +127,6 @@
 ---@field quality? QualityID
 
 ---@class WarpageStorage
----@field schema_version integer
 ---@field startup? WarpageStartupFeatureState
 ---@field thermite_mining? WarpageThermiteMiningFeatureState
 ---@field thermite_research_finished_tick? integer
