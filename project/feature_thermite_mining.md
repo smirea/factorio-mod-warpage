@@ -12,8 +12,9 @@ There is no conventional mining in WarpAge in the early game (no burner miners, 
 - [x] Item and recipe icon use the thermite barrel
 - [x] Throwable consumable starts a `fire-flame` and countdown `3/2/1`, detonates after 3 seconds
 - [x] Countdown and empty-blast `x.x` tooltip are shown to players
-- [x] Base blast removes `basic-solid` resources in a 3x3 area (radius 1)
-- [x] Ore yield per removed ore type: `ceil(min(removed_amount / 100, 20) * productivity_multiplier * ore_multiplier)` spilled on ground
+- [x] Base blast removes `basic-solid` resources in a 4x4 area (radius 2)
+- [x] Ore yield per removed ore type: `ceil(min(removed_amount / 100, 25) * productivity_multiplier * ore_multiplier)` spilled on ground
+- [x] Ore and calcite drops are placed at the center of the removed area
 - [x] Ore multipliers are configurable in runtime: iron/copper `1x`, coal `0.75x`, stone `0.5x`, calcite `0.4x`, tungsten `0.2x`, scrap `1x`, fallback `0.5x`
 - [x] Ore drops are split into stacks of `500` when total yield exceeds 500
 - [x] Calcite bonus always drops first on detonation (including empty ground): `random(1, 5) * productivity_multiplier`
@@ -36,4 +37,4 @@ There is no conventional mining in WarpAge in the early game (no burner miners, 
 - [x] Rescue condition: no calcite and no thermite miners in all player inventories and hub storage
 - [x] During hub repair phase, emergency support targets a player position (cargo pod on player) instead of hub storage
 - [x] Repair-phase emergency support only starts after `warpage-thermite-mining` research is complete and a 2-minute grace period has elapsed
-- [x] Rescue delivery: 1 calcite (`hub` when rebuilt, `player-targeted cargo pod` during repair phase after grace); message `look, you should never run out of [item=calcite], sending you some how`
+- [x] Rescue delivery: 1 calcite (`hub` when rebuilt, `player-targeted cargo pod` during repair phase after grace); message `look, you should never run out of [item=calcite], sending you some now`

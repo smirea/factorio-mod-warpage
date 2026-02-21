@@ -16,7 +16,7 @@ local PLAYER_FORCE_NAME = ShipConstants.player_force_name
 
 local ORE_YIELD_CONFIG = {
   amount_divisor = 100,
-  amount_cap = 20,
+  amount_cap = 25,
   drop_stack_size = 500,
   default_multiplier = 0.5,
   multiplier_by_item_name = {
@@ -32,7 +32,7 @@ local ORE_YIELD_CONFIG = {
 
 local THERMITE_COUNTDOWN_TOOLTIP_LIFETIME = 70
 local THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME = 100
-local THERMITE_COUNTDOWN_TOOLTIP_OFFSET = { x = 0, y = -2 }
+local THERMITE_COUNTDOWN_TOOLTIP_OFFSET = { x = 0, y = -2.6 }
 local THERMITE_EMPTY_BLAST_TOOLTIP_OFFSET = { x = 0, y = -1.5 }
 
 local SCRIPT_TRIGGER_EFFECT_EVENT_ID = common.required_event_id("on_script_trigger_effect")
@@ -684,15 +684,28 @@ local function spill_item_in_stacks(surface, force, position, item_name, item_co
   end
 end
 
----@param surface LuaSurface
 ---@param position MapPosition
 ---@param radius integer
----@return table<string, number>
-local function remove_ore_resources(surface, position, radius)
-  local area = {
-    { position.x - radius - 0.5, position.y - radius - 0.5 },
-    { position.x + radius + 0.5, position.y + radius + 0.5 }
+---@return BoundingBox
+---@return MapPosition
+local function resolve_blast_area_and_center(position, radius)
+  local left_top_x = position.x - radius
+  local left_top_y = position.y - radius
+  local right_bottom_x = position.x + radius
+  local right_bottom_y = position.y + radius
+  return {
+    { left_top_x, left_top_y },
+    { right_bottom_x, right_bottom_y }
+  }, {
+    x = (left_top_x + right_bottom_x) / 2,
+    y = (left_top_y + right_bottom_y) / 2
   }
+end
+
+---@param surface LuaSurface
+---@param area BoundingBox
+---@return table<string, number>
+local function remove_ore_resources(surface, area)
   local resources = surface.find_entities_filtered({
     area = area,
     type = "resource"
@@ -847,10 +860,11 @@ local function detonate_blast(state, blast_id, blast, tick)
   local surface, force = resolve_blast_surface_and_force(blast)
   local radius = compute_blast_radius(force)
   local productivity_multiplier = compute_productivity_multiplier(force)
+  local blast_area, drop_position = resolve_blast_area_and_center(blast.position, radius)
 
-  drop_calcite_bonus(surface, force, blast.position, productivity_multiplier)
-  local removed_by_item = remove_ore_resources(surface, blast.position, radius)
-  local removed_any = drop_ore_yield(surface, force, blast.position, removed_by_item, productivity_multiplier)
+  drop_calcite_bonus(surface, force, drop_position, productivity_multiplier)
+  local removed_by_item = remove_ore_resources(surface, blast_area)
+  local removed_any = drop_ore_yield(surface, force, drop_position, removed_by_item, productivity_multiplier)
 
   local explosion = surface.create_entity({
     name = "grenade-explosion",
@@ -1095,6 +1109,9 @@ local function handle_script_trigger_effect(event)
   if tooltip_anchor == nil then
     error("Failed to create thermite tooltip anchor entity.")
   end
+
+  tooltip_anchor.destructible = false
+  tooltip_anchor.minable = false
 
   if tooltip_anchor.health == nil then
     error("Thermite tooltip anchor entity must have health.")
