@@ -12,6 +12,11 @@ This is an overview of the design document. See the various ./feature_*.md files
 8. Throughput instead of storage - no chests but easy to gather resources, philosophy should be to go to a place and build/research as fast as much as possible
 8.1. This means that researches would have to accomodate sparse resources - all techs needing most research packs is a big limitation
 
+# Feature files
+Store high-level design decisions, the purpose of the feature, and the set of behaviors needed.
+Feature files are rough design docs, not implementation guides.
+Specific implementation details should live in code.
+
 # Big Novel Features
 
 ## Quality Upgrade

@@ -3,7 +3,6 @@ local StorageSchema = require("core.storage_schema")
 local ShipConstants = require("modules.ship.constants")
 local ThermiteConstants = require("modules.thermite_mining.constants")
 
-local THERMITE_FEATURE_KEY = ThermiteConstants.feature_key
 local THERMITE_ITEM_NAME = ThermiteConstants.item_name
 local THERMITE_IMPACT_EFFECT_ID = ThermiteConstants.impact_effect_id
 local THERMITE_MINING_TECH_NAME = ThermiteConstants.thermite_mining_technology_name
@@ -13,6 +12,27 @@ local HUB_POSITION = ShipConstants.hub_position
 local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
 local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
 local PLAYER_FORCE_NAME = ShipConstants.player_force_name
+
+local ORE_YIELD_CONFIG = {
+  amount_divisor = 100,
+  amount_cap = 20,
+  drop_stack_size = 500,
+  default_multiplier = 0.5,
+  multiplier_by_item_name = {
+    ["iron-ore"] = 1,
+    ["copper-ore"] = 1,
+    coal = 0.75,
+    stone = 0.5,
+    calcite = 0.4,
+    ["tungsten-ore"] = 0.2,
+    scrap = 1
+  }
+}
+
+local THERMITE_COUNTDOWN_TOOLTIP_LIFETIME = 70
+local THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME = 100
+local THERMITE_COUNTDOWN_TOOLTIP_OFFSET = { x = 0, y = -2 }
+local THERMITE_EMPTY_BLAST_TOOLTIP_OFFSET = { x = 0, y = -1.5 }
 
 local SCRIPT_TRIGGER_EFFECT_EVENT_ID = common.required_event_id("on_script_trigger_effect")
 local RESEARCH_FINISHED_EVENT_ID = common.required_event_id("on_research_finished")
@@ -63,10 +83,8 @@ local function validate_queued_blast(value, name)
   end
 
   local flame_unit_number = value.flame_unit_number
-  if flame_unit_number ~= nil then
-    if type(flame_unit_number) ~= "number" or flame_unit_number % 1 ~= 0 or flame_unit_number < 1 then
-      error(name .. ".flame_unit_number must be a positive integer when provided.")
-    end
+  if type(flame_unit_number) ~= "number" or flame_unit_number % 1 ~= 0 or flame_unit_number < 1 then
+    error(name .. ".flame_unit_number must be a positive integer.")
   end
 
   return value
@@ -101,46 +119,99 @@ local function validate_thermite_state(value, name)
 
   common.ensure_boolean(value.unlock_bonus_delivered, name .. ".unlock_bonus_delivered")
 
-  local last_calcite_rescue_tick = value.last_calcite_rescue_tick
-  if last_calcite_rescue_tick ~= nil then
-    if
-      type(last_calcite_rescue_tick) ~= "number"
-      or last_calcite_rescue_tick % 1 ~= 0
-      or last_calcite_rescue_tick < 0
-    then
-      error(name .. ".last_calcite_rescue_tick must be a non-negative integer when provided.")
-    end
+  return value
+end
+
+---@param value unknown
+---@param name string
+---@return integer|nil
+local function validate_support_timeout(value, name)
+  if value == nil then
+    return nil
+  end
+
+  if type(value) ~= "number" or value % 1 ~= 0 or value < 0 then
+    error(name .. " must be a non-negative integer when provided.")
   end
 
   return value
 end
 
+---@param value unknown
+---@param name string
+---@return integer|nil
+local function validate_research_finished_tick(value, name)
+  if value == nil then
+    return nil
+  end
+
+  if type(value) ~= "number" or value % 1 ~= 0 or value < 0 then
+    error(name .. " must be a non-negative integer when provided.")
+  end
+
+  return value
+end
+
+---@param runtime_storage WarpageStorage
 ---@return WarpageThermiteMiningFeatureState
-local function ensure_thermite_state()
-  local root = StorageSchema.ensure()
-  local state = root.features[THERMITE_FEATURE_KEY]
+local function ensure_thermite_state_from_storage(runtime_storage)
+  local state = runtime_storage.thermite_mining
   if state == nil then
     state = {
       next_blast_id = 1,
       pending_blasts = {},
-      unlock_bonus_delivered = false,
-      last_calcite_rescue_tick = nil
+      unlock_bonus_delivered = false
     }
-    root.features[THERMITE_FEATURE_KEY] = state
+    runtime_storage.thermite_mining = state
   end
 
-  return validate_thermite_state(state, "storage.warpage.features." .. THERMITE_FEATURE_KEY)
+  local legacy_state = state ---@type table<string, unknown>
+  local legacy_last_rescue_tick = legacy_state.last_calcite_rescue_tick
+  if legacy_last_rescue_tick ~= nil and runtime_storage.thermite_support_timeout == nil then
+    local validated_tick = validate_support_timeout(
+      legacy_last_rescue_tick,
+      "storage.thermite_mining.last_calcite_rescue_tick"
+    )
+    if validated_tick ~= nil then
+      runtime_storage.thermite_support_timeout = validated_tick + ThermiteConstants.rescue_cooldown_ticks
+    end
+  end
+  legacy_state.last_calcite_rescue_tick = nil
+
+  validate_support_timeout(runtime_storage.thermite_support_timeout, "storage.thermite_support_timeout")
+  validate_research_finished_tick(
+    runtime_storage.thermite_research_finished_tick,
+    "storage.thermite_research_finished_tick"
+  )
+  return validate_thermite_state(state, "storage.thermite_mining")
 end
 
+---@param runtime_storage WarpageStorage
 ---@return WarpageThermiteMiningFeatureState|nil
-local function assert_thermite_state()
-  local root = StorageSchema.assert_ready()
-  local state = root.features[THERMITE_FEATURE_KEY]
+local function assert_thermite_state_from_storage(runtime_storage)
+  local state = runtime_storage.thermite_mining
   if state == nil then
     return nil
   end
 
-  return validate_thermite_state(state, "storage.warpage.features." .. THERMITE_FEATURE_KEY)
+  validate_support_timeout(runtime_storage.thermite_support_timeout, "storage.thermite_support_timeout")
+  validate_research_finished_tick(
+    runtime_storage.thermite_research_finished_tick,
+    "storage.thermite_research_finished_tick"
+  )
+  return validate_thermite_state(state, "storage.thermite_mining")
+end
+
+---@return WarpageThermiteMiningFeatureState
+local function ensure_thermite_state()
+  local runtime_storage = StorageSchema.ensure()
+  return ensure_thermite_state_from_storage(runtime_storage)
+end
+
+---@return WarpageThermiteMiningFeatureState|nil
+local function assert_thermite_state()
+  local runtime_storage = StorageSchema.assert_ready()
+  return assert_thermite_state_from_storage(runtime_storage)
 end
 
 ---@return LuaSurface
@@ -278,38 +349,34 @@ local function count_item_in_all_players(item_name)
   return total
 end
 
----@param surface LuaSurface
----@param position MapPosition
----@param text LocalisedString
----@param color Color
----@param ttl integer
-local function show_surface_flying_text(surface, position, text, color, ttl)
+---@param force LuaForce
+---@return LuaPlayer|nil
+local function resolve_repair_phase_drop_target_player(force)
   local runtime_game = require_game()
-  for _, player in pairs(runtime_game.connected_players) do
-    if player.surface == surface then
-      player.create_local_flying_text({
-        text = text,
-        position = position,
-        surface = surface,
-        color = color,
-        time_to_live = ttl,
-        speed = 0
-      })
+  local connected_target = nil ---@type LuaPlayer|nil
+  local any_target = nil ---@type LuaPlayer|nil
+
+  for _, player in pairs(runtime_game.players) do
+    if player.valid and player.force == force and player.character ~= nil and player.character.valid then
+      if player.connected and player.surface.name == HUB_SURFACE_NAME then
+        return player
+      end
+
+      if connected_target == nil and player.connected then
+        connected_target = player
+      end
+
+      if any_target == nil then
+        any_target = player
+      end
     end
   end
-end
 
----@param surface LuaSurface
----@param position MapPosition
----@param seconds integer
-local function show_countdown(surface, position, seconds)
-  show_surface_flying_text(surface, position, tostring(seconds), { r = 1, g = 0.65, b = 0.2 }, 70)
-end
+  if connected_target ~= nil then
+    return connected_target
+  end
 
----@param surface LuaSurface
----@param position MapPosition
-local function show_no_ore_indicator(surface, position)
-  show_surface_flying_text(surface, position, "x.x", { r = 1, g = 0.2, b = 0.2 }, 100)
+  return any_target
 end
 
 ---@param source_entity LuaEntity
@@ -348,6 +415,54 @@ local function send_cargo_pod(source_entity, destination_station, stacks)
   }
   pod.force_finish_ascending()
   return true
+end
+
+---@param force LuaForce
+---@param player LuaPlayer
+---@param stacks WarpageThermiteCargoStack[]
+local function drop_stacks_on_player_via_cargo_pod(force, player, stacks)
+  if player.valid ~= true then
+    error("Repair-phase support drop requires a valid player.")
+  end
+
+  local pod = player.surface.create_entity({
+    name = "cargo-pod",
+    position = player.position,
+    force = force
+  })
+  if pod == nil then
+    error("Failed to create repair-phase cargo pod.")
+  end
+
+  local cargo_inventory = require_inventory(pod, defines.inventory.cargo_unit, "Repair-phase cargo pod")
+  for _, stack in ipairs(stacks) do
+    local inserted = cargo_inventory.insert({
+      name = stack.name,
+      count = stack.count
+    })
+    if inserted ~= stack.count then
+      error(
+        "Failed to load repair-phase cargo pod stack '"
+          .. stack.name
+          .. "': expected "
+          .. tostring(stack.count)
+          .. ", inserted "
+          .. tostring(inserted)
+          .. "."
+      )
+    end
+  end
+
+  pod.cargo_pod_destination = {
+    type = defines.cargo_destination.surface,
+    surface = player.surface,
+    position = {
+      x = player.position.x,
+      y = player.position.y
+    },
+    land_at_exact_position = true
+  }
+  pod.force_finish_descending()
 end
 
 ---@param main_hub LuaEntity
@@ -414,6 +529,7 @@ end
 ---@param force LuaForce
 ---@param stacks WarpageThermiteCargoStack[]
 ---@param pod_count integer
+---@return boolean
 local function deliver_stacks_to_hub(force, stacks, pod_count)
   local surface = resolve_hub_surface()
   local main_hub = find_main_hub(surface, force)
@@ -437,7 +553,7 @@ local function deliver_stacks_to_hub(force, stacks, pod_count)
     if remaining_pods > 0 then
       insert_into_main_hub(main_hub, stacks, remaining_pods)
     end
-    return
+    return true
   end
 
   if destroyed_container == nil then
@@ -445,6 +561,7 @@ local function deliver_stacks_to_hub(force, stacks, pod_count)
   end
 
   insert_into_destroyed_hub_container(destroyed_container, stacks)
+  return false
 end
 
 ---@param force LuaForce
@@ -493,6 +610,45 @@ end
 ---@return integer
 local function compute_blast_radius(force)
   return ThermiteConstants.base_radius + count_researched_radius_levels(force)
+end
+
+---@param item_name string
+---@return number
+local function resolve_ore_multiplier(item_name)
+  local configured = ORE_YIELD_CONFIG.multiplier_by_item_name[item_name]
+  if configured ~= nil then
+    return configured
+  end
+
+  return ORE_YIELD_CONFIG.default_multiplier
+end
+
+---@param surface LuaSurface
+---@param force LuaForce
+---@param position MapPosition
+---@param item_name string
+---@param item_count integer
+local function spill_item_in_stacks(surface, force, position, item_name, item_count)
+  if item_count < 1 then
+    error("Thermite item spill count for '" .. item_name .. "' must be at least 1.")
+  end
+
+  local remaining = item_count
+  while remaining > 0 do
+    local stack_count = math.min(remaining, ORE_YIELD_CONFIG.drop_stack_size)
+    surface.spill_item_stack({
+      position = position,
+      stack = {
+        name = item_name,
+        count = stack_count
+      },
+      enable_looted = true,
+      force = force,
+      allow_belts = true
+    })
+
+    remaining = remaining - stack_count
+  end
 end
 
 ---@param surface LuaSurface
@@ -552,21 +708,14 @@ local function drop_ore_yield(surface, force, position, removed_by_item, product
   for item_name, removed_amount in pairs(removed_by_item) do
     if removed_amount > 0 then
       removed_any = true
-      local yield_count = math.floor(math.max(removed_amount / 100, 50) * productivity_multiplier)
+      local ore_multiplier = resolve_ore_multiplier(item_name)
+      local scaled_amount = math.min(removed_amount / ORE_YIELD_CONFIG.amount_divisor, ORE_YIELD_CONFIG.amount_cap)
+      local yield_count = math.ceil(scaled_amount * productivity_multiplier * ore_multiplier)
       if yield_count < 1 then
         error("Thermite ore yield for item '" .. item_name .. "' must be at least 1.")
       end
 
-      surface.spill_item_stack({
-        position = position,
-        stack = {
-          name = item_name,
-          count = yield_count
-        },
-        enable_looted = true,
-        force = force,
-        allow_belts = true
-      })
+      spill_item_in_stacks(surface, force, position, item_name, yield_count)
     end
   end
 
@@ -579,16 +728,20 @@ end
 ---@param productivity_multiplier integer
 local function drop_calcite_bonus(surface, force, position, productivity_multiplier)
   local calcite_count = math.random(1, 5) * productivity_multiplier
-  surface.spill_item_stack({
-    position = position,
-    stack = {
-      name = "calcite",
-      count = calcite_count
-    },
-    enable_looted = true,
-    force = force,
-    allow_belts = true
-  })
+  spill_item_in_stacks(surface, force, position, "calcite", calcite_count)
+end
+
+---@param force LuaForce
+---@return boolean
+local function is_hub_rebuilt(force)
+  local surface = resolve_hub_surface()
+  local main_hub = find_main_hub(surface, force)
+  local destroyed_container = find_destroyed_hub_container(surface)
+  if main_hub ~= nil and destroyed_container ~= nil then
+    error("Hub main entity and destroyed hub container cannot coexist at the hub origin.")
+  end
+
+  return main_hub ~= nil
 end
 
 ---@param blast WarpageThermiteQueuedBlast
@@ -633,13 +786,9 @@ local function detonate_blast(state, blast_id, blast)
   local radius = compute_blast_radius(force)
   local productivity_multiplier = compute_productivity_multiplier(force)
 
+  drop_calcite_bonus(surface, force, blast.position, productivity_multiplier)
   local removed_by_item = remove_ore_resources(surface, blast.position, radius)
   local removed_any = drop_ore_yield(surface, force, blast.position, removed_by_item, productivity_multiplier)
-  if removed_any then
-    drop_calcite_bonus(surface, force, blast.position, productivity_multiplier)
-  else
-    show_no_ore_indicator(surface, blast.position)
-  end
 
   local explosion = surface.create_entity({
     name = "grenade-explosion",
@@ -649,9 +798,30 @@ local function detonate_blast(state, blast_id, blast)
     error("Failed to create thermite blast explosion entity.")
   end
 
+  if not removed_any then
+    common.create_holographic_text({
+      text = "x.x",
+      surface = surface,
+      target = explosion,
+      target_offset = THERMITE_EMPTY_BLAST_TOOLTIP_OFFSET,
+      time_to_live = THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME
+    })
+  end
+
   cleanup_blast_flame(blast)
   state.pending_blasts[blast_id] = nil
   countdown_seconds_by_blast_id[blast_id] = nil
+end
+
+---@param blast WarpageThermiteQueuedBlast
+---@return LuaEntity
+local function require_blast_flame_entity(blast)
+  local flame = require_game().get_entity_by_unit_number(blast.flame_unit_number)
+  if flame == nil or flame.valid ~= true then
+    error("Thermite blast flame entity is missing for blast id '" .. tostring(blast.id) .. "'.")
+  end
+
+  return flame
 end
 
 ---@param blast_id integer
@@ -673,7 +843,18 @@ local function update_blast_countdown(blast_id, blast, tick)
   end
 
   local surface, _ = resolve_blast_surface_and_force(blast)
-  show_countdown(surface, blast.position, seconds_remaining)
+  local flame = require_blast_flame_entity(blast)
+  if flame.surface ~= surface then
+    error("Thermite blast flame surface mismatch for blast id '" .. tostring(blast.id) .. "'.")
+  end
+
+  common.create_holographic_text({
+    text = tostring(seconds_remaining),
+    surface = surface,
+    target = flame,
+    target_offset = THERMITE_COUNTDOWN_TOOLTIP_OFFSET,
+    time_to_live = THERMITE_COUNTDOWN_TOOLTIP_LIFETIME
+  })
   countdown_seconds_by_blast_id[blast_id] = seconds_remaining
 end
 
@@ -698,6 +879,30 @@ local function grant_unlock_bonus_if_needed(state)
   }, ThermiteConstants.unlock_pod_count)
   state.unlock_bonus_delivered = true
   require_game().print("psst, look up, check the hub")
+end
+
+---@param runtime_storage WarpageStorage
+---@param force LuaForce
+---@param tick integer
+local function ensure_research_finished_tick(runtime_storage, force, tick)
+  validate_research_finished_tick(
+    runtime_storage.thermite_research_finished_tick,
+    "storage.thermite_research_finished_tick"
+  )
+
+  if runtime_storage.thermite_research_finished_tick ~= nil then
+    return
+  end
+
+  local technology = force.technologies[THERMITE_MINING_TECH_NAME]
+  if technology == nil then
+    error("Missing technology '" .. THERMITE_MINING_TECH_NAME .. "' for force '" .. force.name .. "'.")
+  end
+
+  if technology.researched then
+    runtime_storage.thermite_research_finished_tick =
+      math.max(0, tick - ThermiteConstants.repair_phase_support_grace_ticks)
+  end
 end
 
 ---@param force LuaForce
@@ -725,16 +930,18 @@ local function enforce_mining_productivity_removal()
 end
 
 local function initialize_feature()
-  StorageSchema.ensure()
+  local runtime_storage = StorageSchema.ensure()
   local state = ensure_thermite_state()
   enforce_mining_productivity_removal()
+  ensure_research_finished_tick(runtime_storage, resolve_player_force(), require_game().tick)
   grant_unlock_bonus_if_needed(state)
 end
 
 local function configure_feature()
-  StorageSchema.ensure()
+  local runtime_storage = StorageSchema.ensure()
   local state = ensure_thermite_state()
   enforce_mining_productivity_removal()
+  ensure_research_finished_tick(runtime_storage, resolve_player_force(), require_game().tick)
   grant_unlock_bonus_if_needed(state)
 end
 
@@ -796,10 +1003,8 @@ local function handle_script_trigger_effect(event)
   end
 
   local flame_unit_number = flame.unit_number
-  if flame_unit_number ~= nil then
-    if type(flame_unit_number) ~= "number" or flame_unit_number % 1 ~= 0 or flame_unit_number < 1 then
-      error("Thermite flame unit_number must be a positive integer when provided.")
-    end
+  if type(flame_unit_number) ~= "number" or flame_unit_number % 1 ~= 0 or flame_unit_number < 1 then
+    error("Thermite flame unit_number must be a positive integer.")
   end
 
   state.pending_blasts[blast_id] = {
@@ -815,7 +1020,13 @@ local function handle_script_trigger_effect(event)
   }
 
   countdown_seconds_by_blast_id[blast_id] = 3
-  show_countdown(surface, position, 3)
+  common.create_holographic_text({
+    text = "3",
+    surface = surface,
+    target = flame,
+    target_offset = THERMITE_COUNTDOWN_TOOLTIP_OFFSET,
+    time_to_live = THERMITE_COUNTDOWN_TOOLTIP_LIFETIME
+  })
 end
 
 ---@param event table
@@ -833,6 +1044,11 @@ local function handle_research_finished(event)
 
   if research_name ~= THERMITE_MINING_TECH_NAME then
     return
+  end
+
+  local runtime_storage = StorageSchema.ensure()
+  if runtime_storage.thermite_research_finished_tick == nil then
+    runtime_storage.thermite_research_finished_tick = event.tick
   end
 
   local state = ensure_thermite_state()
@@ -865,23 +1081,58 @@ end
 
 ---@param event table
 local function handle_calcite_rescue_check(event)
-  local state = ensure_thermite_state()
-  local last_rescue_tick = state.last_calcite_rescue_tick
-  if last_rescue_tick ~= nil and (event.tick - last_rescue_tick) < ThermiteConstants.rescue_cooldown_ticks then
+  local runtime_storage = StorageSchema.ensure()
+  local support_timeout =
+    validate_support_timeout(runtime_storage.thermite_support_timeout, "storage.thermite_support_timeout")
+  ensure_thermite_state_from_storage(runtime_storage)
+  local force = resolve_player_force()
+  local hub_rebuilt = is_hub_rebuilt(force)
+
+  if hub_rebuilt and support_timeout ~= nil and event.tick < support_timeout then
     return
   end
 
-  local force = resolve_player_force()
   local calcite_count = count_item_in_all_players("calcite") + count_item_in_hub(force, "calcite")
   local thermite_count = count_item_in_all_players(THERMITE_ITEM_NAME) + count_item_in_hub(force, THERMITE_ITEM_NAME)
   if calcite_count > 0 or thermite_count > 0 then
     return
   end
 
-  deliver_stacks_to_hub(force, {
+  if not hub_rebuilt then
+    ensure_research_finished_tick(runtime_storage, force, event.tick)
+    local research_finished_tick = validate_research_finished_tick(
+      runtime_storage.thermite_research_finished_tick,
+      "storage.thermite_research_finished_tick"
+    )
+    if research_finished_tick == nil then
+      return
+    end
+
+    if event.tick < (research_finished_tick + ThermiteConstants.repair_phase_support_grace_ticks) then
+      return
+    end
+
+    local target_player = resolve_repair_phase_drop_target_player(force)
+    if target_player == nil then
+      return
+    end
+
+    drop_stacks_on_player_via_cargo_pod(force, target_player, {
+      { name = "calcite", count = ThermiteConstants.rescue_calcite_count }
+    })
+    runtime_storage.thermite_support_timeout = nil
+    require_game().print("look, you should never run out of [item=calcite], sending you some how")
+    return
+  end
+
+  local delivered_to_rebuilt_hub = deliver_stacks_to_hub(force, {
     { name = "calcite", count = ThermiteConstants.rescue_calcite_count }
   }, 1)
-  state.last_calcite_rescue_tick = event.tick
+  if delivered_to_rebuilt_hub then
+    runtime_storage.thermite_support_timeout = event.tick + ThermiteConstants.rescue_cooldown_ticks
+  else
+    runtime_storage.thermite_support_timeout = nil
+  end
   require_game().print("look, you should never run out of [item=calcite], sending you some how")
 end
 

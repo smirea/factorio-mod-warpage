@@ -8,7 +8,6 @@ local PLAYER_FORCE_NAME = ShipConstants.player_force_name
 local HUB_SURFACE_NAME = ShipConstants.hub_surface_name
 local SHIP_ENTRANCE_POSITION = ShipConstants.ship_entrance_position
 
-local STARTUP_FEATURE_KEY = "startup"
 local FREEPLAY_INTERFACE_NAME = "freeplay"
 
 local PLAYER_CREATED_EVENT_ID = common.required_event_id("on_player_created")
@@ -192,27 +191,27 @@ end
 
 ---@return WarpageStartupFeatureState
 local function ensure_startup_state()
-  local root = StorageSchema.ensure()
-  local state = root.features[STARTUP_FEATURE_KEY]
+  local runtime_storage = StorageSchema.ensure()
+  local state = runtime_storage.startup
   if state == nil then
     state = {
       configured_player_indices = {}
     }
-    root.features[STARTUP_FEATURE_KEY] = state
+    runtime_storage.startup = state
   end
 
-  return validate_startup_state(state, "storage.warpage.features.startup")
+  return validate_startup_state(state, "storage.startup")
 end
 
 ---@return WarpageStartupFeatureState|nil
 local function assert_startup_state()
-  local root = StorageSchema.assert_ready()
-  local state = root.features[STARTUP_FEATURE_KEY]
+  local runtime_storage = StorageSchema.assert_ready()
+  local state = runtime_storage.startup
   if state == nil then
     return nil
   end
 
-  return validate_startup_state(state, "storage.warpage.features.startup")
+  return validate_startup_state(state, "storage.startup")
 end
 
 ---@param player LuaPlayer

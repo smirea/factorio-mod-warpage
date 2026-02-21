@@ -40,6 +40,7 @@ local ThermiteConstants = {
   countdown_ticks = 60 * 3,
   rescue_check_interval_ticks = 60 * 10,
   rescue_cooldown_ticks = 60 * 60 * 10,
+  repair_phase_support_grace_ticks = 60 * 120,
   rescue_calcite_count = 1,
   unlock_pod_count = 3,
   unlock_pod_stack_count = 2

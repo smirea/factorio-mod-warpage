@@ -19,7 +19,6 @@ local POSITION_EPSILON = 0.001
 local TEST_TILE_NAME = "stone-path"
 local TEST_TILE_RADIUS = 32
 local TEST_NTH_TICK = 30
-local TEST_FEATURE_KEY = "ship_tests"
 local FREEPLAY_INTERFACE_NAME = "freeplay"
 
 ---@type string[]
@@ -144,32 +143,32 @@ end
 
 ---@return WarpageShipTestsFeatureState
 local function ensure_test_state()
-  local root = StorageSchema.ensure()
-  local state = root.features[TEST_FEATURE_KEY]
+  local runtime_storage = StorageSchema.ensure()
+  local state = runtime_storage.ship_tests
   if state == nil then
     state = {
       enabled = true,
       completed = false,
       repair_seeded = false
     }
-    root.features[TEST_FEATURE_KEY] = state
+    runtime_storage.ship_tests = state
     return state
   end
 
   if type(state) ~= "table" then
-    error("storage.features." .. TEST_FEATURE_KEY .. " must be a table.")
+    error("storage.ship_tests must be a table.")
   end
 
   if type(state.enabled) ~= "boolean" then
-    error("storage.features." .. TEST_FEATURE_KEY .. ".enabled must be a boolean.")
+    error("storage.ship_tests.enabled must be a boolean.")
   end
 
   if type(state.completed) ~= "boolean" then
-    error("storage.features." .. TEST_FEATURE_KEY .. ".completed must be a boolean.")
+    error("storage.ship_tests.completed must be a boolean.")
   end
 
   if type(state.repair_seeded) ~= "boolean" then
-    error("storage.features." .. TEST_FEATURE_KEY .. ".repair_seeded must be a boolean.")
+    error("storage.ship_tests.repair_seeded must be a boolean.")
   end
 
   return state
@@ -177,26 +176,26 @@ end
 
 ---@return WarpageShipTestsFeatureState|nil
 local function assert_test_state()
-  local root = StorageSchema.assert_ready()
-  local state = root.features[TEST_FEATURE_KEY]
+  local runtime_storage = StorageSchema.assert_ready()
+  local state = runtime_storage.ship_tests
   if state == nil then
     return nil
   end
 
   if type(state) ~= "table" then
-    error("storage.features." .. TEST_FEATURE_KEY .. " must be a table.")
+    error("storage.ship_tests must be a table.")
   end
 
   if type(state.enabled) ~= "boolean" then
-    error("storage.features." .. TEST_FEATURE_KEY .. ".enabled must be a boolean.")
+    error("storage.ship_tests.enabled must be a boolean.")
   end
 
   if type(state.completed) ~= "boolean" then
-    error("storage.features." .. TEST_FEATURE_KEY .. ".completed must be a boolean.")
+    error("storage.ship_tests.completed must be a boolean.")
   end
 
   if type(state.repair_seeded) ~= "boolean" then
-    error("storage.features." .. TEST_FEATURE_KEY .. ".repair_seeded must be a boolean.")
+    error("storage.ship_tests.repair_seeded must be a boolean.")
   end
 
   return state
