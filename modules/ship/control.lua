@@ -36,6 +36,11 @@ local HUB_REPAIR_REQUIREMENTS = {
   { item_name = "calcite", amount = 10 }
 }
 
+---@class WarpageShipStoredStack
+---@field name string
+---@field count integer
+---@field quality string
+
 local open_hubs_by_player = {} ---@type table<integer, LuaEntity>
 local hub_repair_status_text_cleanup = nil ---@type WarpageCleanupFn|nil
 local hub_repair_status_text_value = nil ---@type string|nil
@@ -435,7 +440,7 @@ local function compute_required_repair_slots()
     total_slots = total_slots + compute_repair_requirement_slots(requirement)
   end
 
-  return total_slots + 1
+  return total_slots
 end
 
 ---@param destroyed_hub_container LuaEntity
@@ -460,7 +465,7 @@ local function configure_destroyed_hub_container(destroyed_hub_container)
     end
   end
 
-  inventory.set_bar(required_slots)
+  inventory.set_bar(HUB_DESTROYED_CONTAINER_SLOT_COUNT)
 
   local slot_index = 1
   for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
@@ -513,6 +518,168 @@ local function create_destroyed_hub(surface, force)
   return destroyed_hub_container, destroyed_hub_rubble
 end
 
+---@param inventory LuaInventory
+---@param item_name string
+---@return integer
+local function count_item_across_qualities(inventory, item_name)
+  local quality_counts = inventory.get_item_quality_counts(item_name)
+  common.ensure_table(quality_counts, "inventory.get_item_quality_counts('" .. item_name .. "')")
+  ---@cast quality_counts table<string, integer>
+
+  local total = 0
+  for quality_name, count in pairs(quality_counts) do
+    common.ensure_non_empty_string(quality_name, "quality_name")
+    if prototypes.quality[quality_name] == nil then
+      error("Missing quality prototype '" .. quality_name .. "' while counting '" .. item_name .. "'.")
+    end
+    if type(count) ~= "number" or count % 1 ~= 0 or count < 0 then
+      error("Quality count for '" .. item_name .. "' quality '" .. quality_name .. "' must be a non-negative integer.")
+    end
+    total = total + count
+  end
+
+  return total
+end
+
+---@param inventory LuaInventory
+---@param item_name string
+---@param target_count integer
+---@return integer
+local function remove_item_across_qualities(inventory, item_name, target_count)
+  if type(target_count) ~= "number" or target_count % 1 ~= 0 or target_count < 0 then
+    error("target_count must be a non-negative integer.")
+  end
+
+  local quality_counts = inventory.get_item_quality_counts(item_name)
+  common.ensure_table(quality_counts, "inventory.get_item_quality_counts('" .. item_name .. "')")
+  ---@cast quality_counts table<string, integer>
+
+  local removed_total = 0
+  for quality_name, quality_count in pairs(quality_counts) do
+    if removed_total >= target_count then
+      break
+    end
+
+    common.ensure_non_empty_string(quality_name, "quality_name")
+    if prototypes.quality[quality_name] == nil then
+      error("Missing quality prototype '" .. quality_name .. "' while removing '" .. item_name .. "'.")
+    end
+    if type(quality_count) ~= "number" or quality_count % 1 ~= 0 or quality_count < 0 then
+      error("Quality count for '" .. item_name .. "' quality '" .. quality_name .. "' must be a non-negative integer.")
+    end
+    if quality_count > 0 then
+      local remove_target = math.min(target_count - removed_total, quality_count)
+      local removed = inventory.remove({
+        name = item_name,
+        count = remove_target,
+        quality = quality_name
+      })
+      if type(removed) ~= "number" or removed % 1 ~= 0 or removed < 0 or removed > remove_target then
+        error("Inventory remove returned an invalid count for '" .. item_name .. "' quality '" .. quality_name .. "'.")
+      end
+      removed_total = removed_total + removed
+    end
+  end
+
+  return removed_total
+end
+
+---@param inventory LuaInventory
+---@return WarpageShipStoredStack[]
+local function snapshot_inventory_stacks(inventory)
+  local stacks = {} ---@type WarpageShipStoredStack[]
+  for slot_index = 1, #inventory do
+    local stack = inventory[slot_index]
+    if stack == nil then
+      error("Expected destroyed hub inventory slot '" .. tostring(slot_index) .. "' to exist.")
+    end
+    if stack.valid_for_read then
+      local count = stack.count
+      if type(count) ~= "number" or count % 1 ~= 0 or count < 1 then
+        error("Destroyed hub stack count in slot '" .. tostring(slot_index) .. "' must be a positive integer.")
+      end
+
+      local quality_name = stack.quality.name
+      common.ensure_non_empty_string(quality_name, "stack.quality.name")
+      if prototypes.quality[quality_name] == nil then
+        error("Missing quality prototype '" .. quality_name .. "' while snapshotting destroyed hub inventory.")
+      end
+
+      stacks[#stacks + 1] = {
+        name = stack.name,
+        count = count,
+        quality = quality_name
+      }
+    end
+  end
+
+  return stacks
+end
+
+---@param hub_entity LuaEntity
+---@param inventory_id integer
+---@param description string
+---@return LuaInventory
+local function require_hub_inventory(hub_entity, inventory_id, description)
+  local inventory = hub_entity.get_inventory(inventory_id)
+  if inventory == nil then
+    error(description .. " is missing inventory '" .. tostring(inventory_id) .. "'.")
+  end
+  return inventory
+end
+
+---@param hub_entity LuaEntity
+---@param stacks WarpageShipStoredStack[]
+local function transfer_stacks_to_hub_storage(hub_entity, stacks)
+  if #stacks == 0 then
+    return
+  end
+
+  local main_inventory = require_hub_inventory(
+    hub_entity,
+    defines.inventory.cargo_landing_pad_main,
+    "Hub main entity"
+  )
+  local trash_inventory = require_hub_inventory(
+    hub_entity,
+    defines.inventory.cargo_landing_pad_trash,
+    "Hub main entity"
+  )
+
+  for _, stack in ipairs(stacks) do
+    local inserted_main = main_inventory.insert({
+      name = stack.name,
+      count = stack.count,
+      quality = stack.quality
+    })
+    if inserted_main < 0 or inserted_main > stack.count then
+      error("Hub main inventory insert returned an invalid count.")
+    end
+
+    local remaining = stack.count - inserted_main
+    if remaining > 0 then
+      local inserted_trash = trash_inventory.insert({
+        name = stack.name,
+        count = remaining,
+        quality = stack.quality
+      })
+      if inserted_trash ~= remaining then
+        error(
+          "Failed to transfer destroyed hub stack '"
+            .. stack.name
+            .. "' (quality "
+            .. stack.quality
+            .. "): expected "
+            .. tostring(stack.count)
+            .. ", inserted "
+            .. tostring(inserted_main + inserted_trash)
+            .. "."
+        )
+      end
+    end
+  end
+end
+
 ---@class WarpageShipRepairStatus
 ---@field item_name string
 ---@field required integer
@@ -527,10 +694,7 @@ local function collect_hub_repair_status(destroyed_hub_container)
   local status = {} ---@type WarpageShipRepairStatus[]
 
   for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
-    local current = inventory.get_item_count(requirement.item_name)
-    if type(current) ~= "number" then
-      error("Destroyed hub inventory count for '" .. requirement.item_name .. "' must be numeric.")
-    end
+    local current = count_item_across_qualities(inventory, requirement.item_name)
 
     local remaining = requirement.amount - current
     if remaining < 0 then
@@ -601,10 +765,7 @@ end
 local function consume_hub_repair_items(destroyed_hub_container)
   local inventory = require_destroyed_hub_inventory(destroyed_hub_container)
   for _, requirement in ipairs(HUB_REPAIR_REQUIREMENTS) do
-    local removed = inventory.remove({
-      name = requirement.item_name,
-      count = requirement.amount
-    })
+    local removed = remove_item_across_qualities(inventory, requirement.item_name, requirement.amount)
     if removed ~= requirement.amount then
       error(
         "Failed to consume hub repair item '"
@@ -669,9 +830,12 @@ local function update_hub_lifecycle()
 
   destroy_hub_repair_status_text()
   consume_hub_repair_items(destroyed_hub_container)
+  local leftover_stacks = snapshot_inventory_stacks(require_destroyed_hub_inventory(destroyed_hub_container))
   destroy_entity_or_fail(destroyed_hub_rubble, "destroyed hub rubble")
   destroy_entity_or_fail(destroyed_hub_container, "destroyed hub container")
-  return place_hub(surface, force)
+  local rebuilt_hub = place_hub(surface, force)
+  transfer_stacks_to_hub_storage(rebuilt_hub, leftover_stacks)
+  return rebuilt_hub
 end
 
 ---@param player LuaPlayer

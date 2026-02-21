@@ -24,7 +24,7 @@ When opening The Hub, there is a custom GUI anchored to the top right of the inv
 - how much of each fluid as [icon] [progress bar] [amount / total] table
 
 ## Destroyed Hub
-It's a big storage chest with filtered slots for all the requirements needed to rebuild - uses the rubble version of a destroyed cargo landing pad as a visual. There is a floating message box above it detailing the remaining items needed for repair. Once all items are in, remove the rubble and the items and place The Hub
+It's a big storage chest with filtered slots for all the requirements needed to rebuild - uses the rubble version of a destroyed cargo landing pad as a visual. There is a floating message box above it detailing the remaining items needed for repair and it updates as items are added. Once all items are in, remove the rubble and repair items, place The Hub, and transfer any extra stored items into the rebuilt hub inventories
 
 Repair cost: 200 stone, 200 coal, 100 copper ore, 100 iron plate, 10 calcite
 

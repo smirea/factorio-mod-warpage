@@ -50,6 +50,9 @@ local HUB_REPAIR_REQUIREMENTS = {
   { item_name = "calcite", amount = 10 }
 }
 
+local HUB_EXTRA_STORAGE_ITEM_NAME = "wood"
+local HUB_EXTRA_STORAGE_ITEM_COUNT = 17
+
 ---@class ShipTests
 ---@field bind fun(events: WarpageScopedBinding)
 local ShipTests = {}
@@ -504,6 +507,23 @@ local function seed_destroyed_hub_repair_items()
 
     slot_index = slot_index + compute_repair_requirement_slots(requirement)
   end
+
+  local inserted_extra = inventory.insert({
+    name = HUB_EXTRA_STORAGE_ITEM_NAME,
+    count = HUB_EXTRA_STORAGE_ITEM_COUNT,
+    quality = "normal"
+  })
+  if inserted_extra ~= HUB_EXTRA_STORAGE_ITEM_COUNT then
+    error(
+      "Ship tests could not seed destroyed hub extra storage stack '"
+        .. HUB_EXTRA_STORAGE_ITEM_NAME
+        .. "': expected "
+        .. tostring(HUB_EXTRA_STORAGE_ITEM_COUNT)
+        .. ", inserted "
+        .. tostring(inserted_extra)
+        .. "."
+    )
+  end
 end
 
 local function run_ship_hub_assertions()
@@ -562,6 +582,30 @@ local function run_ship_hub_assertions()
   local destroyed_rubble = find_unique_entity_at_hub_origin(surface, nil, HUB_DESTROYED_RUBBLE_ENTITY_NAME)
   if destroyed_rubble ~= nil then
     error("Ship tests expected destroyed hub rubble to be removed after repair completion.")
+  end
+
+  local hub_main_inventory = hub.get_inventory(defines.inventory.cargo_landing_pad_main)
+  if hub_main_inventory == nil then
+    error("Ship tests expected hub main entity to expose cargo_landing_pad_main inventory.")
+  end
+
+  local hub_trash_inventory = hub.get_inventory(defines.inventory.cargo_landing_pad_trash)
+  if hub_trash_inventory == nil then
+    error("Ship tests expected hub main entity to expose cargo_landing_pad_trash inventory.")
+  end
+
+  local extra_storage_count = hub_main_inventory.get_item_count(HUB_EXTRA_STORAGE_ITEM_NAME)
+    + hub_trash_inventory.get_item_count(HUB_EXTRA_STORAGE_ITEM_NAME)
+  if extra_storage_count < HUB_EXTRA_STORAGE_ITEM_COUNT then
+    error(
+      "Ship tests expected hub inventories to retain destroyed-hub extra storage stack '"
+        .. HUB_EXTRA_STORAGE_ITEM_NAME
+        .. "': expected at least "
+        .. tostring(HUB_EXTRA_STORAGE_ITEM_COUNT)
+        .. ", found "
+        .. tostring(extra_storage_count)
+        .. "."
+    )
   end
 end
 

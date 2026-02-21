@@ -14,20 +14,16 @@ local HUB_MAIN_ENTITY_NAME = ShipConstants.hub_main_entity_name
 local HUB_DESTROYED_CONTAINER_ENTITY_NAME = ShipConstants.hub_destroyed_container_entity_name
 local PLAYER_FORCE_NAME = ShipConstants.player_force_name
 
-local ORE_YIELD_CONFIG = {
-  amount_divisor = 100,
-  amount_cap = 25,
-  drop_stack_size = 500,
-  default_multiplier = 0.5,
-  multiplier_by_item_name = {
-    ["iron-ore"] = 1,
-    ["copper-ore"] = 1,
-    coal = 0.75,
-    stone = 0.5,
-    calcite = 0.4,
-    ["tungsten-ore"] = 0.2,
-    scrap = 1
-  }
+local ORE_DROP_STACK_SIZE = 500
+local ORE_DEFAULT_MULTIPLIER = 0.5
+local multiplier_by_item_name = {
+  ["iron-ore"] = 1,
+  ["copper-ore"] = 1,
+  coal = 0.75,
+  stone = 0.5,
+  calcite = 0.4,
+  ["tungsten-ore"] = 0.2,
+  scrap = 1
 }
 
 local THERMITE_COUNTDOWN_TOOLTIP_LIFETIME = 70
@@ -645,15 +641,23 @@ local function compute_blast_radius(force)
   return ThermiteConstants.base_radius + count_researched_radius_levels(force)
 end
 
+---@param removed_amount number
+---@param productivity_multiplier integer
+---@param ore_multiplier number
+---@return integer
+local function ore_yield_formula(removed_amount, productivity_multiplier, ore_multiplier)
+  return math.ceil(math.max(5, math.min(removed_amount / 100, 25)) * productivity_multiplier * ore_multiplier)
+end
+
 ---@param item_name string
 ---@return number
 local function resolve_ore_multiplier(item_name)
-  local configured = ORE_YIELD_CONFIG.multiplier_by_item_name[item_name]
+  local configured = multiplier_by_item_name[item_name]
   if configured ~= nil then
     return configured
   end
 
-  return ORE_YIELD_CONFIG.default_multiplier
+  return ORE_DEFAULT_MULTIPLIER
 end
 
 ---@param surface LuaSurface
@@ -668,7 +672,7 @@ local function spill_item_in_stacks(surface, force, position, item_name, item_co
 
   local remaining = item_count
   while remaining > 0 do
-    local stack_count = math.min(remaining, ORE_YIELD_CONFIG.drop_stack_size)
+    local stack_count = math.min(remaining, ORE_DROP_STACK_SIZE)
     surface.spill_item_stack({
       position = position,
       stack = {
@@ -755,8 +759,7 @@ local function drop_ore_yield(surface, force, position, removed_by_item, product
     if removed_amount > 0 then
       removed_any = true
       local ore_multiplier = resolve_ore_multiplier(item_name)
-      local scaled_amount = math.min(removed_amount / ORE_YIELD_CONFIG.amount_divisor, ORE_YIELD_CONFIG.amount_cap)
-      local yield_count = math.ceil(scaled_amount * productivity_multiplier * ore_multiplier)
+      local yield_count = ore_yield_formula(removed_amount, productivity_multiplier, ore_multiplier)
       if yield_count < 1 then
         error("Thermite ore yield for item '" .. item_name .. "' must be at least 1.")
       end

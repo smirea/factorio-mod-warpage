@@ -13,7 +13,7 @@ There is no conventional mining in WarpAge in the early game (no burner miners, 
 - [x] Throwable consumable starts a `fire-flame` and countdown `3/2/1`, detonates after 3 seconds
 - [x] Countdown and empty-blast `x.x` tooltip are shown to players
 - [x] Base blast removes `basic-solid` resources in a 4x4 area (radius 2)
-- [x] Ore yield per removed ore type: `ceil(min(removed_amount / 100, 25) * productivity_multiplier * ore_multiplier)` spilled on ground
+- [x] Ore yield per removed ore type: `ceil(max(5, min(removed_amount / 100, 25)) * productivity_multiplier * ore_multiplier)` spilled on ground
 - [x] Ore and calcite drops are placed at the center of the removed area
 - [x] Ore multipliers are configurable in runtime: iron/copper `1x`, coal `0.75x`, stone `0.5x`, calcite `0.4x`, tungsten `0.2x`, scrap `1x`, fallback `0.5x`
 - [x] Ore drops are split into stacks of `500` when total yield exceeds 500

@@ -206,6 +206,13 @@ local function make_destroyed_hub_rubble_prototype()
   prototype.expires = false
   prototype.remove_on_entity_placement = false
   prototype.remove_on_tile_placement = false
+  prototype.selectable_in_game = false
+  prototype.flags = {
+    "placeable-neutral",
+    "placeable-off-grid",
+    "not-on-map",
+    "not-selectable-in-game"
+  }
   prototype.order = "z[" .. MOD_NAMESPACE .. "]-f[destroyed-hub-rubble]"
 
   return prototype
