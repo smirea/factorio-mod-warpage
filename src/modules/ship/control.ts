@@ -1,0 +1,1 @@
+game.print('ship control');
