@@ -1,0 +1,10 @@
+node_modules
+
+# output
+compiled
+
+# caches
+*.tsbuildinfo
+
+# other
+.DS_Store

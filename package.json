@@ -1,0 +1,21 @@
+{
+  "name": "factorio-mod-warpage-ts",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "rm -rf compiled && tstl && cp info.json thumbnail.png compiled",
+    "dev": "tstl --watch",
+    "lint": "oxlint --fix"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "dependencies": {
+    "lefthook": "^2.1.1",
+    "oxlint": "^1.49.0",
+    "typed-factorio": "^3.35.0",
+    "typescript": "^5.9.3",
+    "typescript-to-lua": "^1.33.2"
+  }
+}

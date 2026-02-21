@@ -1,0 +1,13 @@
+{
+  "name": "warpage",
+  "version": "0.1.0",
+  "title": "Warp Age",
+  "author": "stefan",
+  "description": "",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0",
+    "space-age",
+    "quality"
+  ]
+}
