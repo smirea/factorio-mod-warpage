@@ -6,7 +6,8 @@
   "scripts": {
     "build": "rm -rf compiled && tstl && cp info.json thumbnail.png compiled",
     "dev": "tstl --watch",
-    "lint": "oxlint --fix"
+    "lint": "oxlint --fix",
+    "launch": "bun scripts/launch.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
