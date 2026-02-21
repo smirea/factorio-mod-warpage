@@ -25,7 +25,9 @@ local FREEPLAY_INTERFACE_NAME = "freeplay"
 ---@type string[]
 local STARTUP_FORBIDDEN_ITEMS = {
   "stone-furnace",
-  "iron-plate"
+  "iron-plate",
+  "burner-mining-drill",
+  "electric-mining-drill"
 }
 
 ---@type integer[]
@@ -48,11 +50,6 @@ local HUB_REPAIR_REQUIREMENTS = {
   { item_name = "iron-plate", amount = 100 },
   { item_name = "calcite", amount = 10 }
 }
-
----@class WarpageShipTestsFeatureState
----@field enabled boolean
----@field completed boolean
----@field repair_seeded boolean
 
 ---@class ShipTests
 ---@field bind fun(events: WarpageScopedBinding)

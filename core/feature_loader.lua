@@ -32,12 +32,19 @@ local shared_recipe_module_paths = {
 
 ---@type string[]
 local module_entity_module_paths = {
-  "modules.ship.entities"
+  "modules.ship.entities",
+  "modules.thermite_mining.entities"
 }
 
 ---@type string[]
 local module_recipe_module_paths = {
-  "modules.ship.recipes"
+  "modules.ship.recipes",
+  "modules.thermite_mining.recipes"
+}
+
+---@type string[]
+local module_technology_module_paths = {
+  "modules.thermite_mining.technologies"
 }
 
 ---@param stage unknown
@@ -79,6 +86,7 @@ local function run_data_stage()
   extend_prototype_modules(shared_recipe_module_paths, "shared_recipe_module_paths")
   extend_prototype_modules(module_entity_module_paths, "module_entity_module_paths")
   extend_prototype_modules(module_recipe_module_paths, "module_recipe_module_paths")
+  extend_prototype_modules(module_technology_module_paths, "module_technology_module_paths")
 end
 
 ---@param base_context WarpageBaseContext

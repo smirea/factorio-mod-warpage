@@ -2,6 +2,7 @@ local common = require("core.utils.common")
 local StorageSchema = require("core.storage_schema")
 local ShipConstants = require("modules.ship.constants")
 local run_ship_setup = require("modules.ship.control")
+local run_thermite_mining_setup = require("modules.thermite_mining.control")
 
 local PLAYER_FORCE_NAME = ShipConstants.player_force_name
 local HUB_SURFACE_NAME = ShipConstants.hub_surface_name
@@ -367,4 +368,5 @@ return function(context)
   })
 
   run_ship_setup(context)
+  run_thermite_mining_setup(context)
 end

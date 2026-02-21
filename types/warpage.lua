@@ -98,11 +98,32 @@
 
 ---@alias WarpageStageRunner fun(context: WarpageFeatureContext)
 
----@class WarpageFeatureStorage
----@field [string] unknown
-
 ---@class WarpageStartupFeatureState
 ---@field configured_player_indices table<integer, true>
+
+---@class WarpageThermiteQueuedBlast
+---@field id integer
+---@field surface_index integer
+---@field position MapPosition
+---@field force_name string
+---@field trigger_tick integer
+---@field flame_unit_number? integer
+
+---@class WarpageThermiteMiningFeatureState
+---@field next_blast_id integer
+---@field pending_blasts table<integer, WarpageThermiteQueuedBlast>
+---@field unlock_bonus_delivered boolean
+---@field last_calcite_rescue_tick? integer
+
+---@class WarpageShipTestsFeatureState
+---@field enabled boolean
+---@field completed boolean
+---@field repair_seeded boolean
+
+---@class WarpageFeatureStorage
+---@field startup? WarpageStartupFeatureState
+---@field thermite_mining? WarpageThermiteMiningFeatureState
+---@field ship_tests? WarpageShipTestsFeatureState
 
 ---@class WarpageStartupItemStack
 ---@field name string
