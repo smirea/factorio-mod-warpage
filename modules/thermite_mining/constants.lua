@@ -28,6 +28,7 @@ local ThermiteConstants = {
   item_name = Constants.prefixed_entity_name("thermite-miner"),
   recipe_name = Constants.prefixed_entity_name("thermite-miner"),
   projectile_name = Constants.prefixed_entity_name("thermite-miner-projectile"),
+  tooltip_anchor_entity_name = Constants.prefixed_entity_name("thermite-tooltip-anchor"),
   impact_effect_id = Constants.prefixed_entity_name("thermite-impact"),
   thermite_mining_technology_name = Constants.prefixed_entity_name("thermite-mining"),
   productivity_technology_names = productivity_technology_names,

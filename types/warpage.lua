@@ -107,11 +107,13 @@
 ---@field position MapPosition
 ---@field force_name string
 ---@field trigger_tick integer
----@field flame_unit_number integer
+---@field flame_unit_number? integer
+---@field tooltip_anchor_unit_number? integer
 
 ---@class WarpageThermiteMiningFeatureState
 ---@field next_blast_id integer
 ---@field pending_blasts table<integer, WarpageThermiteQueuedBlast>
+---@field tooltip_anchor_cleanup_ticks table<integer, integer>
 ---@field unlock_bonus_delivered boolean
 
 ---@class WarpageShipTestsFeatureState

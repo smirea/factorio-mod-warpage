@@ -3,6 +3,7 @@ local ThermiteConstants = require("modules.thermite_mining.constants")
 
 local THERMITE_ITEM_NAME = ThermiteConstants.item_name
 local THERMITE_PROJECTILE_NAME = ThermiteConstants.projectile_name
+local THERMITE_TOOLTIP_ANCHOR_ENTITY_NAME = ThermiteConstants.tooltip_anchor_entity_name
 local THERMITE_IMPACT_EFFECT_ID = ThermiteConstants.impact_effect_id
 
 ---@return table
@@ -68,8 +69,32 @@ local function make_thermite_capsule()
   }
 end
 
+---@return table
+local function make_thermite_tooltip_anchor()
+  return {
+    type = "simple-entity-with-owner",
+    name = THERMITE_TOOLTIP_ANCHOR_ENTITY_NAME,
+    icon = ThermiteConstants.item_icon_path,
+    icon_size = 64,
+    flags = {
+      "not-on-map",
+      "placeable-off-grid",
+      "not-selectable-in-game"
+    },
+    hidden = true,
+    selectable_in_game = false,
+    max_health = 1,
+    collision_mask = { layers = {} },
+    collision_box = { { 0, 0 }, { 0, 0 } },
+    selection_box = { { 0, 0 }, { 0, 0 } },
+    render_layer = "object",
+    picture = util.empty_sprite()
+  }
+end
+
 ---@type table[]
 return {
   make_thermite_projectile(),
-  make_thermite_capsule()
+  make_thermite_capsule(),
+  make_thermite_tooltip_anchor()
 }

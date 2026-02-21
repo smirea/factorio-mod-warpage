@@ -4,6 +4,7 @@ local ShipConstants = require("modules.ship.constants")
 local ThermiteConstants = require("modules.thermite_mining.constants")
 
 local THERMITE_ITEM_NAME = ThermiteConstants.item_name
+local THERMITE_TOOLTIP_ANCHOR_ENTITY_NAME = ThermiteConstants.tooltip_anchor_entity_name
 local THERMITE_IMPACT_EFFECT_ID = ThermiteConstants.impact_effect_id
 local THERMITE_MINING_TECH_NAME = ThermiteConstants.thermite_mining_technology_name
 
@@ -83,8 +84,21 @@ local function validate_queued_blast(value, name)
   end
 
   local flame_unit_number = value.flame_unit_number
-  if type(flame_unit_number) ~= "number" or flame_unit_number % 1 ~= 0 or flame_unit_number < 1 then
-    error(name .. ".flame_unit_number must be a positive integer.")
+  if flame_unit_number ~= nil then
+    if type(flame_unit_number) ~= "number" or flame_unit_number % 1 ~= 0 or flame_unit_number < 1 then
+      error(name .. ".flame_unit_number must be a positive integer when provided.")
+    end
+  end
+
+  local tooltip_anchor_unit_number = value.tooltip_anchor_unit_number
+  if tooltip_anchor_unit_number ~= nil then
+    if
+      type(tooltip_anchor_unit_number) ~= "number"
+      or tooltip_anchor_unit_number % 1 ~= 0
+      or tooltip_anchor_unit_number < 1
+    then
+      error(name .. ".tooltip_anchor_unit_number must be a positive integer when provided.")
+    end
   end
 
   return value
@@ -114,6 +128,20 @@ local function validate_thermite_state(value, name)
     )
     if validated_blast.id ~= blast_id then
       error(name .. ".pending_blasts[" .. tostring(blast_id) .. "].id must match its table key.")
+    end
+  end
+
+  local tooltip_anchor_cleanup_ticks = value.tooltip_anchor_cleanup_ticks
+  if tooltip_anchor_cleanup_ticks ~= nil then
+    common.ensure_table(tooltip_anchor_cleanup_ticks, name .. ".tooltip_anchor_cleanup_ticks")
+    for unit_number, cleanup_tick in pairs(tooltip_anchor_cleanup_ticks) do
+      if type(unit_number) ~= "number" or unit_number % 1 ~= 0 or unit_number < 1 then
+        error(name .. ".tooltip_anchor_cleanup_ticks keys must be positive integers.")
+      end
+
+      if type(cleanup_tick) ~= "number" or cleanup_tick % 1 ~= 0 or cleanup_tick < 0 then
+        error(name .. ".tooltip_anchor_cleanup_ticks values must be non-negative integers.")
+      end
     end
   end
 
@@ -160,9 +188,14 @@ local function ensure_thermite_state_from_storage(runtime_storage)
     state = {
       next_blast_id = 1,
       pending_blasts = {},
+      tooltip_anchor_cleanup_ticks = {},
       unlock_bonus_delivered = false
     }
     runtime_storage.thermite_mining = state
+  end
+
+  if state.tooltip_anchor_cleanup_ticks == nil then
+    state.tooltip_anchor_cleanup_ticks = {}
   end
 
   local legacy_state = state ---@type table<string, unknown>
@@ -779,9 +812,38 @@ local function cleanup_blast_flame(blast)
 end
 
 ---@param state WarpageThermiteMiningFeatureState
+---@param blast WarpageThermiteQueuedBlast
+---@param tick integer
+local function schedule_blast_tooltip_anchor_cleanup(state, blast, tick)
+  local tooltip_anchor_unit_number = blast.tooltip_anchor_unit_number
+  if tooltip_anchor_unit_number == nil then
+    return
+  end
+
+  state.tooltip_anchor_cleanup_ticks[tooltip_anchor_unit_number] = tick + THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME
+end
+
+---@param blast WarpageThermiteQueuedBlast
+---@return LuaEntity|nil
+local function resolve_blast_tooltip_anchor_entity(blast)
+  local tooltip_anchor_unit_number = blast.tooltip_anchor_unit_number
+  if tooltip_anchor_unit_number == nil then
+    return nil
+  end
+
+  local tooltip_anchor = require_game().get_entity_by_unit_number(tooltip_anchor_unit_number)
+  if tooltip_anchor == nil or tooltip_anchor.valid ~= true then
+    return nil
+  end
+
+  return tooltip_anchor
+end
+
+---@param state WarpageThermiteMiningFeatureState
 ---@param blast_id integer
 ---@param blast WarpageThermiteQueuedBlast
-local function detonate_blast(state, blast_id, blast)
+---@param tick integer
+local function detonate_blast(state, blast_id, blast, tick)
   local surface, force = resolve_blast_surface_and_force(blast)
   local radius = compute_blast_radius(force)
   local productivity_multiplier = compute_productivity_multiplier(force)
@@ -799,29 +861,40 @@ local function detonate_blast(state, blast_id, blast)
   end
 
   if not removed_any then
-    common.create_holographic_text({
-      text = "x.x",
-      surface = surface,
-      target = explosion,
-      target_offset = THERMITE_EMPTY_BLAST_TOOLTIP_OFFSET,
-      time_to_live = THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME
-    })
+    local tooltip_anchor = resolve_blast_tooltip_anchor_entity(blast)
+    if tooltip_anchor ~= nil then
+      common.create_holographic_text({
+        text = "x.x",
+        surface = surface,
+        target = tooltip_anchor,
+        target_offset = THERMITE_EMPTY_BLAST_TOOLTIP_OFFSET,
+        time_to_live = THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME
+      })
+    end
   end
 
+  schedule_blast_tooltip_anchor_cleanup(state, blast, tick)
   cleanup_blast_flame(blast)
   state.pending_blasts[blast_id] = nil
   countdown_seconds_by_blast_id[blast_id] = nil
 end
 
----@param blast WarpageThermiteQueuedBlast
----@return LuaEntity
-local function require_blast_flame_entity(blast)
-  local flame = require_game().get_entity_by_unit_number(blast.flame_unit_number)
-  if flame == nil or flame.valid ~= true then
-    error("Thermite blast flame entity is missing for blast id '" .. tostring(blast.id) .. "'.")
-  end
+---@param state WarpageThermiteMiningFeatureState
+---@param tick integer
+local function process_tooltip_anchor_cleanup(state, tick)
+  for unit_number, cleanup_tick in pairs(state.tooltip_anchor_cleanup_ticks) do
+    if tick >= cleanup_tick then
+      local tooltip_anchor = require_game().get_entity_by_unit_number(unit_number)
+      if tooltip_anchor ~= nil and tooltip_anchor.valid then
+        local destroyed = tooltip_anchor.destroy()
+        if destroyed ~= true and tooltip_anchor.valid then
+          error("Failed to destroy thermite tooltip anchor entity.")
+        end
+      end
 
-  return flame
+      state.tooltip_anchor_cleanup_ticks[unit_number] = nil
+    end
+  end
 end
 
 ---@param blast_id integer
@@ -843,15 +916,20 @@ local function update_blast_countdown(blast_id, blast, tick)
   end
 
   local surface, _ = resolve_blast_surface_and_force(blast)
-  local flame = require_blast_flame_entity(blast)
-  if flame.surface ~= surface then
-    error("Thermite blast flame surface mismatch for blast id '" .. tostring(blast.id) .. "'.")
+  local tooltip_anchor = resolve_blast_tooltip_anchor_entity(blast)
+  if tooltip_anchor == nil then
+    countdown_seconds_by_blast_id[blast_id] = seconds_remaining
+    return
+  end
+
+  if tooltip_anchor.surface ~= surface then
+    error("Thermite tooltip anchor surface mismatch for blast id '" .. tostring(blast.id) .. "'.")
   end
 
   common.create_holographic_text({
     text = tostring(seconds_remaining),
     surface = surface,
-    target = flame,
+    target = tooltip_anchor,
     target_offset = THERMITE_COUNTDOWN_TOOLTIP_OFFSET,
     time_to_live = THERMITE_COUNTDOWN_TOOLTIP_LIFETIME
   })
@@ -1003,8 +1081,34 @@ local function handle_script_trigger_effect(event)
   end
 
   local flame_unit_number = flame.unit_number
-  if type(flame_unit_number) ~= "number" or flame_unit_number % 1 ~= 0 or flame_unit_number < 1 then
-    error("Thermite flame unit_number must be a positive integer.")
+  if flame_unit_number ~= nil then
+    if type(flame_unit_number) ~= "number" or flame_unit_number % 1 ~= 0 or flame_unit_number < 1 then
+      error("Thermite flame unit_number must be a positive integer when provided.")
+    end
+  end
+
+  local tooltip_anchor = surface.create_entity({
+    name = THERMITE_TOOLTIP_ANCHOR_ENTITY_NAME,
+    position = position,
+    force = source_force
+  })
+  if tooltip_anchor == nil then
+    error("Failed to create thermite tooltip anchor entity.")
+  end
+
+  if tooltip_anchor.health == nil then
+    error("Thermite tooltip anchor entity must have health.")
+  end
+
+  local tooltip_anchor_unit_number = tooltip_anchor.unit_number
+  if tooltip_anchor_unit_number ~= nil then
+    if
+      type(tooltip_anchor_unit_number) ~= "number"
+      or tooltip_anchor_unit_number % 1 ~= 0
+      or tooltip_anchor_unit_number < 1
+    then
+      error("Thermite tooltip anchor unit_number must be a positive integer when provided.")
+    end
   end
 
   state.pending_blasts[blast_id] = {
@@ -1016,14 +1120,15 @@ local function handle_script_trigger_effect(event)
     },
     force_name = source_force.name,
     trigger_tick = event.tick + ThermiteConstants.countdown_ticks,
-    flame_unit_number = flame_unit_number
+    flame_unit_number = flame_unit_number,
+    tooltip_anchor_unit_number = tooltip_anchor_unit_number
   }
 
   countdown_seconds_by_blast_id[blast_id] = 3
   common.create_holographic_text({
     text = "3",
     surface = surface,
-    target = flame,
+    target = tooltip_anchor,
     target_offset = THERMITE_COUNTDOWN_TOOLTIP_OFFSET,
     time_to_live = THERMITE_COUNTDOWN_TOOLTIP_LIFETIME
   })
@@ -1058,6 +1163,7 @@ end
 ---@param event table
 local function handle_blast_updates(event)
   local state = ensure_thermite_state()
+  process_tooltip_anchor_cleanup(state, event.tick)
   if next(state.pending_blasts) == nil then
     return
   end
@@ -1074,7 +1180,7 @@ local function handle_blast_updates(event)
   for _, blast_id in ipairs(due_blast_ids) do
     local blast = state.pending_blasts[blast_id]
     if blast ~= nil then
-      detonate_blast(state, blast_id, blast)
+      detonate_blast(state, blast_id, blast, event.tick)
     end
   end
 end

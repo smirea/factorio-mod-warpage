@@ -4,5 +4,10 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"Lua.workspace.userThirdParty": [
+			"/Users/stefan/Library/Application Support/Code/User/workspaceStorage/13c39751e0761d63cba232e556151328/justarandomgeek.factoriomod-debug/sumneko-3rd"
+		],
+		"Lua.workspace.checkThirdParty": "ApplyInMemory"
+	}
 }
