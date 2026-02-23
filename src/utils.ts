@@ -1,3 +1,5 @@
+import type { LocalisedString, LuaSurface, type LuaEntity, type MapPosition } from 'factorio:runtime';
+
 type NthTickEventData = {
 	// importing from factorio:runtime causes a module not found error during launch
 	readonly tick: number;
@@ -39,8 +41,8 @@ const onEventHandlers: Record<
 
 export function on_event<Type extends keyof typeof defines.events>(
 	type: Type,
-	handler: (event: (typeof defines.events)[Type]) => void,
-	filters: Array<(typeof defines.events)[Type]['_filter']>,
+	handler: (event: (typeof defines.events)[Type]['_eventData']) => void,
+	filters?: Array<(typeof defines.events)[Type]['_filter']>,
 ) {
 	if (!onEventHandlers[type]) {
 		onEventHandlers[type] = {
@@ -81,4 +83,29 @@ export function hideItem(name: keyof typeof data.raw.item) {
 	if (!item) return;
 	item.hidden = true;
 	item.hidden_in_factoriopedia = true;
+}
+
+export function createHolographicText({
+	target,
+	text,
+	ticks,
+	offset,
+}: {
+	target: LuaEntity,
+	text: LocalisedString,
+	ticks: number,
+	offset?: MapPosition,
+}) {
+	target.surface.create_entity({
+		name: 'compi-speech-bubble',
+		position: {
+			x: target.position.x + (offset?.x ?? 0),
+			y: target.position.y + (offset?.y ?? 0),
+		},
+		target,
+		text,
+		lifetime: ticks,
+	} as any);
+
+	return () => target.destroy();
 }
