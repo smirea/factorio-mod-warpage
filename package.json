@@ -1,23 +1,24 @@
 {
-  "name": "factorio-mod-warpage-ts",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "build": "bun scripts/build.ts",
-    "dev": "tstl --watch",
-    "lint": "oxlint --fix && oxfmt",
-    "launch": "bun scripts/launch.ts"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "dependencies": {
-    "lefthook": "^2.1.1",
-    "oxfmt": "^0.34.0",
-    "oxlint": "^1.49.0",
-    "typed-factorio": "^3.35.0",
-    "typescript": "^5.9.3",
-    "typescript-to-lua": "^1.33.2"
-  }
+	"name": "factorio-mod-warpage-ts",
+	"private": true,
+	"type": "module",
+	"module": "index.ts",
+	"scripts": {
+		"build": "bun scripts/build.ts",
+		"dev": "tstl --watch",
+		"lint": "oxlint --fix && oxfmt",
+		"launch": "bun scripts/launch.ts"
+	},
+	"dependencies": {
+		"lefthook": "^2.1.1",
+		"oxfmt": "^0.34.0",
+		"oxlint": "^1.49.0",
+		"typed-factorio": "^3.35.0",
+		"typescript": "^5.9.3",
+		"typescript-to-lua": "^1.33.2"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"ts-node": "^10.9.2"
+	}
 }
