@@ -8,16 +8,15 @@ import type {
 	UnitNumber,
 } from 'factorio:runtime';
 import { names } from './constants';
-import { createHolographicText, on_event, on_nth_tick } from '@/utils';
+import { on_event, on_nth_tick } from '@/utils';
 
 const IMPACT_EFFECT_ID = names.projectile;
-const TOOLTIP_ANCHOR_ENTITY_NAME = names.ns('tooltip-anchor');
 
 const PRODUCTIVITY_TECHNOLOGY_NAMES = [1, 2, 3, 4, 5].map(level => names.ns('mining-productivity-' + level));
 const RADIUS_TECHNOLOGY_NAMES = [1, 2, 3].map(level => names.ns('mining-radius-' + level));
 
 const BASE_PRODUCTIVITY_MULTIPLIER = 1;
-const COUNTDOWN_TICKS = 60 * 3;
+const FLAME_LIFETIME_TICKS = 60 * 3;
 const RESCUE_COOLDOWN_TICKS = 60 * 60 * 10;
 
 const ORE_DROP_STACK_SIZE = 500;
@@ -32,18 +31,7 @@ const ORE_MULTIPLIER_BY_ITEM_NAME = {
 	scrap: 1,
 } as const;
 
-const THERMITE_COUNTDOWN_TOOLTIP_LIFETIME = 70;
-const THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME = 100;
-const THERMITE_COUNTDOWN_TOOLTIP_OFFSET: MapPosition = { x: 0, y: -2.6 };
-const THERMITE_EMPTY_BLAST_TOOLTIP_OFFSET: MapPosition = { x: 0, y: -1.5 };
-
-let countdownSecondsByBlastId: Record<number, number | undefined> = {};
-
 function init() {
-	script.on_load(() => {
-		countdownSecondsByBlastId = {};
-	});
-
 	on_event('on_script_trigger_effect', on_script_trigger_effect);
 
 	on_nth_tick(1, handleBlastUpdates);
@@ -69,13 +57,13 @@ function init() {
 const requireSurfaceByIndex = (surfaceIndex: number): LuaSurface => {
 	const surface = game.surfaces[surfaceIndex];
 	if (!surface) throw new Error(`Missing surface index '${surfaceIndex}'.`);
-	return surface as LuaSurface;
+	return surface;
 };
 
 const requireForce = (name: string): LuaForce => {
 	const force = game.forces[name];
 	if (!force) throw new Error(`Missing force '${name}'.`);
-	return force as LuaForce;
+	return force;
 };
 
 function ensureThermiteState(): ThermiteMiningState {
@@ -84,14 +72,9 @@ function ensureThermiteState(): ThermiteMiningState {
 		state = {
 			next_blast_id: 1,
 			pending_blasts: {},
-			tooltip_anchor_cleanup_ticks: {},
 			unlock_bonus_delivered: false,
 		};
 		storage.thermite_mining = state;
-	}
-
-	if (!state.tooltip_anchor_cleanup_ticks) {
-		state.tooltip_anchor_cleanup_ticks = {};
 	}
 
 	const legacyLastRescueTick = storage.last_calcite_rescue_tick;
@@ -185,12 +168,10 @@ function dropOreYield(
 	removedByItem: Record<string, number | undefined>,
 	productivityMultiplier: number,
 ) {
-	let removedAny = false;
 	for (const [itemName, removedAmount] of pairs(removedByItem)) {
 		if (!removedAmount || removedAmount <= 0) {
 			continue;
 		}
-		removedAny = true;
 		const oreMultiplier = resolveOreMultiplier(itemName);
 		const yieldCount = oreYieldFormula(removedAmount, productivityMultiplier, oreMultiplier);
 		if (yieldCount < 1) {
@@ -198,7 +179,6 @@ function dropOreYield(
 		}
 		spillItemInStacks(surface, force, position, itemName, yieldCount);
 	}
-	return removedAny;
 }
 
 function cleanupBlastFlame(blast: ThermiteQueuedBlast) {
@@ -208,19 +188,7 @@ function cleanupBlastFlame(blast: ThermiteQueuedBlast) {
 	flame.destroy();
 }
 
-function scheduleBlastTooltipAnchorCleanup(state: ThermiteMiningState, blast: ThermiteQueuedBlast, tick: number) {
-	if (blast.tooltip_anchor_unit_number === undefined) return;
-	state.tooltip_anchor_cleanup_ticks[blast.tooltip_anchor_unit_number] = tick + THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME;
-}
-
-function resolveBlastTooltipAnchorEntity(blast: ThermiteQueuedBlast) {
-	if (blast.tooltip_anchor_unit_number === undefined) return;
-	const tooltipAnchor = game.get_entity_by_unit_number(blast.tooltip_anchor_unit_number as UnitNumber);
-	if (!tooltipAnchor || !tooltipAnchor.valid) return;
-	return tooltipAnchor;
-}
-
-function detonateBlast(state: ThermiteMiningState, blastId: number, blast: ThermiteQueuedBlast, tick: number) {
+function detonateBlast(blast: ThermiteQueuedBlast) {
 	const surface = requireSurfaceByIndex(blast.surface_index);
 	const force = requireForce(blast.force_name);
 	const radius = 2 + countResearchedLevels(force, RADIUS_TECHNOLOGY_NAMES);
@@ -244,79 +212,7 @@ function detonateBlast(state: ThermiteMiningState, blastId: number, blast: Therm
 	});
 
 	spillItemInStacks(surface, force, blast.position, 'calcite', math.random(1, 5) * productivityMultiplier);
-
-	const removedAny = dropOreYield(surface, force, blast.position, removedByItem, productivityMultiplier);
-
-	if (!removedAny) {
-		const tooltipAnchor = resolveBlastTooltipAnchorEntity(blast);
-		if (tooltipAnchor) {
-			createHolographicText({
-				target: tooltipAnchor,
-				text: 'x.x',
-				offset: THERMITE_EMPTY_BLAST_TOOLTIP_OFFSET,
-				ticks: THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME,
-			});
-		}
-	}
-
-	scheduleBlastTooltipAnchorCleanup(state, blast, tick);
-	cleanupBlastFlame(blast);
-	state.pending_blasts[blastId] = undefined;
-	countdownSecondsByBlastId[blastId] = undefined;
-}
-
-function processTooltipAnchorCleanup(state: ThermiteMiningState, tick: number) {
-	for (const [unitNumber, cleanupTick] of pairs(state.tooltip_anchor_cleanup_ticks)) {
-		if (cleanupTick === undefined || tick < cleanupTick) {
-			continue;
-		}
-
-		const tooltipAnchor = game.get_entity_by_unit_number(unitNumber as UnitNumber);
-		if (tooltipAnchor && tooltipAnchor.valid) {
-			const destroyed = tooltipAnchor.destroy();
-			if (destroyed !== true && tooltipAnchor.valid) {
-				throw new Error('Failed to destroy thermite tooltip anchor entity.');
-			}
-		}
-
-		state.tooltip_anchor_cleanup_ticks[unitNumber] = undefined;
-	}
-}
-
-function updateBlastCountdown(blastId: number, blast: ThermiteQueuedBlast, tick: number) {
-	const remainingTicks = blast.trigger_tick - tick;
-	if (remainingTicks <= 0) {
-		return;
-	}
-
-	const secondsRemaining = math.ceil(remainingTicks / 60);
-	if (secondsRemaining < 1 || secondsRemaining > 3) {
-		return;
-	}
-
-	if (countdownSecondsByBlastId[blastId] === secondsRemaining) {
-		return;
-	}
-
-	const surface = requireSurfaceByIndex(blast.surface_index);
-
-	const tooltipAnchor = resolveBlastTooltipAnchorEntity(blast);
-	if (!tooltipAnchor) {
-		countdownSecondsByBlastId[blastId] = secondsRemaining;
-		return;
-	}
-
-	if (tooltipAnchor.surface !== surface) {
-		throw new Error(`Thermite tooltip anchor surface mismatch for blast id '${blast.id}'.`);
-	}
-
-	createHolographicText({
-		target: tooltipAnchor,
-		text: String(secondsRemaining),
-		offset: THERMITE_COUNTDOWN_TOOLTIP_OFFSET,
-		ticks: THERMITE_COUNTDOWN_TOOLTIP_LIFETIME,
-	});
-	countdownSecondsByBlastId[blastId] = secondsRemaining;
+	dropOreYield(surface, force, blast.position, removedByItem, productivityMultiplier);
 }
 
 function on_script_trigger_effect(event: OnScriptTriggerEffectEvent) {
@@ -341,41 +237,22 @@ function on_script_trigger_effect(event: OnScriptTriggerEffectEvent) {
 		force: sourceEntity.force,
 	});
 
-	const tooltipAnchor = surface.create_entity({
-		name: TOOLTIP_ANCHOR_ENTITY_NAME,
-		position,
-		force: sourceEntity.force,
-	})!;
-
-	tooltipAnchor.destructible = false;
-	tooltipAnchor.minable = false;
-
 	const blast: ThermiteQueuedBlast = {
 		id: blastId,
 		surface_index: event.surface_index,
 		position,
 		force_name: sourceEntity.force!.name,
-		trigger_tick: event.tick + COUNTDOWN_TICKS,
+		flame_cleanup_tick: event.tick + FLAME_LIFETIME_TICKS,
 	};
 
 	if (flame && flame.unit_number !== undefined) blast.flame_unit_number = flame.unit_number;
-	if (tooltipAnchor.unit_number !== undefined) {
-		blast.tooltip_anchor_unit_number = tooltipAnchor.unit_number;
-	}
 
 	state.pending_blasts[blastId] = blast;
-	countdownSecondsByBlastId[blastId] = 3;
-	createHolographicText({
-		target: tooltipAnchor,
-		text: '3',
-		offset: THERMITE_COUNTDOWN_TOOLTIP_OFFSET,
-		ticks: THERMITE_COUNTDOWN_TOOLTIP_LIFETIME,
-	});
+	detonateBlast(blast);
 }
 
 function handleBlastUpdates(event: NthTickEventData) {
 	const state = ensureThermiteState();
-	processTooltipAnchorCleanup(state, event.tick);
 
 	const [firstPendingBlastId] = next(state.pending_blasts);
 	if (firstPendingBlastId === undefined) {
@@ -388,17 +265,16 @@ function handleBlastUpdates(event: NthTickEventData) {
 			continue;
 		}
 
-		if (event.tick >= blast.trigger_tick) {
+		if (event.tick >= blast.flame_cleanup_tick) {
 			dueBlastIds.push(blastId);
-		} else {
-			updateBlastCountdown(blastId, blast, event.tick);
 		}
 	}
 
 	for (const blastId of dueBlastIds) {
 		const blast = state.pending_blasts[blastId];
 		if (blast) {
-			detonateBlast(state, blastId, blast, event.tick);
+			cleanupBlastFlame(blast);
+			state.pending_blasts[blastId] = undefined;
 		}
 	}
 }

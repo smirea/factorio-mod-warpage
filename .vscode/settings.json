@@ -1,0 +1,7 @@
+{
+	"search.exclude": {
+		".tmp": true,
+		"compiled": true,
+		"mod": true
+	}
+}

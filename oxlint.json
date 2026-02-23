@@ -16,5 +16,14 @@
 		"unicorn/filename-case": "off",
 		"node/no-process-env": "error"
 	},
-	"ignorePatterns": ["node_modules", "dist", "build", "generated", "**/generated", "**/*.generated.ts", "**/*.gen.ts", "bun.lock"]
+	"ignorePatterns": [
+		"node_modules",
+		"dist",
+		"build",
+		"generated",
+		"**/generated",
+		"**/*.generated.ts",
+		"**/*.gen.ts",
+		"bun.lock"
+	]
 }

@@ -1,4 +1,4 @@
-import type { LocalisedString, LuaSurface, type LuaEntity, type MapPosition } from 'factorio:runtime';
+import type { LocalisedString, LuaEntity, MapPosition } from 'factorio:runtime';
 
 type NthTickEventData = {
 	// importing from factorio:runtime causes a module not found error during launch
@@ -91,10 +91,10 @@ export function createHolographicText({
 	ticks,
 	offset,
 }: {
-	target: LuaEntity,
-	text: LocalisedString,
-	ticks: number,
-	offset?: MapPosition,
+	target: LuaEntity;
+	text: LocalisedString;
+	ticks: number;
+	offset?: MapPosition;
 }) {
 	target.surface.create_entity({
 		name: 'compi-speech-bubble',

@@ -4,15 +4,13 @@ declare global {
 		surface_index: number;
 		position: { x: number; y: number };
 		force_name: string;
-		trigger_tick: number;
+		flame_cleanup_tick: number;
 		flame_unit_number?: number;
-		tooltip_anchor_unit_number?: number;
 	};
 
 	type ThermiteMiningState = {
 		next_blast_id: number;
 		pending_blasts: Record<number, ThermiteQueuedBlast | undefined>;
-		tooltip_anchor_cleanup_ticks: Record<number, number | undefined>;
 		unlock_bonus_delivered: boolean;
 	};
 
