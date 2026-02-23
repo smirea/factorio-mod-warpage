@@ -16,14 +16,13 @@ const TOOLTIP_ANCHOR_ENTITY_NAME = names.ns('tooltip-anchor');
 const PRODUCTIVITY_TECHNOLOGY_NAMES = [1, 2, 3, 4, 5].map(level => names.ns('mining-productivity-' + level));
 const RADIUS_TECHNOLOGY_NAMES = [1, 2, 3].map(level => names.ns('mining-radius-' + level));
 
-const BASE_RADIUS = 2;
 const BASE_PRODUCTIVITY_MULTIPLIER = 1;
 const COUNTDOWN_TICKS = 60 * 3;
 const RESCUE_COOLDOWN_TICKS = 60 * 60 * 10;
 
 const ORE_DROP_STACK_SIZE = 500;
 const ORE_DEFAULT_MULTIPLIER = 0.5;
-const ORE_MULTIPLIER_BY_ITEM_NAME: Record<string, number | undefined> = {
+const ORE_MULTIPLIER_BY_ITEM_NAME = {
 	'iron-ore': 1,
 	'copper-ore': 1,
 	coal: 0.75,
@@ -31,7 +30,7 @@ const ORE_MULTIPLIER_BY_ITEM_NAME: Record<string, number | undefined> = {
 	calcite: 0.4,
 	'tungsten-ore': 0.2,
 	scrap: 1,
-};
+} as const;
 
 const THERMITE_COUNTDOWN_TOOLTIP_LIFETIME = 70;
 const THERMITE_EMPTY_BLAST_TOOLTIP_LIFETIME = 100;
@@ -115,15 +114,13 @@ function countResearchedLevels(force: LuaForce, technologies: ReadonlyArray<stri
 	return researchedLevels;
 }
 
-const computeProductivityMultiplier = (force: LuaForce) =>
-	BASE_PRODUCTIVITY_MULTIPLIER + countResearchedLevels(force, PRODUCTIVITY_TECHNOLOGY_NAMES);
-
-const computeBlastRadius = (force: LuaForce) => BASE_RADIUS + countResearchedLevels(force, RADIUS_TECHNOLOGY_NAMES);
-
 const oreYieldFormula = (removedAmount: number, productivityMultiplier: number, oreMultiplier: number) =>
 	math.ceil(math.max(5, math.min(removedAmount / 100, 25)) * productivityMultiplier * oreMultiplier);
 
-const resolveOreMultiplier = (itemName: string) => ORE_MULTIPLIER_BY_ITEM_NAME[itemName] ?? ORE_DEFAULT_MULTIPLIER;
+const resolveOreMultiplier = (itemName: string) =>
+	itemName in ORE_MULTIPLIER_BY_ITEM_NAME
+		? ORE_MULTIPLIER_BY_ITEM_NAME[itemName as keyof typeof ORE_MULTIPLIER_BY_ITEM_NAME]
+		: ORE_DEFAULT_MULTIPLIER;
 
 function spillItemInStacks(
 	surface: LuaSurface,
@@ -148,24 +145,6 @@ function spillItemInStacks(
 		});
 		remaining -= stackCount;
 	}
-}
-
-function resolveBlastAreaAndCenter(position: MapPosition, radius: number): [BoundingBox, MapPosition] {
-	const leftTopX = position.x - radius;
-	const leftTopY = position.y - radius;
-	const rightBottomX = position.x + radius;
-	const rightBottomY = position.y + radius;
-
-	return [
-		{
-			left_top: { x: leftTopX, y: leftTopY },
-			right_bottom: { x: rightBottomX, y: rightBottomY },
-		},
-		{
-			x: (leftTopX + rightBottomX) / 2,
-			y: (leftTopY + rightBottomY) / 2,
-		},
-	];
 }
 
 function removeOreResources(surface: LuaSurface, area: BoundingBox) {
@@ -244,21 +223,29 @@ function resolveBlastTooltipAnchorEntity(blast: ThermiteQueuedBlast) {
 function detonateBlast(state: ThermiteMiningState, blastId: number, blast: ThermiteQueuedBlast, tick: number) {
 	const surface = requireSurfaceByIndex(blast.surface_index);
 	const force = requireForce(blast.force_name);
-
-	const radius = computeBlastRadius(force);
-	const productivityMultiplier = computeProductivityMultiplier(force);
-	const [blastArea, dropPosition] = resolveBlastAreaAndCenter(blast.position, radius);
-
-	const calciteCount = math.random(1, 5) * productivityMultiplier;
-	spillItemInStacks(surface, force, dropPosition, 'calcite', calciteCount);
-
-	const removedByItem = removeOreResources(surface, blastArea);
-	const removedAny = dropOreYield(surface, force, dropPosition, removedByItem, productivityMultiplier);
+	const radius = 2 + countResearchedLevels(force, RADIUS_TECHNOLOGY_NAMES);
+	const productivityMultiplier =
+		BASE_PRODUCTIVITY_MULTIPLIER + countResearchedLevels(force, PRODUCTIVITY_TECHNOLOGY_NAMES);
 
 	surface.create_entity({
 		name: 'grenade-explosion',
 		position: blast.position,
 	});
+
+	const removedByItem = removeOreResources(surface, {
+		left_top: {
+			x: blast.position.x - radius / 2,
+			y: blast.position.y - radius / 2,
+		},
+		right_bottom: {
+			x: blast.position.x + radius / 2,
+			y: blast.position.y + radius / 2,
+		},
+	});
+
+	spillItemInStacks(surface, force, blast.position, 'calcite', math.random(1, 5) * productivityMultiplier);
+
+	const removedAny = dropOreYield(surface, force, blast.position, removedByItem, productivityMultiplier);
 
 	if (!removedAny) {
 		const tooltipAnchor = resolveBlastTooltipAnchorEntity(blast);
@@ -333,14 +320,10 @@ function updateBlastCountdown(blastId: number, blast: ThermiteQueuedBlast, tick:
 }
 
 function on_script_trigger_effect(event: OnScriptTriggerEffectEvent) {
-	if (event.effect_id !== IMPACT_EFFECT_ID) {
-		return;
-	}
+	if (event.effect_id !== IMPACT_EFFECT_ID) return;
 
 	const position = event.target_position ?? event.source_position;
-	if (!position) {
-		return;
-	}
+	if (!position) return;
 
 	const surface = requireSurfaceByIndex(event.surface_index);
 
@@ -375,9 +358,7 @@ function on_script_trigger_effect(event: OnScriptTriggerEffectEvent) {
 		trigger_tick: event.tick + COUNTDOWN_TICKS,
 	};
 
-	if (flame && flame.unit_number !== undefined) {
-		blast.flame_unit_number = flame.unit_number;
-	}
+	if (flame && flame.unit_number !== undefined) blast.flame_unit_number = flame.unit_number;
 	if (tooltipAnchor.unit_number !== undefined) {
 		blast.tooltip_anchor_unit_number = tooltipAnchor.unit_number;
 	}
