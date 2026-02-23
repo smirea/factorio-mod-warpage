@@ -1,20 +1,25 @@
 #!/usr/bin/env bun
 
 import { execSync, type ExecSyncOptionsWithBufferEncoding } from 'node:child_process';
-import path, { dirname, join, resolve } from 'node:path';
+import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const rootDir = resolve(scriptDir, '..');
-const srcDir = join(rootDir, 'src');
-
-const tsFiles = cmd(`find ${srcDir} -type f -name '*.ts'`, { stdio: undefined }).split('\n');
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(scriptDir, '..');
+const srcDir = path.join(rootDir, 'src');
 
 const mustImportNames = ['control.ts', 'data-final-fixes.ts', 'data-updates.ts', 'data.ts'];
+const toCopy: string[] = ['info.json', 'thumbnail.png'];
+const allFiles = cmd(`find ${srcDir} -type f`, { stdio: undefined }).split('\n');
 
 const errors: string[] = [];
-for (const file of tsFiles) {
+for (const file of allFiles) {
+	if (!file.endsWith('.ts')) {
+		if (!file.endsWith('.md')) toCopy.push(file);
+		continue;
+	}
+
 	const fileName = path.basename(file);
 	if (!mustImportNames.includes(fileName)) continue;
 	const moduleName = path.basename(path.dirname(file));
@@ -41,7 +46,16 @@ if (errors.length > 0) {
 
 cmd(`rm -rf compiled`);
 cmd(`./node_modules/.bin/tstl`);
-cmd(`cp info.json thumbnail.png compiled`);
+
+for (const fullFilePath of toCopy) {
+	const source = fullFilePath.replace(rootDir + path.sep, '');
+	const parts = source.split(path.sep);
+	if (parts[0] === 'src') parts.shift();
+	const dest = path.join(rootDir, 'compiled', ...parts);
+	console.log('copy:', source);
+	fs.mkdirSync(path.dirname(dest), { recursive: true });
+	fs.copyFileSync(fullFilePath, dest);
+}
 
 function cmd(str: string, args?: ExecSyncOptionsWithBufferEncoding) {
 	return execSync(str, { cwd: rootDir, stdio: 'inherit', ...args })

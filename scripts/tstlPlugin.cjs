@@ -51,7 +51,7 @@ const plugin = {
 					const localeKey = `${sectionArg.text}.${keyArg.text}`;
 					const fields = [
 						tstl.createTableFieldExpression(tstl.createStringLiteral(localeKey, node)),
-						...args.map(arg => tstl.createTableFieldExpression(context.transformExpression(arg))),
+						...args.map(arg => tstl.createTableFieldExpression(transformLocaleArg(arg, context))),
 					];
 					return tstl.createTableExpression(fields, node);
 				}
@@ -63,6 +63,25 @@ const plugin = {
 };
 
 module.exports = plugin;
+
+function transformLocaleArg(arg, context) {
+	const transformed = context.transformExpression(arg);
+	const argType = context.checker.getTypeAtLocation(arg);
+	if (!isNumberLikeType(argType)) {
+		return transformed;
+	}
+	return tstl.createCallExpression(tstl.createIdentifier('tostring', arg), [transformed], arg);
+}
+
+function isNumberLikeType(type) {
+	if ((type.flags & ts.TypeFlags.NumberLike) !== 0) {
+		return true;
+	}
+	if (type.isUnionOrIntersection()) {
+		return type.types.some(isNumberLikeType);
+	}
+	return false;
+}
 
 function parseLocaleFile(filePath) {
 	const sections = new Map();
