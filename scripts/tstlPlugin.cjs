@@ -94,7 +94,7 @@ function parseLocaleFile(filePath) {
 }
 
 function warnMissingLocale(section, key, fileName, node) {
-	if (localeSections.get(section)?.get(key)) return;
+	if (localeSections.get(section)?.has(key)) return;
 
 	const location = node.getSourceFile().getLineAndCharacterOfPosition(node.getStart());
 	const warningKey = `${fileName}:${location.line}:${location.character}:${section}.${key}`;

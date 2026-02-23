@@ -1,0 +1,211 @@
+import { modNs } from '@/constants';
+import * as util from 'util';
+import { names } from './constants';
+import type {
+	SimpleEntityWithOwnerPrototype,
+	CapsulePrototype,
+	IconData,
+	RecipePrototype,
+	TechnologyPrototype,
+	ProjectilePrototype,
+} from 'factorio:prototype';
+import { disableRecipe, disableTechnology, hideItem } from '@/utils';
+
+const barrelIcon = DIR_PATH_JOIN('../graphics/thermite-barrel.png');
+
+function makeTechnologyIcons(overlayIcon: string) {
+	return [
+		{
+			icon: barrelIcon,
+			icon_size: 256,
+		},
+		{
+			icon: overlayIcon,
+			icon_size: 128,
+			scale: 0.4,
+			shift: [-50, -50],
+			floating: true,
+		},
+	] satisfies Array<IconData>;
+}
+
+const makeProductivityTechnology = (level: number) =>
+	({
+		type: 'technology',
+		name: names.ns('mining-productivity-' + level),
+		icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-capacity.png'),
+		effects: [
+			{
+				type: 'nothing',
+				effect_description: LOCALE('technology-effect', 'thermite-mining-productivity', level),
+			},
+		],
+		prerequisites: level === 1 ? [] : [names.ns('mining-productivity-' + (level - 1))],
+		unit: {
+			count: level * 100,
+			ingredients: [['automation-science-pack', 1]],
+			time: 10,
+		},
+		upgrade: true,
+	}) satisfies TechnologyPrototype;
+
+const makeRadiusTechnology = (level: number, count: number, ingredients: Array<[string, number]>) =>
+	({
+		type: 'technology',
+		name: names.ns('mining-radius-' + level),
+		icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-range.png'),
+		effects: [
+			{
+				type: 'nothing',
+				effect_description: LOCALE('technology-effect', 'warpage-thermite-mining-radius', level),
+			},
+		],
+		prerequisites: level === 1 ? [] : [names.ns('mining-radius-' + (level - 1))],
+		unit: {
+			count,
+			ingredients: ingredients,
+			time: 30,
+		},
+		upgrade: true,
+	}) satisfies TechnologyPrototype;
+
+for (const key in data.raw.technology) {
+	if (key.startsWith('mining-productivity')) disableTechnology(key);
+}
+
+disableRecipe('burner-mining-drill');
+disableRecipe('electric-mining-drill');
+disableTechnology('electric-mining-drill');
+hideItem('burner-mining-drill');
+hideItem('electric-mining-drill');
+
+data.extend([
+	{
+		type: 'recipe',
+		name: names.recipe,
+		enabled: false,
+		energy_required: 1,
+		ingredients: [
+			{ type: 'item', name: 'iron-plate', amount: 1 },
+			{ type: 'item', name: 'copper-plate', amount: 1 },
+			{ type: 'item', name: 'calcite', amount: 1 },
+		],
+		results: [{ type: 'item', name: names.item, amount: 1 }],
+		allow_as_intermediate: false,
+	} satisfies RecipePrototype,
+	{
+		type: 'technology',
+		name: names.recipe,
+		icon: barrelIcon,
+		icon_size: 256,
+		effects: [{ type: 'unlock-recipe', recipe: names.recipe }],
+		research_trigger: {
+			type: 'mine-entity',
+			entity: 'iron-ore',
+		},
+	} satisfies TechnologyPrototype,
+
+	{
+		...(util.copy(data.raw.projectile.grenade) as ProjectilePrototype),
+		name: names.projectile,
+		action: [
+			{
+				type: 'direct',
+				action_delivery: {
+					type: 'instant',
+					target_effects: [
+						{
+							type: 'script',
+							effect_id: names.projectile,
+						},
+					],
+				},
+			},
+		],
+		light: undefined,
+	} satisfies ProjectilePrototype,
+
+	{
+		type: 'capsule',
+		name: modNs('thermite'),
+		icon: barrelIcon,
+		icon_size: 64,
+		capsule_action: {
+			type: 'throw',
+			attack_parameters: {
+				type: 'projectile',
+				activation_type: 'throw',
+				ammo_category: 'grenade',
+				cooldown: 30,
+				projectile_creation_distance: 0.6,
+				range: 15,
+				ammo_type: {
+					target_type: 'position',
+					action: {
+						type: 'direct',
+						action_delivery: {
+							type: 'projectile',
+							projectile: names.projectile,
+							starting_speed: 0.3,
+						},
+					},
+				},
+			},
+		},
+		subgroup: 'capsule',
+		order: 'a[grenade]-c[warpage-thermite-miner]',
+		stack_size: 100,
+	} satisfies CapsulePrototype,
+
+	{
+		type: 'simple-entity-with-owner',
+		name: names.ns('tooltip-anchor'),
+		icon: barrelIcon,
+		icon_size: 64,
+		flags: [
+			'not-on-map',
+			'placeable-off-grid',
+			'not-selectable-in-game',
+			'not-deconstructable',
+			'not-blueprintable',
+			'not-upgradable',
+			'not-flammable',
+			'not-repairable',
+			'no-copy-paste',
+			'no-automated-item-removal',
+			'no-automated-item-insertion',
+			'not-in-kill-statistics',
+			'get-by-unit-number',
+		],
+		hidden: true,
+		selectable_in_game: false,
+		allow_copy_paste: false,
+		is_military_target: false,
+		alert_when_damaged: false,
+		max_health: 1,
+		collision_mask: { layers: {} },
+		collision_box: [
+			[0, 0],
+			[0, 0],
+		],
+		selection_box: [
+			[0, 0],
+			[0, 0],
+		],
+		render_layer: 'object',
+		picture: {
+			filename: '__core__/graphics/empty.png',
+			size: 1,
+		},
+	} satisfies SimpleEntityWithOwnerPrototype,
+
+	// tech
+	makeProductivityTechnology(1),
+	makeProductivityTechnology(2),
+	makeProductivityTechnology(3),
+	makeProductivityTechnology(4),
+	makeProductivityTechnology(5),
+	makeRadiusTechnology(1, 500, [['automation-science-pack', 1]]),
+	makeRadiusTechnology(2, 500, [['logistic-science-pack', 1]]),
+	makeRadiusTechnology(3, 500, [['chemical-science-pack', 1]]),
+]);
