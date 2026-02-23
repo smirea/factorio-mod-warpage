@@ -1,4 +1,4 @@
-import { modNs, nsFactory } from '@/constants';
+import { modNs, nsFactory } from '@/lib/constants';
 
 const ns = nsFactory(modNs('thermite'));
 

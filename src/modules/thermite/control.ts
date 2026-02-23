@@ -8,7 +8,7 @@ import type {
 	UnitNumber,
 } from 'factorio:runtime';
 import { names } from './constants';
-import { on_event, on_nth_tick } from '@/utils';
+import { on_event, on_nth_tick } from '@/lib/utils';
 
 const IMPACT_EFFECT_ID = names.projectile;
 

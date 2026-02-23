@@ -17,7 +17,7 @@
 
 		// Bundler mode
 		"moduleResolution": "node",
-		"verbatimModuleSyntax": true,
+		"verbatimModuleSyntax": false, // counter-intuitive: this actually STRIPS type imports when using TSTL which is what we want
 
 		// Best practices
 		"strict": true,

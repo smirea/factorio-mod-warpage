@@ -9,7 +9,7 @@ type NthTickEventData = {
 const nthTickHandlers: Record<
 	number,
 	{
-		fn: (event: NthTickEventData) => void;
+		fn: (this: void, event: NthTickEventData) => void;
 		handlers: Array<(event: NthTickEventData) => void>;
 	}
 > = {};
@@ -17,7 +17,9 @@ const nthTickHandlers: Record<
 export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => void) {
 	if (!nthTickHandlers[tick]) {
 		nthTickHandlers[tick] = {
-			fn: event => nthTickHandlers[tick]?.handlers.forEach(h => h(event)),
+			fn: function (this: void, event) {
+				nthTickHandlers[tick]?.handlers.forEach(h => h(event));
+			},
 			handlers: [],
 		};
 		script.on_nth_tick(tick, nthTickHandlers[tick].fn);
@@ -34,7 +36,7 @@ export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => 
 const onEventHandlers: Record<
 	string,
 	{
-		fn: (event: any) => void;
+		fn: (this: void, event: any) => void;
 		handlers: Array<(event: any) => void>;
 	}
 > = {};
@@ -46,7 +48,9 @@ export function on_event<Type extends keyof typeof defines.events>(
 ) {
 	if (!onEventHandlers[type]) {
 		onEventHandlers[type] = {
-			fn: event => onEventHandlers[type]?.handlers.forEach(h => h(event)),
+			fn: function (this: void, event) {
+				onEventHandlers[type]?.handlers.forEach(h => h(event));
+			},
 			handlers: [],
 		};
 		script.on_event(defines.events[type] as any, onEventHandlers[type].fn, filters);

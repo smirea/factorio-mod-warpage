@@ -1,4 +1,4 @@
-import { modNs } from '@/constants';
+import { modNs } from '@/lib/constants';
 import * as util from 'util';
 import { names } from './constants';
 import type {
@@ -9,9 +9,9 @@ import type {
 	TechnologyPrototype,
 	ProjectilePrototype,
 } from 'factorio:prototype';
-import { disableRecipe, disableTechnology, hideItem } from '@/utils';
+import { disableRecipe, disableTechnology, hideItem } from '@/lib/utils';
 
-const barrelIcon = DIR_PATH_JOIN('../graphics/thermite-barrel.png');
+const barrelIcon = DIR_PATH_JOIN('./graphics/thermite-barrel.png');
 
 function makeTechnologyIcons(overlayIcon: string) {
 	return [
@@ -129,7 +129,7 @@ data.extend([
 		type: 'capsule',
 		name: modNs('thermite'),
 		icon: barrelIcon,
-		icon_size: 64,
+		icon_size: 256,
 		capsule_action: {
 			type: 'throw',
 			attack_parameters: {
@@ -161,7 +161,7 @@ data.extend([
 		type: 'simple-entity-with-owner',
 		name: names.ns('tooltip-anchor'),
 		icon: barrelIcon,
-		icon_size: 64,
+		icon_size: 256,
 		flags: [
 			'not-on-map',
 			'placeable-off-grid',
