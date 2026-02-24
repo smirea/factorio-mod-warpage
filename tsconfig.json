@@ -3,7 +3,9 @@
 	"include": ["src/**/*.ts"],
 	"tstl": {
 		"luaTarget": "5.2",
-		"luaPlugins": [{ "name": "./scripts/tstlPlugin.cjs" }]
+		"luaPlugins": [{ "name": "./scripts/tstlPlugin.cjs" }],
+		"noImplicitGlobalVariables": false,
+		"noImplicitSelf": true
 	},
 	"compilerOptions": {
 		// Environment setup & latest features

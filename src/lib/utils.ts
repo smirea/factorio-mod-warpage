@@ -1,4 +1,4 @@
-import type { LocalisedString, LuaEntity, MapPosition } from 'factorio:runtime';
+import type { LocalisedString, LuaEntity, LuaSurface, MapPosition, SurfaceCreateEntity } from 'factorio:runtime';
 
 type NthTickEventData = {
 	// importing from factorio:runtime causes a module not found error during launch
@@ -9,15 +9,20 @@ type NthTickEventData = {
 const nthTickHandlers: Record<
 	number,
 	{
-		fn: (this: void, event: NthTickEventData) => void;
+		fn: (event: NthTickEventData) => void;
 		handlers: Array<(event: NthTickEventData) => void>;
 	}
 > = {};
 
+/**
+ * convenience wrapper on top of `script.on_nth_tick()` that allows multiple modules to register events
+ *
+ * @see script.on_event
+ */
 export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => void) {
 	if (!nthTickHandlers[tick]) {
 		nthTickHandlers[tick] = {
-			fn: function (this: void, event) {
+			fn: function (event) {
 				nthTickHandlers[tick]?.handlers.forEach(h => h(event));
 			},
 			handlers: [],
@@ -36,11 +41,17 @@ export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => 
 const onEventHandlers: Record<
 	string,
 	{
-		fn: (this: void, event: any) => void;
+		fn: (event: any) => void;
 		handlers: Array<(event: any) => void>;
+		filters?: any;
 	}
 > = {};
 
+/**
+ * convenience wrapper on top of `script.on_event()` that allows multiple modules to register events
+ *
+ * @see script.on_event
+ */
 export function on_event<Type extends keyof typeof defines.events>(
 	type: Type,
 	handler: (event: (typeof defines.events)[Type]['_eventData']) => void,
@@ -48,12 +59,16 @@ export function on_event<Type extends keyof typeof defines.events>(
 ) {
 	if (!onEventHandlers[type]) {
 		onEventHandlers[type] = {
-			fn: function (this: void, event) {
+			fn: function (event) {
 				onEventHandlers[type]?.handlers.forEach(h => h(event));
 			},
 			handlers: [],
 		};
 		script.on_event(defines.events[type] as any, onEventHandlers[type].fn, filters);
+	} else if (filters || onEventHandlers[type].filters) {
+		throw new Error(
+			`you cannot register multiple on_event(${type}) when using event filters, either remove the filters or use a single event handler`,
+		);
 	}
 
 	onEventHandlers[type].handlers.push(handler);
@@ -63,6 +78,16 @@ export function on_event<Type extends keyof typeof defines.events>(
 		onEventHandlers[type].handlers = onEventHandlers[type].handlers.filter(h => h !== handler);
 		if (onEventHandlers[type].handlers.length === 0) script.on_event(defines.events[type], undefined);
 	};
+}
+
+const onInitEvents: Array<() => void> = [];
+export function on_init(handler: () => void) {
+	onInitEvents.push(handler);
+	if (onInitEvents.length === 1) {
+		script.on_init(() => {
+			onInitEvents.forEach(h => h());
+		});
+	}
 }
 
 export function disableRecipe(name: keyof typeof data.raw.recipe) {
@@ -112,4 +137,25 @@ export function createHolographicText({
 	} as any);
 
 	return () => target.destroy();
+}
+
+/**
+ * Convenience wrapper on top of `surface.create_entity()` that asserts entity exists
+ */
+export function createEntity<T = LuaEntity>(surface: LuaSurface, params: SurfaceCreateEntity): T {
+	const entity = surface.create_entity({
+		force: 'player',
+		...params,
+	});
+	if (!entity) throw new Error(`failed to create entity.name=${params.name} on surface ${surface.name}`);
+	return entity as any;
+}
+
+/**
+ * useful when debugging in game
+ * @see https://typescripttolua.github.io/docs/assigning-global-variables
+ */
+export function registerGlobal(name: string, value: any) {
+	// @ts-ignore
+	globalThis[name] = value;
 }
