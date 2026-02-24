@@ -4,12 +4,14 @@ import { spawnSync } from 'node:child_process';
 import {
 	accessSync,
 	constants as fsConstants,
+	copyFileSync,
 	existsSync,
 	lstatSync,
 	mkdirSync,
 	readdirSync,
 	readFileSync,
 	readlinkSync,
+	renameSync,
 	statSync,
 	symlinkSync,
 	writeFileSync,
@@ -39,7 +41,8 @@ const configFile = join(launchRoot, 'config.ini');
 const canonicalSavesDir = join(repoRoot, 'saves');
 
 const compiledDir = resolve(env.COMPILED_DIR ?? join(repoRoot, 'compiled'));
-const defaultSaveName = env.SAVE_NAME ?? env.SAFE_SAVE_NAME ?? 'warptorio-test';
+const defaultSaveName = env.SAVE_NAME ?? env.SAFE_SAVE_NAME ?? 'warpage-test';
+const autosaveInterval = env.AUTOSAVE_INTERVAL ?? '0';
 const headless = env.HEADLESS ?? '0';
 const untilTick = env.UNTIL_TICK ?? '120';
 
@@ -58,13 +61,12 @@ assertFile(join(compiledDir, 'info.json'), `Compiled info.json not found: ${join
 
 mkdirSync(runModDir, { recursive: true });
 ensureDirectory(writeData);
-ensureDirectory(runSavesDir);
 ensureDirectory(canonicalSavesDir);
 
 ensureSymlink(runModLink, compiledDir);
-syncCanonicalSaves(canonicalSavesDir, runSavesDir);
+ensureSavesSymlink(runSavesDir, canonicalSavesDir);
 
-writeConfig(configFile, writeData);
+writeConfig(configFile, writeData, autosaveInterval);
 writeModList(join(runModDir, 'mod-list.json'), modInfo.name);
 
 if (!existsSync(saveFile)) {
@@ -164,8 +166,16 @@ function readModInfo(filePath: string): { name: string; version: string } {
 	return { name: parsed.name, version: parsed.version };
 }
 
-function writeConfig(filePath: string, dataPath: string): void {
-	const config = ['[path]', 'read-data=__PATH__system-read-data__', `write-data=${dataPath}`, ''].join('\n');
+function writeConfig(filePath: string, dataPath: string, autosaveInterval: string): void {
+	const config = [
+		'[path]',
+		'read-data=__PATH__system-read-data__',
+		`write-data=${dataPath}`,
+		'',
+		'[other]',
+		`autosave-interval=${autosaveInterval}`,
+		'',
+	].join('\n');
 	writeFileSync(filePath, config, 'utf8');
 }
 
@@ -200,19 +210,55 @@ function ensureSymlink(linkPath: string, targetPath: string): void {
 	symlinkSync(targetPath, linkPath);
 }
 
-function syncCanonicalSaves(sourceDir: string, targetDir: string): void {
+function ensureSavesSymlink(linkPath: string, targetPath: string): void {
+	const existingPathType = getPathType(linkPath);
+	if (existingPathType === 'missing') {
+		symlinkSync(targetPath, linkPath);
+		return;
+	}
+
+	if (existingPathType === 'symlink') {
+		const currentTarget = resolve(dirname(linkPath), readlinkSync(linkPath));
+		if (currentTarget === resolve(targetPath)) {
+			return;
+		}
+		trashPath(linkPath);
+		symlinkSync(targetPath, linkPath);
+		return;
+	}
+
+	if (statSync(linkPath).isDirectory()) {
+		migrateRunSaves(linkPath, targetPath);
+	}
+
+	trashPath(linkPath);
+	symlinkSync(targetPath, linkPath);
+}
+
+function migrateRunSaves(sourceDir: string, targetDir: string): void {
 	const entries = readdirSync(sourceDir, { withFileTypes: true });
 	for (const entry of entries) {
 		if (entry.name.startsWith('.')) {
 			continue;
 		}
-		if (!entry.isFile() && !entry.isSymbolicLink()) {
+		if (!entry.isFile()) {
 			continue;
 		}
 		const sourcePath = join(sourceDir, entry.name);
 		const targetPath = join(targetDir, entry.name);
-		ensureSymlink(targetPath, sourcePath);
+		if (!shouldCopySave(sourcePath, targetPath)) {
+			continue;
+		}
+		copyFileSync(sourcePath, targetPath);
+		console.log(`Updated canonical save: ${targetPath}`);
 	}
+}
+
+function shouldCopySave(sourcePath: string, targetPath: string): boolean {
+	if (!existsSync(targetPath)) {
+		return true;
+	}
+	return statSync(sourcePath).mtimeMs >= statSync(targetPath).mtimeMs;
 }
 
 function getPathType(filePath: string): 'missing' | 'symlink' | 'other' {
@@ -246,7 +292,21 @@ function runCommand(command: string[], options: { cwd?: string } = {}): void {
 }
 
 function trashPath(filePath: string): void {
-	runCommand(['trash', filePath]);
+	const result = spawnSync('trash', [filePath], {
+		stdio: 'inherit',
+	});
+	if (!result.error && result.status === 0) {
+		return;
+	}
+
+	const reason = result.error ? result.error.message : `exit status ${result.status ?? 'unknown'}`;
+	const fallbackPath = `${filePath}.trash-fallback-${Date.now()}`;
+	try {
+		console.warn(`trash failed (${reason}), moving aside: ${filePath} -> ${fallbackPath}`);
+		renameSync(filePath, fallbackPath);
+	} catch (error) {
+		fail(`Failed to remove path: ${filePath}. ${reason}. ${(error as Error).message}`);
+	}
 }
 
 function isExecutable(filePath: string): boolean {
