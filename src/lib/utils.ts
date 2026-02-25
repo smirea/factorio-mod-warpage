@@ -30,6 +30,7 @@ export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => 
 		nthTickHandlers[tick] = {
 			handlers: [],
 		};
+		// oxlint-disable-next-line factorio/no-restricted-api
 		script.on_nth_tick(tick, event => {
 			nthTickHandlers[tick]?.handlers.forEach(h => h(event));
 		});
@@ -41,6 +42,7 @@ export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => 
 		if (!nthTickHandlers[tick]) return;
 		nthTickHandlers[tick].handlers = nthTickHandlers[tick].handlers.filter(h => h !== handler);
 		if (nthTickHandlers[tick].handlers.length === 0) {
+			// oxlint-disable-next-line factorio/no-restricted-api
 			script.on_nth_tick(tick, undefined);
 			delete nthTickHandlers[tick];
 		}
@@ -69,6 +71,7 @@ export function on_event<Type extends keyof typeof defines.events>(
 		onEventHandlers[type] = {
 			handlers: [],
 		};
+		// oxlint-disable-next-line factorio/no-restricted-api
 		script.on_event(
 			defines.events[type] as any,
 			event => {
@@ -89,6 +92,7 @@ export function on_event<Type extends keyof typeof defines.events>(
 		onEventHandlers[type].handlers = onEventHandlers[type].handlers.filter(h => h !== handler);
 		if (onEventHandlers[type].handlers.length === 0) {
 			delete onEventHandlers[type];
+			// oxlint-disable-next-line factorio/no-restricted-api
 			script.on_event(defines.events[type], undefined);
 		}
 	};
@@ -101,6 +105,7 @@ const onInitEvents: Array<() => void> = [];
 export function on_init(handler: () => void) {
 	onInitEvents.push(handler);
 	if (onInitEvents.length === 1) {
+		// oxlint-disable-next-line factorio/no-restricted-api
 		script.on_init(() => {
 			onInitEvents.forEach(h => h());
 		});
@@ -134,6 +139,7 @@ export function createHolographicText({
  * Convenience wrapper on top of `surface.create_entity()` that asserts entity exists
  */
 export function createEntity<T = LuaEntity>(surface: LuaSurface, params: SurfaceCreateEntity): T {
+	// oxlint-disable-next-line factorio/no-restricted-api
 	const entity = surface.create_entity({
 		force: 'player',
 		...params,

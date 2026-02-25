@@ -187,7 +187,7 @@ function igniteTrees(surface: LuaSurface, area: BoundingBox) {
 
 	for (const tree of trees) {
 		if (!tree.valid) continue;
-		surface.create_entity({
+		createEntity(surface, {
 			name: treeFlameName,
 			position: tree.position,
 		});
@@ -208,7 +208,7 @@ function spawnBlastFlames(surface: LuaSurface, center: MapPosition, radius: numb
 				continue;
 			}
 
-			surface.create_entity({
+			createEntity(surface, {
 				name: 'fire-flame',
 				position: { x: x + 0.5, y: y + 0.5 },
 			});
@@ -246,7 +246,7 @@ function detonateBlast({
 	spawnBlastFlames(surface, position, blastRadius);
 	igniteTrees(surface, blastArea);
 
-	surface.create_entity({
+	createEntity(surface, {
 		name: 'grenade-explosion',
 		position,
 	});

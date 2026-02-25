@@ -1,12 +1,9 @@
 {
 	"$schema": "./node_modules/oxlint/configuration_schema.json",
 	"plugins": ["typescript", "unicorn", "oxc", "import", "promise", "node"],
+	"jsPlugins": [{ "name": "factorio", "specifier": "./scripts/oxlint-plugin-warpage.mjs" }],
 	"categories": {
-		"correctness": "error",
-		"suspicious": "warn",
-		"perf": "warn",
-		"style": "warn",
-		"pedantic": "warn"
+		"correctness": "error"
 	},
 	"rules": {
 		"no-unused-vars": "warn",
@@ -14,7 +11,28 @@
 		"unicorn/no-null": "off",
 		"unicorn/prefer-top-level-await": "off",
 		"unicorn/filename-case": "off",
-		"node/no-process-env": "error"
+		"node/no-process-env": "error",
+		"factorio/no-restricted-api": [
+			"error",
+			[
+				{
+					"pattern": "script.on_event()",
+					"message": "Use on_event from '@/lib/utils.ts' instead"
+				},
+				{
+					"pattern": "script.on_nth_tick()",
+					"message": "Use on_nth_tick from '@/lib/utils.ts' instead"
+				},
+				{
+					"pattern": "script.on_init()",
+					"message": "Use on_init from '@/lib/utils.ts' instead"
+				},
+				{
+					"pattern": "surface.create_entity()",
+					"message": "Use createEntity from '@/lib/utils.ts' instead"
+				}
+			]
+		]
 	},
 	"ignorePatterns": [
 		"node_modules",
