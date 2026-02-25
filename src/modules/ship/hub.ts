@@ -1,4 +1,4 @@
-import { createEntity, createHolographicText, on_nth_tick, registerGlobal } from '@/lib/utils';
+import { createEntity, createHolographicText, getCurrentSurface, on_nth_tick, registerGlobal } from '@/lib/utils';
 import type {
 	CargoLandingPadEntity,
 	LuaEntity,
@@ -40,7 +40,7 @@ function startHubRepairChecks() {
 	cancelHubRepairCheck = on_nth_tick(60, handleHubRepairCheck);
 }
 
-function createHub() {
+export function createHub() {
 	const surface = getCurrentSurface();
 	const landingPad = createEntity<CargoLandingPadEntity>(surface, {
 		name: names.hubLandingPad,
@@ -67,7 +67,7 @@ function createHub() {
 	makeIndestructible(leftFluidPipe);
 }
 
-function createDestroyedHub(surface = getCurrentSurface()) {
+export function createDestroyedHub(surface = getCurrentSurface()) {
 	storage.hubRepaired = false;
 	lastRepairText = '';
 	destroyEntity(entities.repairSpeechBubble);
@@ -120,7 +120,6 @@ function createDestroyedHub(surface = getCurrentSurface()) {
 
 let lastRepairText = '';
 function handleHubRepairCheck() {
-	game.print('handleHubRepairCheck');
 	const destroyedHub = getDestroyedHub();
 	if (!destroyedHub) {
 		lastRepairText = '';
@@ -255,10 +254,4 @@ function relativeTo(
 	}
 
 	return [finalX, finalY];
-}
-
-function getCurrentSurface() {
-	const surface = game.surfaces[storage.surface];
-	if (!surface) throw new Error('Cannot find current surface, this should not be possible');
-	return surface;
 }

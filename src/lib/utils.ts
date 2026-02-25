@@ -142,6 +142,12 @@ export function createEntity<T = LuaEntity>(surface: LuaSurface, params: Surface
 	return entity as any;
 }
 
+export function getCurrentSurface(surfaceName = storage.surface) {
+	const surface = game.surfaces[surfaceName];
+	if (!surface) throw new Error(`Missing surface '${surfaceName}'.`);
+	return surface;
+}
+
 /**
  * useful when debugging in game
  * @see https://typescripttolua.github.io/docs/assigning-global-variables
