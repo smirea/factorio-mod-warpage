@@ -1,32 +1,100 @@
-import { createEntity, registerGlobal } from '@/lib/utils';
+import { createEntity, createHolographicText, registerGlobal } from '@/lib/utils';
 import type { CargoLandingPadEntity, LuaEntity, MapPositionArray } from 'factorio:runtime';
 import { names } from './constants';
 
+const hubClearRadius = 4;
+const repairRequirements: Array<[string, number]> = [
+	['stone', 200],
+	['coal', 200],
+	['copper-ore', 100],
+	['iron-plate', 100],
+	['calcite', 10],
+];
+
 registerGlobal('createHub', createHub);
+registerGlobal('createDestroyedHub', createDestroyedHub);
 
 function createHub() {
 	const surface = getCurrentSurface();
 	const landingPad = createEntity<CargoLandingPadEntity>(surface, {
 		name: names.hubLandingPad,
-		position: [0, 0],
+		position: names.hubPosition,
 	});
-	const accumulator = createEntity(surface, {
-		name: names.hubAccumulator,
-		position: relativeTo(names.hubAccumulator, landingPad, 'bottom', 0, 'right', 0),
+
+	createEntity(surface, { name: names.hubAccumulator, position: landingPad.position });
+	createEntity(surface, { name: names.hubPowerPole, position: landingPad.position });
+	createEntity(surface, {
+		name: names.hubFluidPipe,
+		position: relativeTo(names.hubFluidPipe, landingPad, 'right', 'bottom'),
 	});
-	const powerPole = createEntity(surface, {
-		name: names.hubPowerPole,
-		position: relativeTo(names.hubPowerPole, landingPad, 'middle', 0, 'middle', 0),
+	createEntity(surface, {
+		name: names.hubFluidPipe,
+		position: relativeTo(names.hubFluidPipe, landingPad, 'left', 'bottom'),
+	});
+}
+
+function createDestroyedHub(surface = getCurrentSurface()) {
+	const { x, y } = names.hubPosition;
+	for (const entity of surface.find_entities_filtered({
+		area: [
+			[x - hubClearRadius, y - hubClearRadius],
+			[x + hubClearRadius, y + hubClearRadius],
+		],
+	})) {
+		if (entity.valid) {
+			entity.destroy();
+		}
+	}
+
+	const hub = createEntity(surface, {
+		name: names.destroyedHubContainer,
+		position: names.hubPosition,
+	});
+	const inventory = hub.get_inventory(defines.inventory.chest);
+	if (!inventory) {
+		throw new Error('Missing destroyed hub container inventory.');
+	}
+
+	let slotIndex = 1;
+	for (const [itemName, amount] of repairRequirements) {
+		const stackSize = prototypes.item[itemName]?.stack_size;
+		if (!stackSize || stackSize < 1) {
+			throw new Error(`Missing stack size for repair requirement item '${itemName}'.`);
+		}
+		for (let index = 0; index < math.ceil(amount / stackSize); index += 1) {
+			inventory.set_filter(slotIndex, itemName);
+			slotIndex += 1;
+		}
+	}
+	inventory.set_bar(slotIndex);
+
+	const parts: string[] = [];
+	for (const [itemName, amount] of repairRequirements) {
+		let current = 0;
+		for (const [, count] of pairs(inventory.get_item_quality_counts(itemName) as Record<string, number | undefined>)) {
+			current += count ?? 0;
+		}
+		const remaining = math.max(0, amount - current);
+		if (remaining > 0) {
+			parts.push(`[item=${itemName}] ${remaining}`);
+		}
+	}
+
+	createHolographicText({
+		target: hub,
+		text: parts.join(' '),
+		ticks: 2e9,
+		offset: { x: 0, y: -1 * hub.tile_height - 0.5 },
 	});
 }
 
 function relativeTo(
 	sourceEntityName: string,
 	target: Pick<LuaEntity, 'tile_width' | 'tile_height' | 'position'>,
-	rY: 'top' | 'middle' | 'bottom',
-	oY: number,
 	rX: 'left' | 'middle' | 'right',
-	oX: number,
+	rY: 'top' | 'middle' | 'bottom',
+	oX = 0,
+	oY = 0,
 	origin: 'center' | 'edge' = 'edge',
 ): MapPositionArray {
 	const sourceEntity = (prototypes.entity as any)[sourceEntityName] as LuaEntity;
@@ -39,28 +107,28 @@ function relativeTo(
 
 	switch (rY) {
 		case 'top':
-			if (origin === 'edge') finalY += finalY + height / 2;
+			if (origin === 'edge') finalY += height / 2;
 			finalY -= targetHeight / 2;
 			break;
 		case 'bottom':
-			if (origin === 'edge') finalY -= finalY + height / 2;
+			if (origin === 'edge') finalY -= height / 2;
 			finalY += targetHeight / 2;
 			break;
 		case 'middle':
-			break; // noop
+			break;
 	}
 
 	switch (rX) {
 		case 'left':
-			if (origin === 'edge') finalX += finalX + width / 2;
+			if (origin === 'edge') finalX += width / 2;
 			finalX -= targetWidth / 2;
 			break;
 		case 'right':
-			if (origin === 'edge') finalX -= finalX + width / 2;
+			if (origin === 'edge') finalX -= width / 2;
 			finalX += targetWidth / 2;
 			break;
 		case 'middle':
-			break; // noop
+			break;
 	}
 
 	return [finalX, finalY];

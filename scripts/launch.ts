@@ -186,6 +186,7 @@ function writeModList(filePath: string, modName: string): void {
 			{ name: 'elevated-rails', enabled: true },
 			{ name: 'quality', enabled: true },
 			{ name: 'space-age', enabled: true },
+			{ name: 'simple-mod-reload', enabled: true },
 			{ name: modName, enabled: true },
 		],
 	};

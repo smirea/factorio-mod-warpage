@@ -1,3 +1,4 @@
+import * as util from 'util';
 import { names } from './constants';
 import { extend } from '@/lib/data-utils';
 import { modNs } from '@/lib/constants';
@@ -96,24 +97,22 @@ const caragoLandingPad = extend(data.raw['cargo-landing-pad']['cargo-landing-pad
 data.extend([
 	makeHubFluidPipe(),
 	caragoLandingPad,
-	extend(data.raw.accumulator.accumulator, {
+	extend(data.raw['electric-energy-interface']['hidden-electric-energy-interface'], {
 		name: names.hubAccumulator,
 		flags: hiddenOffGridFlags,
 		hidden: true,
 		hidden_in_factoriopedia: true,
+		gui_mode: 'none',
 		selectable_in_game: false,
-		minable: undefined,
-		fast_replaceable_group: undefined,
 		collision_box: zeroBox,
 		selection_box: zeroBox,
-		chargable_graphics: undefined,
-		water_reflection: undefined,
-		working_sound: undefined,
-		open_sound: undefined,
-		close_sound: undefined,
-		draw_copper_wires: false,
-		draw_circuit_wires: false,
-		order: order('a[hub-accumulator]'),
+		energy_source: {
+			type: 'electric',
+			usage_priority: 'tertiary',
+			buffer_capacity: '10MJ',
+			input_flow_limit: '1MW',
+			output_flow_limit: '1MW',
+		},
 	}),
 	extend(data.raw['electric-pole']['small-electric-pole'], {
 		name: names.hubPowerPole,
@@ -128,30 +127,30 @@ data.extend([
 		maximum_wire_distance: 0,
 		supply_area_distance: 10,
 		auto_connect_up_to_n_wires: 0,
-		draw_copper_wires: false,
-		draw_circuit_wires: false,
 	}),
-	// extend(data.raw.roboport.roboport, {
-	// 	name: names.hubRoboport,
-	// 	flags: hiddenOffGridFlags,
-	// 	hidden: true,
-	// 	hidden_in_factoriopedia: true,
-	// 	selectable_in_game: false,
-	// 	minable: undefined,
-	// 	fast_replaceable_group: undefined,
-	// 	collision_box: zeroBox,
-	// 	selection_box: zeroBox,
-	// 	order: order('c[hub-roboport]'),
-	// }),
-	// extend(data.raw.corpse['cargo-landing-pad-remnants'], {
-	// 	name: names.destroyedHubRubble,
-	// 	time_before_removed: 60 * 60 * 24 * 365 * 100,
-	// 	time_before_shading_off: 60 * 60 * 24 * 365 * 100,
-	// 	expires: false,
-	// 	remove_on_entity_placement: false,
-	// 	remove_on_tile_placement: false,
-	// 	selectable_in_game: false,
-	// 	flags: ['placeable-neutral', 'placeable-off-grid', 'not-on-map', 'not-selectable-in-game'] as const,
-	// 	order: order('f[destroyed-hub-rubble]'),
-	// }),
+	extend(data.raw.container['wooden-chest'], {
+		name: names.destroyedHubContainer,
+		icon: '__base__/graphics/icons/cargo-landing-pad.png',
+		flags: ['placeable-neutral', 'player-creation', 'not-deconstructable'],
+		hidden: true,
+		hidden_in_factoriopedia: true,
+		minable: undefined,
+		max_health: 1,
+		inventory_size: 20,
+		inventory_type: 'with_filters_and_bar',
+		fast_replaceable_group: undefined,
+		collision_box: caragoLandingPad.collision_box,
+		selection_box: caragoLandingPad.selection_box,
+		picture: {
+			layers: [
+				{
+					filename: '__base__/graphics/entity/cargo-hubs/hubs/planet-hub-remnants.png',
+					width: 686,
+					height: 610,
+					shift: util.by_pixel(-12.0, 5.5),
+					scale: 0.5,
+				},
+			],
+		},
+	}),
 ]);

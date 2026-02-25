@@ -125,7 +125,7 @@ export function createHolographicText({
 	ticks: number;
 	offset?: MapPosition;
 }) {
-	target.surface.create_entity({
+	const textEntity = target.surface.create_entity({
 		name: 'compi-speech-bubble',
 		position: {
 			x: target.position.x + (offset?.x ?? 0),
@@ -136,7 +136,7 @@ export function createHolographicText({
 		lifetime: ticks,
 	} as any);
 
-	return () => target.destroy();
+	return () => textEntity?.destroy();
 }
 
 /**
