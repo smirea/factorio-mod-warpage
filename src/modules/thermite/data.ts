@@ -1,15 +1,8 @@
 import { modNs } from '@/lib/constants';
-import * as util from 'util';
 import { names } from './constants';
-import type {
-	SimpleEntityWithOwnerPrototype,
-	CapsulePrototype,
-	IconData,
-	RecipePrototype,
-	TechnologyPrototype,
-	ProjectilePrototype,
-} from 'factorio:prototype';
+import type { SimpleEntityWithOwnerPrototype, CapsulePrototype, IconData, RecipePrototype } from 'factorio:prototype';
 import { disableRecipe, disableTechnology, hideItem } from '@/lib/utils';
+import { addTechnology, extend } from '@/lib/data-utils';
 
 const barrelIcon = DIR_PATH_JOIN('./graphics/thermite-barrel.png');
 
@@ -22,15 +15,15 @@ function makeTechnologyIcons(overlayIcon: string) {
 		{
 			icon: overlayIcon,
 			icon_size: 128,
-			scale: 0.4,
-			shift: [-50, -50],
+			scale: 0.5,
+			shift: [50, 50],
 			floating: true,
 		},
 	] satisfies Array<IconData>;
 }
 
-const makeProductivityTechnology = (level: number) =>
-	({
+const addProductivityTechnology = (level: number) =>
+	addTechnology({
 		type: 'technology',
 		name: names.ns('mining-productivity-' + level),
 		localised_name: LOCALE('technology-name', 'warpage-thermite-mining-productivity', level),
@@ -39,20 +32,20 @@ const makeProductivityTechnology = (level: number) =>
 		effects: [
 			{
 				type: 'nothing',
-				effect_description: LOCALE('technology-effect', 'thermite-mining-productivity', level),
+				effect_description: LOCALE('technology-effect', 'warpage-thermite-mining-productivity', level),
 			},
 		],
-		prerequisites: level === 1 ? [] : [names.ns('mining-productivity-' + (level - 1))],
+		prerequisites: level === 1 ? [names.recipe] : [names.recipe, names.ns('mining-productivity-' + (level - 1))],
 		unit: {
 			count: level * 100,
 			ingredients: [['automation-science-pack', 1]],
 			time: 10,
 		},
 		upgrade: true,
-	}) satisfies TechnologyPrototype;
+	});
 
-const makeRadiusTechnology = (level: number, count: number, ingredients: Array<[string, number]>) =>
-	({
+const addRadiusTechnology = (level: number, count: number, ingredients: Array<[string, number]>) =>
+	addTechnology({
 		type: 'technology',
 		name: names.ns('mining-radius-' + level),
 		localised_name: LOCALE('technology-name', 'warpage-thermite-mining-radius', level),
@@ -64,14 +57,14 @@ const makeRadiusTechnology = (level: number, count: number, ingredients: Array<[
 				effect_description: LOCALE('technology-effect', 'warpage-thermite-mining-radius', level),
 			},
 		],
-		prerequisites: level === 1 ? [] : [names.ns('mining-radius-' + (level - 1))],
+		prerequisites: level === 1 ? [names.recipe] : [names.recipe, names.ns('mining-radius-' + (level - 1))],
 		unit: {
 			count,
-			ingredients: ingredients,
+			ingredients,
 			time: 30,
 		},
 		upgrade: true,
-	}) satisfies TechnologyPrototype;
+	});
 
 for (const key in data.raw.technology) {
 	if (key.startsWith('mining-productivity')) disableTechnology(key);
@@ -82,6 +75,26 @@ disableRecipe('electric-mining-drill');
 disableTechnology('electric-mining-drill');
 hideItem('burner-mining-drill');
 hideItem('electric-mining-drill');
+
+addTechnology({
+	type: 'technology',
+	name: names.recipe,
+	icon: barrelIcon,
+	icon_size: 256,
+	effects: [{ type: 'unlock-recipe', recipe: names.recipe }],
+	research_trigger: {
+		type: 'mine-entity',
+		entity: 'iron-ore',
+	},
+});
+addProductivityTechnology(1);
+addProductivityTechnology(2);
+addProductivityTechnology(3);
+addProductivityTechnology(4);
+addProductivityTechnology(5);
+addRadiusTechnology(1, 500, [['automation-science-pack', 1]]);
+addRadiusTechnology(2, 500, [['logistic-science-pack', 1]]);
+addRadiusTechnology(3, 500, [['chemical-science-pack', 1]]);
 
 data.extend([
 	{
@@ -97,20 +110,8 @@ data.extend([
 		results: [{ type: 'item', name: names.item, amount: 1 }],
 		allow_as_intermediate: false,
 	} satisfies RecipePrototype,
-	{
-		type: 'technology',
-		name: names.recipe,
-		icon: barrelIcon,
-		icon_size: 256,
-		effects: [{ type: 'unlock-recipe', recipe: names.recipe }],
-		research_trigger: {
-			type: 'mine-entity',
-			entity: 'iron-ore',
-		},
-	} satisfies TechnologyPrototype,
 
-	{
-		...(util.copy(data.raw.projectile.grenade) as ProjectilePrototype),
+	extend(data.raw.projectile.grenade, {
 		name: names.projectile,
 		action: [
 			{
@@ -127,7 +128,7 @@ data.extend([
 			},
 		],
 		light: undefined,
-	} satisfies ProjectilePrototype,
+	}),
 
 	{
 		type: 'capsule',
@@ -202,14 +203,4 @@ data.extend([
 			size: 1,
 		},
 	} satisfies SimpleEntityWithOwnerPrototype,
-
-	// tech
-	makeProductivityTechnology(1),
-	makeProductivityTechnology(2),
-	makeProductivityTechnology(3),
-	makeProductivityTechnology(4),
-	makeProductivityTechnology(5),
-	makeRadiusTechnology(1, 500, [['automation-science-pack', 1]]),
-	makeRadiusTechnology(2, 500, [['logistic-science-pack', 1]]),
-	makeRadiusTechnology(3, 500, [['chemical-science-pack', 1]]),
 ]);
