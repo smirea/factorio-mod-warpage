@@ -46,17 +46,25 @@ function createHub() {
 		name: names.hubLandingPad,
 		position: [0, 0],
 	});
+	makeIndestructible(landingPad);
 
 	entities.hub = createEntity(surface, { name: names.hubAccumulator, position: landingPad.position });
-	createEntity(surface, { name: names.hubPowerPole, position: landingPad.position });
-	createEntity(surface, {
+	makeIndestructible(entities.hub);
+
+	const hubPowerPole = createEntity(surface, { name: names.hubPowerPole, position: landingPad.position });
+	makeIndestructible(hubPowerPole);
+
+	const rightFluidPipe = createEntity(surface, {
 		name: names.hubFluidPipe,
 		position: relativeTo(names.hubFluidPipe, landingPad, 'right', 'bottom'),
 	});
-	createEntity(surface, {
+	makeIndestructible(rightFluidPipe);
+
+	const leftFluidPipe = createEntity(surface, {
 		name: names.hubFluidPipe,
 		position: relativeTo(names.hubFluidPipe, landingPad, 'left', 'bottom'),
 	});
+	makeIndestructible(leftFluidPipe);
 }
 
 function createDestroyedHub(surface = getCurrentSurface()) {
@@ -80,6 +88,7 @@ function createDestroyedHub(surface = getCurrentSurface()) {
 		name: names.destroyedHub,
 		position: [0, 0],
 	});
+	makeIndestructible(entities.destroyedHub);
 	const inventory = entities.destroyedHub!.get_inventory(defines.inventory.chest)!;
 
 	let slotIndex = 1;
@@ -111,6 +120,7 @@ function createDestroyedHub(surface = getCurrentSurface()) {
 
 let lastRepairText = '';
 function handleHubRepairCheck() {
+	game.print('handleHubRepairCheck');
 	const destroyedHub = getDestroyedHub();
 	if (!destroyedHub) {
 		lastRepairText = '';
@@ -175,7 +185,10 @@ function onHubRepaired() {
 function getDestroyedHub() {
 	if (entities.destroyedHub?.valid) return entities.destroyedHub;
 	entities.destroyedHub = getCurrentSurface().find_entity(names.destroyedHub, [0, 0]) ?? undefined;
-	if (entities.destroyedHub?.valid) return entities.destroyedHub;
+	if (entities.destroyedHub?.valid) {
+		makeIndestructible(entities.destroyedHub);
+		return entities.destroyedHub;
+	}
 	entities.destroyedHub = undefined;
 	return undefined;
 }
@@ -191,6 +204,11 @@ function getTotalItemCount(inventory: LuaInventory, itemName: string) {
 function destroyEntity(entity: LuaEntity | SpeechBubbleEntity | undefined) {
 	if (!entity?.valid) return;
 	entity.destroy();
+}
+
+function makeIndestructible(entity: { valid: boolean; destructible: boolean } | undefined) {
+	if (!entity?.valid) return;
+	entity.destructible = false;
 }
 
 function relativeTo(

@@ -26,7 +26,7 @@ const nthTickHandlers: Record<
  * @see script.on_event
  */
 export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => void) {
-	if (!nthTickHandlers[tick]) {
+	if (!nthTickHandlers[tick] || nthTickHandlers[tick].handlers.length === 0) {
 		nthTickHandlers[tick] = {
 			handlers: [],
 		};
@@ -40,7 +40,10 @@ export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => 
 	return () => {
 		if (!nthTickHandlers[tick]) return;
 		nthTickHandlers[tick].handlers = nthTickHandlers[tick].handlers.filter(h => h !== handler);
-		if (nthTickHandlers[tick].handlers.length === 0) script.on_nth_tick(tick, undefined);
+		if (nthTickHandlers[tick].handlers.length === 0) {
+			script.on_nth_tick(tick, undefined);
+			delete nthTickHandlers[tick];
+		}
 	};
 }
 
@@ -84,7 +87,10 @@ export function on_event<Type extends keyof typeof defines.events>(
 	return () => {
 		if (!onEventHandlers[type]) return;
 		onEventHandlers[type].handlers = onEventHandlers[type].handlers.filter(h => h !== handler);
-		if (onEventHandlers[type].handlers.length === 0) script.on_event(defines.events[type], undefined);
+		if (onEventHandlers[type].handlers.length === 0) {
+			delete onEventHandlers[type];
+			script.on_event(defines.events[type], undefined);
+		}
 	};
 }
 
