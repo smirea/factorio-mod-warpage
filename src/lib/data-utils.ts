@@ -58,8 +58,8 @@ export function addTechnology<const T extends TechnologyPrototype>(item: T): T {
 	delete item.icon;
 	delete item.icon_size;
 	icons.push({
-		icon: '__core__/graphics/icons/item-to-be-delivered-symbol.png',
-		icon_size: 96,
+		icon: '__base__/graphics/icons/signal/signal-heart.png',
+		icon_size: 64,
 		floating: true,
 		shift: [-50, -50],
 		scale: 0.6,
@@ -83,4 +83,33 @@ export function addTechnology<const T extends TechnologyPrototype>(item: T): T {
 
 	data.extend([item]);
 	return item;
+}
+
+export function disableRecipe(name: keyof typeof data.raw.recipe) {
+	const recipe = data.raw.recipe[name];
+	if (!recipe) return;
+	recipe.enabled = false;
+	recipe.hidden = true;
+	recipe.hidden_in_factoriopedia = true;
+	recipe.hide_from_player_crafting = true;
+	recipe.hide_from_stats = true;
+	recipe.hide_from_signal_gui = true;
+	recipe.hide_from_bonus_gui = true;
+	recipe.unlock_results = false;
+}
+
+export function disableTechnology(name: keyof typeof data.raw.technology) {
+	const technology = data.raw.technology[name];
+	if (!technology) return;
+	technology.enabled = false;
+	technology.visible_when_disabled = false;
+	technology.hidden = true;
+	technology.prerequisites = [];
+}
+
+export function hideItem(name: keyof typeof data.raw.item) {
+	const item = data.raw.item[name];
+	if (!item) return;
+	item.hidden = true;
+	item.hidden_in_factoriopedia = true;
 }

@@ -10,7 +10,7 @@ const rootDir = path.resolve(scriptDir, '..');
 const srcDir = path.join(rootDir, 'src');
 
 const mustImportNames = ['control.ts', 'data-final-fixes.ts', 'data-updates.ts', 'data.ts'];
-const toCopy: string[] = ['info.json', 'thumbnail.png'];
+const toCopy: string[] = ['locale', 'info.json', 'thumbnail.png'];
 const allFiles = cmd(`find ${srcDir} -type f`, { stdio: undefined }).split('\n');
 
 const errors: string[] = [];
@@ -54,7 +54,11 @@ for (const fullFilePath of toCopy) {
 	const dest = path.join(rootDir, 'compiled', ...parts);
 	console.log('copy:', source);
 	fs.mkdirSync(path.dirname(dest), { recursive: true });
-	fs.copyFileSync(fullFilePath, dest);
+	if (fs.statSync(fullFilePath).isDirectory()) {
+		cmd(`cp -r '${fullFilePath}' '${dest}'`);
+	} else {
+		fs.copyFileSync(fullFilePath, dest);
+	}
 }
 
 function cmd(str: string, args?: ExecSyncOptionsWithBufferEncoding) {

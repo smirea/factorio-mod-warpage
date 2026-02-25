@@ -101,30 +101,6 @@ export function on_init(handler: () => void) {
 	}
 }
 
-export function disableRecipe(name: keyof typeof data.raw.recipe) {
-	const recipe = data.raw.recipe[name];
-	if (!recipe) return;
-	recipe.enabled = false;
-	recipe.hidden = true;
-	recipe.hide_from_player_crafting = true;
-}
-
-export function disableTechnology(name: keyof typeof data.raw.technology) {
-	const technology = data.raw.technology[name];
-	if (!technology) return;
-	technology.enabled = false;
-	technology.visible_when_disabled = false;
-	technology.hidden = true;
-	technology.prerequisites = [];
-}
-
-export function hideItem(name: keyof typeof data.raw.item) {
-	const item = data.raw.item[name];
-	if (!item) return;
-	item.hidden = true;
-	item.hidden_in_factoriopedia = true;
-}
-
 export function createHolographicText({
 	target,
 	text,

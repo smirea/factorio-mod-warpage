@@ -11,3 +11,4 @@ High level design documennts available under `./project/*`, they were true at th
 - there is a `./scripts/launch.ts` script that can be also run in headless mode that handles mod and save linking and other launch goodies
 - you should rely on the built-in utilities over their native counterparts where possible (`src/lib/utils.ts` for working with events, research, etc and `src/lib/data-utils.ts` for prototype manipulation during data stage)
 - localization under `locale/en/warpage.cfg`, custom `LOCALE(namespace, key, ...args)` build time macro that validates against the file
+- factorio data path: `/Applications/factorio.app/Contents/data` (for referencing canonical assets)
