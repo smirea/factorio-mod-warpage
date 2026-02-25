@@ -31,7 +31,7 @@ type ParsedArgs = {
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, '..');
-const env = process.env;
+const env = Bun.env;
 
 const launchRoot = resolve(env.LAUNCH_ROOT ?? join(repoRoot, '.tmp/factorio-launch'));
 const runModDir = join(launchRoot, 'mods');
@@ -95,9 +95,7 @@ const launchArgs = [
 	saveFile,
 ];
 
-if (headless === '1') {
-	launchArgs.push('--until-tick', untilTick);
-}
+if (headless === '1') launchArgs.push('--until-tick', untilTick);
 
 launchArgs.push(...parsedArgs.factorioArgs);
 
@@ -110,9 +108,7 @@ runFactorioWithDev(factorioBin, launchArgs);
 
 function parseArgs(args: string[], defaultName: string): ParsedArgs {
 	const firstArg = args[0];
-	if (!firstArg || firstArg.startsWith('--')) {
-		return { saveSelector: defaultName, factorioArgs: args };
-	}
+	if (!firstArg || firstArg.startsWith('--')) return { saveSelector: defaultName, factorioArgs: args };
 
 	return {
 		saveSelector: firstArg,
@@ -121,9 +117,8 @@ function parseArgs(args: string[], defaultName: string): ParsedArgs {
 }
 
 function resolveSaveFile(saveSelector: string, savesDir: string, root: string): string {
-	if (saveSelector.includes('/') || saveSelector.endsWith('.zip')) {
+	if (saveSelector.includes('/') || saveSelector.endsWith('.zip'))
 		return isAbsolute(saveSelector) ? saveSelector : resolve(root, saveSelector);
-	}
 
 	return join(savesDir, `${saveSelector}.zip`);
 }
@@ -131,9 +126,7 @@ function resolveSaveFile(saveSelector: string, savesDir: string, root: string): 
 function resolveFactorioBin(explicitPath: string | undefined, home: string | undefined): string {
 	if (explicitPath && explicitPath.trim().length > 0) {
 		const candidate = explicitPath.trim();
-		if (isExecutable(candidate)) {
-			return candidate;
-		}
+		if (isExecutable(candidate)) return candidate;
 
 		fail(`FACTORIO_BIN is not executable: ${candidate}`);
 	}
@@ -148,20 +141,14 @@ function resolveFactorioBin(explicitPath: string | undefined, home: string | und
 			: undefined,
 	].filter((value): value is string => value !== undefined);
 
-	for (const candidate of candidates) {
-		if (isExecutable(candidate)) {
-			return candidate;
-		}
-	}
+	for (const candidate of candidates) if (isExecutable(candidate)) return candidate;
 
 	fail('Factorio binary not found. Set FACTORIO_BIN explicitly or install Factorio in a standard location.');
 }
 
 function readModInfo(filePath: string): { name: string; version: string } {
 	const parsed = JSON.parse(readFileSync(filePath, 'utf8')) as ModInfo;
-	if (!parsed.name || !parsed.version) {
-		fail(`Unable to read mod name/version from ${filePath}`);
-	}
+	if (!parsed.name || !parsed.version) fail(`Unable to read mod name/version from ${filePath}`);
 
 	return { name: parsed.name, version: parsed.version };
 }
@@ -205,9 +192,7 @@ function ensureSymlink(linkPath: string, targetPath: string): void {
 
 	if (existingPathType === 'symlink') {
 		const currentTarget = resolve(dirname(linkPath), readlinkSync(linkPath));
-		if (currentTarget === resolve(targetPath)) {
-			return;
-		}
+		if (currentTarget === resolve(targetPath)) return;
 	}
 
 	trashPath(linkPath);
@@ -223,17 +208,14 @@ function ensureSavesSymlink(linkPath: string, targetPath: string): void {
 
 	if (existingPathType === 'symlink') {
 		const currentTarget = resolve(dirname(linkPath), readlinkSync(linkPath));
-		if (currentTarget === resolve(targetPath)) {
-			return;
-		}
+		if (currentTarget === resolve(targetPath)) return;
+
 		trashPath(linkPath);
 		symlinkSync(targetPath, linkPath);
 		return;
 	}
 
-	if (statSync(linkPath).isDirectory()) {
-		migrateRunSaves(linkPath, targetPath);
-	}
+	if (statSync(linkPath).isDirectory()) migrateRunSaves(linkPath, targetPath);
 
 	trashPath(linkPath);
 	symlinkSync(targetPath, linkPath);
@@ -242,26 +224,22 @@ function ensureSavesSymlink(linkPath: string, targetPath: string): void {
 function migrateRunSaves(sourceDir: string, targetDir: string): void {
 	const entries = readdirSync(sourceDir, { withFileTypes: true });
 	for (const entry of entries) {
-		if (entry.name.startsWith('.')) {
-			continue;
-		}
-		if (!entry.isFile()) {
-			continue;
-		}
+		if (entry.name.startsWith('.')) continue;
+
+		if (!entry.isFile()) continue;
+
 		const sourcePath = join(sourceDir, entry.name);
 		const targetPath = join(targetDir, entry.name);
-		if (!shouldCopySave(sourcePath, targetPath)) {
-			continue;
-		}
+		if (!shouldCopySave(sourcePath, targetPath)) continue;
+
 		copyFileSync(sourcePath, targetPath);
 		console.log(`Updated canonical save: ${targetPath}`);
 	}
 }
 
 function shouldCopySave(sourcePath: string, targetPath: string): boolean {
-	if (!existsSync(targetPath)) {
-		return true;
-	}
+	if (!existsSync(targetPath)) return true;
+
 	return statSync(sourcePath).mtimeMs >= statSync(targetPath).mtimeMs;
 }
 
@@ -270,9 +248,8 @@ function getPathType(filePath: string): 'missing' | 'symlink' | 'other' {
 		const stats = lstatSync(filePath);
 		return stats.isSymbolicLink() ? 'symlink' : 'other';
 	} catch (error) {
-		if (isErrnoException(error) && error.code === 'ENOENT') {
-			return 'missing';
-		}
+		if (isErrnoException(error) && error.code === 'ENOENT') return 'missing';
+
 		throw error;
 	}
 }
@@ -288,28 +265,23 @@ function runFactorioWithDev(factorioPath: string, args: string[]): void {
 		stdio: 'inherit',
 		detached: true,
 	});
-	if (devProcess.pid === undefined) {
-		fail('Failed to start "bun run dev".');
-	}
+	if (devProcess.pid === undefined) fail('Failed to start "bun run dev".');
 
 	const factorioResult = spawnSync(factorioPath, args, {
 		stdio: 'inherit',
 	});
 
-	if (devProcess.exitCode === null && devProcess.signalCode === null) {
+	if (devProcess.exitCode === null && devProcess.signalCode === null)
 		try {
 			process.kill(-devProcess.pid, 'SIGTERM');
 		} catch {
 			devProcess.kill('SIGTERM');
 		}
-	}
 
-	if (factorioResult.error) {
+	if (factorioResult.error)
 		fail(`Failed to run "${[factorioPath, ...args].join(' ')}": ${factorioResult.error.message}`);
-	}
-	if (factorioResult.status !== 0) {
-		process.exit(factorioResult.status ?? 1);
-	}
+
+	if (factorioResult.status !== 0) process.exit(factorioResult.status ?? 1);
 }
 
 function runCommand(command: string[], options: { cwd?: string } = {}): void {
@@ -318,21 +290,16 @@ function runCommand(command: string[], options: { cwd?: string } = {}): void {
 		cwd: options.cwd,
 		stdio: 'inherit',
 	});
-	if (result.error) {
-		fail(`Failed to run "${command.join(' ')}": ${result.error.message}`);
-	}
-	if (result.status !== 0) {
-		process.exit(result.status ?? 1);
-	}
+	if (result.error) fail(`Failed to run "${command.join(' ')}": ${result.error.message}`);
+
+	if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
 function trashPath(filePath: string): void {
 	const result = spawnSync('trash', [filePath], {
 		stdio: 'inherit',
 	});
-	if (!result.error && result.status === 0) {
-		return;
-	}
+	if (!result.error && result.status === 0) return;
 
 	const reason = result.error ? result.error.message : `exit status ${result.status ?? 'unknown'}`;
 	const fallbackPath = `${filePath}.trash-fallback-${Date.now()}`;
@@ -355,9 +322,7 @@ function isExecutable(filePath: string): boolean {
 
 function assertDirectory(filePath: string, errorMessage: string): void {
 	try {
-		if (statSync(filePath).isDirectory()) {
-			return;
-		}
+		if (statSync(filePath).isDirectory()) return;
 	} catch {
 		fail(errorMessage);
 	}
@@ -366,9 +331,7 @@ function assertDirectory(filePath: string, errorMessage: string): void {
 
 function assertFile(filePath: string, errorMessage: string): void {
 	try {
-		if (statSync(filePath).isFile()) {
-			return;
-		}
+		if (statSync(filePath).isFile()) return;
 	} catch {
 		fail(errorMessage);
 		return;
@@ -388,9 +351,7 @@ function ensureDirectory(dirPath: string): void {
 		return;
 	}
 	try {
-		if (statSync(dirPath).isDirectory()) {
-			return;
-		}
+		if (statSync(dirPath).isDirectory()) return;
 	} catch {
 		// handled below
 	}

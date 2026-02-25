@@ -21,7 +21,7 @@ const forbiddenStartItems = [
 ] as const;
 
 const startingItems = [
-	{ count: 2, name: 'steel-furnace', quality: 'legendary' as const },
+	{ count: 2, name: 'steel-furnace', quality: 'legendary' },
 	{ count: 50, name: 'jellynut' },
 ] as const;
 
@@ -44,9 +44,8 @@ script.on_configuration_changed(() => {
 
 on_event('on_player_created', event => {
 	const player = game.get_player(event.player_index);
-	if (!player?.valid) {
-		return;
-	}
+	if (!player?.valid) return;
+
 	const surface = getCurrentSurface();
 	applyStartupToPlayer(player, surface, resolveStartupAnchor(surface));
 });
@@ -92,9 +91,7 @@ function initStart() {
 		ensureInitialShipModule(surface);
 		destroyedHub?.destroy();
 		createHub();
-	} else if (!destroyedHub?.valid) {
-		createDestroyedHub(surface);
-	}
+	} else if (!destroyedHub?.valid) createDestroyedHub(surface);
 
 	const activeDestroyedHub = surface.find_entity(shipNames.destroyedHub, [0, 0]);
 	if (activeDestroyedHub?.valid) {
@@ -104,21 +101,17 @@ function initStart() {
 		};
 
 		let startupChest = surface.find_entity('wooden-chest', startupChestPosition);
-		if (!startupChest?.valid) {
+		if (!startupChest?.valid)
 			startupChest =
 				createEntity(surface, {
 					name: 'wooden-chest',
 					position: startupChestPosition,
 				}) ?? undefined;
-		}
 
 		if (startupChest?.valid && !storage.startupSuppliesSeeded) {
 			const inventory = startupChest.get_inventory(defines.inventory.chest);
-			if (inventory) {
-				for (const stack of startingItems) {
-					inventory.insert({ ...stack });
-				}
-			}
+			if (inventory) for (const stack of startingItems) inventory.insert({ ...stack });
+
 			storage.startupSuppliesSeeded = true;
 		}
 	}
@@ -126,9 +119,8 @@ function initStart() {
 	const startupAnchor = resolveStartupAnchor(surface);
 	game.forces.player!.set_spawn_position(startupAnchor, surface);
 	for (const [, player] of pairs(game.players)) {
-		if (!player?.valid) {
-			continue;
-		}
+		if (!player?.valid) continue;
+
 		applyStartupToPlayer(player, surface, startupAnchor);
 	}
 }
@@ -140,28 +132,21 @@ function resolveStartupAnchor(surface: LuaSurface): MapPosition {
 		: { x: 0, y: 5 };
 	const startupChest = surface.find_entity('wooden-chest', startupChestPosition);
 
-	if (startupChest?.valid) {
-		return { x: startupChest.position.x + 2, y: startupChest.position.y };
-	}
+	if (startupChest?.valid) return { x: startupChest.position.x + 2, y: startupChest.position.y };
 
 	return { x: startupChestPosition.x + 2, y: startupChestPosition.y };
 }
 
 function applyStartupToPlayer(player: LuaPlayer, surface: LuaSurface, startupAnchor: MapPosition) {
-	if (storage.startConfiguredPlayerIndices[player.index]) {
-		return;
-	}
+	if (storage.startConfiguredPlayerIndices[player.index]) return;
+
 	for (const inventoryId of playerInventoryIds) {
 		const inventory = player.get_inventory(inventoryId);
-		if (!inventory) {
-			continue;
-		}
+		if (!inventory) continue;
 
 		for (const itemName of forbiddenStartItems) {
 			const count = inventory.get_item_count(itemName);
-			if (count > 0) {
-				inventory.remove({ count, name: itemName });
-			}
+			if (count > 0) inventory.remove({ count, name: itemName });
 		}
 	}
 

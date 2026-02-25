@@ -40,28 +40,23 @@ const applyShipTileBuildabilityRule = () => {
 	const placeableEntityNames: Record<string, true | undefined> = {};
 
 	for (const prototypesByName of Object.values(rawByType)) {
-		if (!prototypesByName) {
-			continue;
-		}
+		if (!prototypesByName) continue;
+
 		for (const prototype of Object.values(prototypesByName)) {
-			if (typeof prototype?.place_result !== 'string') {
-				continue;
-			}
+			if (typeof prototype?.place_result !== 'string') continue;
+
 			placeableEntityNames[prototype.place_result] = true;
 		}
 	}
 
 	for (const prototypesByName of Object.values(rawByType)) {
-		if (!prototypesByName) {
-			continue;
-		}
+		if (!prototypesByName) continue;
+
 		for (const prototype of Object.values(prototypesByName)) {
-			if (!prototype?.name || !prototype.collision_box) {
-				continue;
-			}
-			if (!placeableEntityNames[prototype.name]) {
-				continue;
-			}
+			if (!prototype?.name || !prototype.collision_box) continue;
+
+			if (!placeableEntityNames[prototype.name]) continue;
+
 			prototype.tile_buildability_rules = [
 				...(prototype.tile_buildability_rules ?? []),
 				{

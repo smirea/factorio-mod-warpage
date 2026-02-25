@@ -14,9 +14,7 @@ const localeNamespacePrefix = `${modName}-`;
 const red = '\x1b[31m';
 const reset = '\x1b[0m';
 
-if (!fs.existsSync(localeFilePath)) {
-	throw new Error(`Missing locale file: ${localeFilePath}`);
-}
+if (!fs.existsSync(localeFilePath)) throw new Error(`Missing locale file: ${localeFilePath}`);
 
 const localeSections = parseLocaleFile(localeFilePath);
 const warnedMissingLocales = new Set();
@@ -27,9 +25,9 @@ const plugin = {
 	visitors: {
 		[ts.SyntaxKind.CallExpression]: (node, context) => {
 			if (!ts.isIdentifier(node.expression)) return context.superTransformExpression(node);
-			if (node.expression.text !== 'DIR_PATH_JOIN' && node.expression.text !== 'LOCALE') {
+			if (node.expression.text !== 'DIR_PATH_JOIN' && node.expression.text !== 'LOCALE')
 				return context.superTransformExpression(node);
-			}
+
 			const sourceFile = node.getSourceFile();
 			const fileName = sourceFile?.fileName ?? '<unknown>';
 
@@ -37,24 +35,22 @@ const plugin = {
 				case 'DIR_PATH_JOIN': {
 					const parts = node.arguments.map(arg => (ts.isStringLiteralLike(arg) ? arg.text : undefined));
 					if (!parts.length) throw new Error('DIR_PATH_JOIN() must have at least one argument in: ' + fileName);
-					if (parts.some(part => part === undefined)) {
+					if (parts.some(part => part === undefined))
 						throw new Error('DIR_PATH_JOIN() only accepts string arguments in: ' + fileName);
-					}
+
 					const sourceDir = path.dirname(fileName);
-					if (!sourceDir.startsWith(srcDir)) {
-						throw new Error(`DIR_PATH_JOIN('${parts.join(', ')}') not in mod dir`);
-					}
+					if (!sourceDir.startsWith(srcDir)) throw new Error(`DIR_PATH_JOIN('${parts.join(', ')}') not in mod dir`);
+
 					const value = path.join(`__${modName}__`, sourceDir.replace(srcDir + path.sep, ''), ...parts);
 					return tstl.createStringLiteral(value, node);
 				}
 				case 'LOCALE': {
-					if (node.arguments.length < 2) {
-						throw new Error('LOCALE() must have at least 2 arguments at: ' + fileName);
-					}
+					if (node.arguments.length < 2) throw new Error('LOCALE() must have at least 2 arguments at: ' + fileName);
+
 					const [sectionArg, keyArg, ...args] = node.arguments;
-					if (!ts.isStringLiteralLike(sectionArg) || !ts.isStringLiteralLike(keyArg)) {
+					if (!ts.isStringLiteralLike(sectionArg) || !ts.isStringLiteralLike(keyArg))
 						throw new Error('LOCALE() first two arguments must be string literals at: ' + fileName);
-					}
+
 					const namespacedKey = keyArg.text.startsWith(localeNamespacePrefix)
 						? (warnPrefixedLocaleKey(keyArg.text, fileName, node), keyArg.text)
 						: localeNamespacePrefix + keyArg.text;
@@ -78,19 +74,16 @@ module.exports = plugin;
 function transformLocaleArg(arg, context) {
 	const transformed = context.transformExpression(arg);
 	const argType = context.checker.getTypeAtLocation(arg);
-	if (!isNumberLikeType(argType)) {
-		return transformed;
-	}
+	if (!isNumberLikeType(argType)) return transformed;
+
 	return tstl.createCallExpression(tstl.createIdentifier('tostring', arg), [transformed], arg);
 }
 
 function isNumberLikeType(type) {
-	if ((type.flags & ts.TypeFlags.NumberLike) !== 0) {
-		return true;
-	}
-	if (type.isUnionOrIntersection()) {
-		return type.types.some(isNumberLikeType);
-	}
+	if ((type.flags & ts.TypeFlags.NumberLike) !== 0) return true;
+
+	if (type.isUnionOrIntersection()) return type.types.some(isNumberLikeType);
+
 	return false;
 }
 

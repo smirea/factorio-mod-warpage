@@ -9,7 +9,7 @@ High level design documennts available under `./project/*`, they were true at th
 - automatic pre-commit hooks: lint (oxlint --fix), format (oxfmt), build (scripts/build.ts)
 - there is a `./scripts/build.ts` processing step together with `./scripts/tstlPlugin.cjs` that handles TS to Lua, static files, sanity checks and build time macros
 - there is a `./scripts/launch.ts` script that can be also run in headless mode that handles mod and save linking and other launch goodies
-- you should rely on the built-in utilities over their native counterparts where possible (`src/lib/utils.ts` for working with events, research, etc and `src/lib/data-utils.ts` for prototype manipulation during data stage)
+- you should rely on the built-in utilities over their native counterparts as much as possible (`src/lib/utils.ts` for working with events, creating entities, etc and `src/lib/data-utils.ts` for prototype manipulation during data stage)
 - localization under `locale/en/warpage.cfg`, custom `LOCALE(namespace, key, ...args)` build time macro that validates against the file
 - factorio data path: `/Applications/factorio.app/Contents/data` (for referencing canonical assets)
 - prefer absolute imports using `@` alias outside of modules, so `import '@/lib/utils'` instead of `import './lib/utils'`
@@ -25,10 +25,6 @@ Use these as source-of-truth references when implementing mechanics, prototypes,
 - Prototype API index: https://lua-api.factorio.com/latest/index-prototype.html
 - Auxiliary docs index: https://lua-api.factorio.com/latest/index-auxiliary.html
 - Data lifecycle: https://lua-api.factorio.com/latest/auxiliary/data-lifecycle.html
-- Mod structure: https://lua-api.factorio.com/latest/auxiliary/mod-structure.html
-- Storage (persistent state): https://lua-api.factorio.com/latest/auxiliary/storage.html
-- Libraries/`require()` behavior: https://lua-api.factorio.com/latest/auxiliary/libraries.html
-- Events enum reference: https://lua-api.factorio.com/latest/defines.html#defines.events
 
 ## Factorio wiki (secondary reference)
 

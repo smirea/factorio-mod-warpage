@@ -1,10 +1,10 @@
 declare global {
-	type ModStorage = {
+	interface ModStorage {
 		surface: string;
 		hubRepaired: boolean;
 		startupSuppliesSeeded: boolean;
 		startConfiguredPlayerIndices: Record<number, true | undefined>;
-	};
+	}
 
 	const storage: ModStorage;
 
@@ -12,5 +12,5 @@ declare global {
 	const DIR_PATH_JOIN: (...parts: string[]) => string;
 
 	/** Build time macro evals to [`${section}.${key}`, ...args] after checking that the locale exists */
-	const LOCALE: (section: string, key: string, ...args: Array<string | number>) => [string, ...(string | number)[]];
+	const LOCALE: (section: string, key: string, ...args: (string | number)[]) => [string, ...(string | number)[]];
 }

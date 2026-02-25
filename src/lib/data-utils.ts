@@ -46,9 +46,9 @@ export function extend<T extends Record<string, any> | undefined>(
 export function addTechnology<const T extends TechnologyPrototype>(item: T): T {
 	const icons = item.icons ? [...item.icons] : [];
 	if (icons.length === 0) {
-		if (!item.icon || !item.icon_size) {
+		if (!item.icon || !item.icon_size)
 			throw new Error(`technology ${item.name} must define icons or both icon and icon_size`);
-		}
+
 		icons.push({
 			icon: item.icon,
 			icon_size: item.icon_size,

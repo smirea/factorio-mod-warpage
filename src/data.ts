@@ -10,6 +10,4 @@ hideItem('gun-turret');
 
 const jellynut = data.raw.capsule.jellynut;
 const jellynutAttackParameters = (jellynut?.capsule_action as any)?.attack_parameters;
-if (jellynutAttackParameters?.cooldown != null) {
-	jellynutAttackParameters.cooldown /= 2;
-}
+if (jellynutAttackParameters?.cooldown != null) jellynutAttackParameters.cooldown /= 2;

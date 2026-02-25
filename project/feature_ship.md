@@ -37,3 +37,8 @@ Repair cost: 200 stone, 200 coal, 100 copper ore, 100 iron plate, 10 calcite
 - water container storage size
 - power supply range
 - accumulator size
+
+# Ship Building
+
+- buildings can only be constructor on a custom tile that initially is just a copy of the space platform tile. prevent building anything outside that tile (ideally at the prototype stage, if not then using event)
+- the initial ship module that is centered around the hub is a 12x12 square - only after the hub is repaired. the module has ship tiles across it

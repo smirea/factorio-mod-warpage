@@ -79,11 +79,10 @@ export function on_event<Type extends keyof typeof defines.events>(
 			},
 			filters,
 		);
-	} else if (filters || onEventHandlers[type].filters) {
+	} else if (filters || onEventHandlers[type].filters)
 		throw new Error(
 			`you cannot register multiple on_event(${type}) when using event filters, either remove the filters or use a single event handler`,
 		);
-	}
 
 	onEventHandlers[type].handlers.push(handler);
 
@@ -104,12 +103,11 @@ const onInitEvents: Array<() => void> = [];
  */
 export function on_init(handler: () => void) {
 	onInitEvents.push(handler);
-	if (onInitEvents.length === 1) {
+	if (onInitEvents.length === 1)
 		// oxlint-disable-next-line factorio/no-restricted-api
 		script.on_init(() => {
 			onInitEvents.forEach(h => h());
 		});
-	}
 }
 
 export function createHolographicText({

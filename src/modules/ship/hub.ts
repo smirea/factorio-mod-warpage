@@ -28,11 +28,8 @@ registerGlobal('createDestroyedHub', createDestroyedHub);
 
 let cancelHubRepairCheck: null | (() => void) = null;
 script.on_load(() => {
-	if (storage.hubRepaired) {
-		onHubRepaired();
-	} else {
-		startHubRepairChecks();
-	}
+	if (storage.hubRepaired) onHubRepaired();
+	else startHubRepairChecks();
 });
 
 function startHubRepairChecks() {
@@ -80,12 +77,10 @@ export function createDestroyedHub(surface = getCurrentSurface()) {
 			[hubClearRadius, hubClearRadius],
 		],
 	})) {
-		if (!entity.valid) {
-			continue;
-		}
-		if (entity.type === 'character') {
-			continue;
-		}
+		if (!entity.valid) continue;
+
+		if (entity.type === 'character') continue;
+
 		entity.destroy();
 	}
 
@@ -99,26 +94,21 @@ export function createDestroyedHub(surface = getCurrentSurface()) {
 	let slotIndex = 1;
 	for (const [itemName, amount] of Object.entries(repairRequirements)) {
 		const stackSize = prototypes.item[itemName]?.stack_size;
-		if (!stackSize || stackSize < 1) {
-			throw new Error(`Missing stack size for repair requirement item '${itemName}'.`);
-		}
+		if (!stackSize || stackSize < 1) throw new Error(`Missing stack size for repair requirement item '${itemName}'.`);
+
 		for (let index = 0; index < math.ceil(amount / stackSize); index += 1) {
-			if (slotIndex > inventory.length) {
+			if (slotIndex > inventory.length)
 				throw new Error('Destroyed hub inventory is too small for current repair requirements.');
-			}
+
 			inventory.set_filter(slotIndex, itemName);
 			slotIndex += 1;
 		}
 	}
 	const requiredSlots = slotIndex - 1;
-	for (let i = requiredSlots + 1; i <= inventory.length; ++i) {
-		inventory.set_filter(i, 'deconstruction-planner');
-	}
-	if (requiredSlots < inventory.length) {
-		inventory.set_bar(requiredSlots + 1);
-	} else {
-		inventory.set_bar();
-	}
+	for (let i = requiredSlots + 1; i <= inventory.length; ++i) inventory.set_filter(i, 'deconstruction-planner');
+
+	if (requiredSlots < inventory.length) inventory.set_bar(requiredSlots + 1);
+	else inventory.set_bar();
 
 	startHubRepairChecks();
 }
@@ -134,19 +124,14 @@ function handleHubRepairCheck() {
 	}
 
 	const inventory = destroyedHub.get_inventory(defines.inventory.chest);
-	if (!inventory) {
-		return;
-	}
+	if (!inventory) return;
 
 	const extra: Record<string, number> = {};
 	const parts: string[] = [];
 	for (const [name, required] of Object.entries(repairRequirements)) {
 		const remaining = required - getTotalItemCount(inventory, name);
-		if (remaining > 0) {
-			parts.push(`[item=${name}] ${remaining}`);
-		} else if (remaining < 0) {
-			extra[name] = remaining * -1;
-		}
+		if (remaining > 0) parts.push(`[item=${name}] ${remaining}`);
+		else if (remaining < 0) extra[name] = remaining * -1;
 	}
 
 	if (parts.length > 0) {
@@ -164,7 +149,7 @@ function handleHubRepairCheck() {
 	} else {
 		onHubRepaired();
 		createHub();
-		for (const [name, count] of Object.entries(extra)) {
+		for (const [name, count] of Object.entries(extra))
 			getCurrentSurface().spill_item_stack({
 				allow_belts: false,
 				drop_full_stack: false,
@@ -172,7 +157,6 @@ function handleHubRepairCheck() {
 				position: entities.hub!.position,
 				stack: { count, name },
 			});
-		}
 	}
 }
 
@@ -189,9 +173,8 @@ function onHubRepaired() {
 }
 
 function getDestroyedHub() {
-	if (entities.destroyedHub?.valid) {
-		return entities.destroyedHub;
-	}
+	if (entities.destroyedHub?.valid) return entities.destroyedHub;
+
 	entities.destroyedHub = getCurrentSurface().find_entity(names.destroyedHub, [0, 0]) ?? undefined;
 	if (entities.destroyedHub?.valid) {
 		makeIndestructible(entities.destroyedHub);
@@ -203,23 +186,20 @@ function getDestroyedHub() {
 
 function getTotalItemCount(inventory: LuaInventory, itemName: string) {
 	let total = 0;
-	for (const count of Object.values(inventory.get_item_quality_counts(itemName))) {
-		total += count;
-	}
+	for (const count of Object.values(inventory.get_item_quality_counts(itemName))) total += count;
+
 	return total;
 }
 
 function destroyEntity(entity: LuaEntity | SpeechBubbleEntity | undefined) {
-	if (!entity?.valid) {
-		return;
-	}
+	if (!entity?.valid) return;
+
 	entity.destroy();
 }
 
 function makeIndestructible(entity: { valid: boolean; destructible: boolean } | undefined) {
-	if (!entity?.valid) {
-		return;
-	}
+	if (!entity?.valid) return;
+
 	entity.destructible = false;
 }
 
@@ -242,16 +222,14 @@ function relativeTo(
 
 	switch (rY) {
 		case 'top': {
-			if (origin === 'edge') {
-				finalY += height / 2;
-			}
+			if (origin === 'edge') finalY += height / 2;
+
 			finalY -= targetHeight / 2;
 			break;
 		}
 		case 'bottom': {
-			if (origin === 'edge') {
-				finalY -= height / 2;
-			}
+			if (origin === 'edge') finalY -= height / 2;
+
 			finalY += targetHeight / 2;
 			break;
 		}
@@ -262,16 +240,14 @@ function relativeTo(
 
 	switch (rX) {
 		case 'left': {
-			if (origin === 'edge') {
-				finalX += width / 2;
-			}
+			if (origin === 'edge') finalX += width / 2;
+
 			finalX -= targetWidth / 2;
 			break;
 		}
 		case 'right': {
-			if (origin === 'edge') {
-				finalX -= width / 2;
-			}
+			if (origin === 'edge') finalX -= width / 2;
+
 			finalX += targetWidth / 2;
 			break;
 		}

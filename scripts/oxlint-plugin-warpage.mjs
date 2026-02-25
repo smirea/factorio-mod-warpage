@@ -6,23 +6,19 @@ export default {
 		'no-restricted-api': {
 			create(context) {
 				const restrictions = compileRestrictions(context.options);
-				if (restrictions.length === 0) {
-					return {};
-				}
+				if (restrictions.length === 0) return {};
 
 				return {
 					CallExpression(node) {
 						const apiPath = getApiPath(node.callee);
-						if (!apiPath) {
-							return;
-						}
+						if (!apiPath) return;
+
 						const match = restrictions.find(restriction => restriction.pattern === apiPath);
-						if (match) {
+						if (match)
 							context.report({
 								message: match.message,
 								node,
 							});
-						}
 					},
 				};
 			},
@@ -76,24 +72,15 @@ function isPatternSupported(pattern) {
 }
 
 function getApiPath(expression) {
-	if (!expression || typeof expression !== 'object') {
-		return undefined;
-	}
+	if (!expression || typeof expression !== 'object') return undefined;
 
-	if (expression.type === 'ChainExpression') {
-		return getApiPath(expression.expression);
-	}
+	if (expression.type === 'ChainExpression') return getApiPath(expression.expression);
 
-	if (expression.type !== 'MemberExpression') {
-		return undefined;
-	}
+	if (expression.type !== 'MemberExpression') return undefined;
 
-	if (expression.computed) {
-		return undefined;
-	}
-	if (expression.object.type !== 'Identifier' || expression.property.type !== 'Identifier') {
-		return undefined;
-	}
+	if (expression.computed) return undefined;
+
+	if (expression.object.type !== 'Identifier' || expression.property.type !== 'Identifier') return undefined;
 
 	return `${expression.object.name}.${expression.property.name}()`;
 }

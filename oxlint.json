@@ -8,6 +8,8 @@
 	"rules": {
 		"no-unused-vars": "warn",
 		"no-console": "off",
+		"curly": ["error", "multi"],
+		"typescript/array-type": "off",
 		"unicorn/no-null": "off",
 		"unicorn/prefer-top-level-await": "off",
 		"unicorn/filename-case": "off",

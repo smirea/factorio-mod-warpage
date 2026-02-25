@@ -1,6 +1,6 @@
 import { names } from './constants';
 import type { CapsulePrototype, IconData, RecipePrototype } from 'factorio:prototype';
-import { addTechnology, extend, disableRecipe, disableTechnology, hideItem } from '@/lib/data-utils';
+import { addTechnology, disableRecipe, disableTechnology, extend, hideItem } from '@/lib/data-utils';
 
 const barrelIcon = DIR_PATH_JOIN('./graphics/thermite-barrel.png');
 
@@ -12,31 +12,31 @@ function makeTechnologyIcons(overlayIcon: string, effectIcon = false) {
 			icon_size: 256,
 		},
 		{
+			floating: true,
 			icon: overlayIcon,
 			icon_size: 128,
 			scale: effectIcon ? 0.25 : 0.5,
 			shift: [shift, shift],
-			floating: true,
 		},
-	] satisfies Array<IconData>;
+	] satisfies IconData[];
 }
 
-const addRadiusTechnology = (level: number, count: number, ingredients: Array<[string, number]>) =>
+const addRadiusTechnology = (level: number, count: number, ingredients: [string, number][]) =>
 	addTechnology({
-		type: 'technology',
-		name: names.ns('mining-radius-' + level),
-		localised_name: LOCALE('technology-name', 'thermite-mining-radius', level),
-		localised_description: LOCALE('technology-description', 'thermite-mining-radius'),
-		icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-range.png'),
 		effects: [
 			{
-				type: 'nothing',
-				icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-range.png', true),
-				use_icon_overlay_constant: false,
 				effect_description: LOCALE('technology-effect', 'thermite-mining-radius', level),
+				icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-range.png', true),
+				type: 'nothing',
+				use_icon_overlay_constant: false,
 			},
 		],
+		icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-range.png'),
+		localised_description: LOCALE('technology-description', 'thermite-mining-radius'),
+		localised_name: LOCALE('technology-name', 'thermite-mining-radius', level),
+		name: names.ns('mining-radius-' + level),
 		prerequisites: level === 1 ? [names.recipe] : [names.recipe, names.ns('mining-radius-' + (level - 1))],
+		type: 'technology',
 		unit: {
 			count,
 			ingredients,
@@ -46,36 +46,36 @@ const addRadiusTechnology = (level: number, count: number, ingredients: Array<[s
 	});
 
 addTechnology({
-	type: 'technology',
-	name: names.recipe,
+	effects: [{ recipe: names.recipe, type: 'unlock-recipe' }],
 	icon: barrelIcon,
 	icon_size: 256,
-	effects: [{ type: 'unlock-recipe', recipe: names.recipe }],
+	name: names.recipe,
 	research_trigger: {
-		type: 'mine-entity',
 		entity: 'iron-ore',
+		type: 'mine-entity',
 	},
+	type: 'technology',
 });
 addTechnology({
-	type: 'technology',
-	name: names.miningProductivityRecipe,
-	localised_name: LOCALE('technology-name', 'thermite-mining-productivity'),
-	localised_description: LOCALE('technology-description', 'thermite-mining-productivity'),
-	icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-capacity.png'),
-	max_level: 5,
 	effects: [
 		{
-			type: 'nothing',
-			icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-capacity.png', true),
-			use_icon_overlay_constant: false,
 			effect_description: LOCALE('technology-effect', 'thermite-mining-productivity'),
+			icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-capacity.png', true),
+			type: 'nothing',
+			use_icon_overlay_constant: false,
 		},
 	],
+	icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-capacity.png'),
+	localised_description: LOCALE('technology-description', 'thermite-mining-productivity'),
+	localised_name: LOCALE('technology-name', 'thermite-mining-productivity'),
+	max_level: 5,
+	name: names.miningProductivityRecipe,
 	prerequisites: [names.recipe],
+	type: 'technology',
 	unit: {
+		count_formula: '100 * L',
 		ingredients: [['automation-science-pack', 1]],
 		time: 10,
-		count_formula: '100 * L',
 	},
 	upgrade: true,
 });
@@ -85,53 +85,44 @@ addRadiusTechnology(3, 500, [['chemical-science-pack', 1]]);
 
 data.extend([
 	{
-		type: 'recipe',
-		name: names.recipe,
+		allow_as_intermediate: false,
 		enabled: false,
 		energy_required: 1,
 		ingredients: [
-			{ type: 'item', name: 'iron-plate', amount: 1 },
-			{ type: 'item', name: 'copper-plate', amount: 1 },
-			{ type: 'item', name: 'calcite', amount: 1 },
+			{ amount: 1, name: 'iron-plate', type: 'item' },
+			{ amount: 1, name: 'copper-plate', type: 'item' },
+			{ amount: 1, name: 'calcite', type: 'item' },
 		],
-		results: [{ type: 'item', name: names.item, amount: 1 }],
-		subgroup: data.raw.item['electric-mining-drill']!.subgroup,
+		name: names.recipe,
 		order: data.raw.item['electric-mining-drill']!.order,
-		allow_as_intermediate: false,
+		results: [{ amount: 1, name: names.item, type: 'item' }],
+		subgroup: data.raw.item['electric-mining-drill']!.subgroup,
+		type: 'recipe',
 	} satisfies RecipePrototype,
 
 	extend(data.raw.projectile.grenade, {
-		name: names.projectile,
 		action: [
 			{
-				type: 'direct',
 				action_delivery: {
-					type: 'instant',
 					target_effects: [
 						{
 							type: 'script',
 							effect_id: names.projectile,
 						},
 					],
+					type: 'instant',
 				},
+				type: 'direct',
 			},
 		],
+		name: names.projectile,
 	}),
 
 	{
-		type: 'capsule',
-		name: names.item,
-		icon: barrelIcon,
-		icon_size: 256,
 		capsule_action: {
-			type: 'throw',
 			attack_parameters: {
-				type: 'projectile',
 				activation_type: 'throw',
 				ammo_category: 'grenade',
-				cooldown: 25,
-				projectile_creation_distance: 0.6,
-				range: 15,
 				ammo_type: {
 					target_type: 'position',
 					action: {
@@ -143,17 +134,24 @@ data.extend([
 						},
 					},
 				},
+				cooldown: 25,
+				projectile_creation_distance: 0.6,
+				range: 15,
+				type: 'projectile',
 			},
+			type: 'throw',
 		},
+		icon: barrelIcon,
+		icon_size: 256,
+		name: names.item,
+		order: data.raw.item['electric-mining-drill']!.order,
 		stack_size: 20,
 		subgroup: data.raw.item['electric-mining-drill']!.subgroup,
-		order: data.raw.item['electric-mining-drill']!.order,
+		type: 'capsule',
 	} satisfies CapsulePrototype,
 ]);
 
-for (const key in data.raw.technology) {
-	if (key.startsWith('mining-productivity')) disableTechnology(key);
-}
+for (const key in data.raw.technology) if (key.startsWith('mining-productivity')) disableTechnology(key);
 
 disableRecipe('burner-mining-drill');
 disableRecipe('electric-mining-drill');

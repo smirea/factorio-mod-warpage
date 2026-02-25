@@ -31,16 +31,13 @@ for (const file of allFiles) {
 		continue;
 	}
 	const canonical = fs.readFileSync(canonicalPath);
-	if (!canonical.includes(importString)) {
-		errors.push(`src/${fileName} is missing \`${importString}\``);
-	}
+	if (!canonical.includes(importString)) errors.push(`src/${fileName} is missing \`${importString}\``);
 }
 
 if (errors.length > 0) {
 	console.error('Errors:');
-	for (const error of errors) {
-		console.error(error);
-	}
+	for (const error of errors) console.error(error);
+
 	process.exit(1);
 }
 
@@ -54,11 +51,8 @@ for (const fullFilePath of toCopy) {
 	const dest = path.join(rootDir, 'compiled', ...parts);
 	console.log('copy:', source);
 	fs.mkdirSync(path.dirname(dest), { recursive: true });
-	if (fs.statSync(fullFilePath).isDirectory()) {
-		cmd(`cp -r '${fullFilePath}' '${dest}'`);
-	} else {
-		fs.copyFileSync(fullFilePath, dest);
-	}
+	if (fs.statSync(fullFilePath).isDirectory()) cmd(`cp -r '${fullFilePath}' '${dest}'`);
+	else fs.copyFileSync(fullFilePath, dest);
 }
 
 function cmd(str: string, args?: ExecSyncOptionsWithBufferEncoding) {
