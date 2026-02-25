@@ -58,7 +58,7 @@ export function addTechnology<const T extends TechnologyPrototype>(item: T): T {
 	delete item.icon;
 	delete item.icon_size;
 	icons.push({
-		icon: '__base__/graphics/icons/signal/signal-heart.png',
+		icon: '__base__/graphics/icons/signal/signal-science-pack.png',
 		icon_size: 64,
 		floating: true,
 		shift: [-50, -50],

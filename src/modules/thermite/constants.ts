@@ -7,4 +7,5 @@ export const names = {
 	recipe: ns(),
 	item: ns(),
 	projectile: ns('projectile'),
+	miningProductivityRecipe: ns('mining-productivity'),
 } as const;

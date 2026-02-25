@@ -1,12 +1,9 @@
 import '@/modules/ship/control.ts';
 import '@/modules/thermite/control.ts';
-import type { LuaPlayer } from 'factorio:runtime';
+import type { LuaPlayer, LuaSurface, MapPosition } from 'factorio:runtime';
 import { names as shipNames } from '@/modules/ship/constants';
 import { createDestroyedHub, createHub } from '@/modules/ship/hub';
 import { getCurrentSurface, on_event, registerGlobal } from '@/lib/utils';
-
-const freeplayInterfaceName = 'freeplay';
-const shipEntrancePosition = { x: 0, y: 5 };
 
 const forbiddenStartItems = [
 	'pistol',
@@ -47,7 +44,8 @@ script.on_configuration_changed(() => {
 on_event('on_player_created', event => {
 	const player = game.get_player(event.player_index);
 	if (!player?.valid) return;
-	applyStartupToPlayer(player);
+	const surface = getCurrentSurface();
+	applyStartupToPlayer(player, surface, resolveStartupAnchor(surface));
 });
 
 registerGlobal('initStorage', initStorage);
@@ -56,26 +54,27 @@ registerGlobal('initStart', initStart);
 function initStorage() {
 	storage.surface ||= shipNames.surface;
 	storage.hubRepaired ??= false;
+	storage.startupSuppliesSeeded ??= false;
 	storage.startConfiguredPlayerIndices ||= {};
 }
 
 function initStart() {
-	const freeplay = remote.interfaces[freeplayInterfaceName];
+	const freeplay = remote.interfaces.freeplay;
 	if (freeplay) {
-		const createdItems = remote.call(freeplayInterfaceName, 'get_created_items') as Record<string, number | undefined>;
-		const respawnItems = remote.call(freeplayInterfaceName, 'get_respawn_items') as Record<string, number | undefined>;
+		const createdItems = remote.call('freeplay', 'get_created_items') as Record<string, number | undefined>;
+		const respawnItems = remote.call('freeplay', 'get_respawn_items') as Record<string, number | undefined>;
 
 		for (const itemName of forbiddenStartItems) {
 			createdItems[itemName] = undefined;
 			respawnItems[itemName] = undefined;
 		}
 
-		remote.call(freeplayInterfaceName, 'set_created_items', createdItems);
-		remote.call(freeplayInterfaceName, 'set_respawn_items', respawnItems);
-		remote.call(freeplayInterfaceName, 'set_ship_items', {});
-		remote.call(freeplayInterfaceName, 'set_debris_items', {});
-		remote.call(freeplayInterfaceName, 'set_skip_intro', true);
-		remote.call(freeplayInterfaceName, 'set_disable_crashsite', true);
+		remote.call('freeplay', 'set_created_items', createdItems);
+		remote.call('freeplay', 'set_respawn_items', respawnItems);
+		remote.call('freeplay', 'set_ship_items', {});
+		remote.call('freeplay', 'set_debris_items', {});
+		remote.call('freeplay', 'set_skip_intro', true);
+		remote.call('freeplay', 'set_disable_crashsite', true);
 	}
 
 	const surface = getCurrentSurface();
@@ -92,14 +91,57 @@ function initStart() {
 		createDestroyedHub(surface);
 	}
 
-	game.forces[shipNames.force]?.set_spawn_position(shipEntrancePosition, surface);
+	const activeDestroyedHub = surface.find_entity(shipNames.destroyedHub, [0, 0]);
+	if (activeDestroyedHub?.valid) {
+		const startupChestPosition = {
+			x: activeDestroyedHub.position.x,
+			y: activeDestroyedHub.position.y + activeDestroyedHub.tile_height / 2 + 1,
+		};
+
+		let startupChest = surface.find_entity('wooden-chest', startupChestPosition);
+		if (!startupChest?.valid) {
+			startupChest =
+				surface.create_entity({
+					name: 'wooden-chest',
+					position: startupChestPosition,
+					force: shipNames.force,
+				}) ?? undefined;
+		}
+
+		if (startupChest?.valid && !storage.startupSuppliesSeeded) {
+			const inventory = startupChest.get_inventory(defines.inventory.chest);
+			if (inventory) {
+				for (const stack of startingItems) {
+					inventory.insert({ ...stack });
+				}
+			}
+			storage.startupSuppliesSeeded = true;
+		}
+	}
+
+	const startupAnchor = resolveStartupAnchor(surface);
+	game.forces[shipNames.force]?.set_spawn_position(startupAnchor, surface);
 	for (const [, player] of pairs(game.players)) {
 		if (!player?.valid) continue;
-		applyStartupToPlayer(player);
+		applyStartupToPlayer(player, surface, startupAnchor);
 	}
 }
 
-function applyStartupToPlayer(player: LuaPlayer) {
+function resolveStartupAnchor(surface: LuaSurface): MapPosition {
+	const destroyedHub = surface.find_entity(shipNames.destroyedHub, [0, 0]);
+	const startupChestPosition = destroyedHub?.valid
+		? { x: destroyedHub.position.x, y: destroyedHub.position.y + destroyedHub.tile_height / 2 + 1 }
+		: { x: 0, y: 5 };
+	const startupChest = surface.find_entity('wooden-chest', startupChestPosition);
+
+	if (startupChest?.valid) {
+		return { x: startupChest.position.x + 2, y: startupChest.position.y };
+	}
+
+	return { x: startupChestPosition.x + 2, y: startupChestPosition.y };
+}
+
+function applyStartupToPlayer(player: LuaPlayer, surface: LuaSurface, startupAnchor: MapPosition) {
 	if (storage.startConfiguredPlayerIndices[player.index]) return;
 	for (const inventoryId of playerInventoryIds) {
 		const inventory = player.get_inventory(inventoryId);
@@ -111,13 +153,7 @@ function applyStartupToPlayer(player: LuaPlayer) {
 		}
 	}
 
-	for (const stack of startingItems) {
-		player.insert(stack);
-	}
-
-	const surface = getCurrentSurface();
-	const destination =
-		surface.find_non_colliding_position('character', shipEntrancePosition, 16, 0.25, true) ?? shipEntrancePosition;
+	const destination = surface.find_non_colliding_position('character', startupAnchor, 16, 0.25, true) ?? startupAnchor;
 	player.teleport(destination, surface);
 	storage.startConfiguredPlayerIndices[player.index] = true;
 }

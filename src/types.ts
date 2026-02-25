@@ -2,6 +2,7 @@ declare global {
 	type ModStorage = {
 		surface: string;
 		hubRepaired: boolean;
+		startupSuppliesSeeded: boolean;
 		startConfiguredPlayerIndices: Record<number, true | undefined>;
 	};
 

@@ -4,7 +4,8 @@ import { addTechnology, extend, disableRecipe, disableTechnology, hideItem } fro
 
 const barrelIcon = DIR_PATH_JOIN('./graphics/thermite-barrel.png');
 
-function makeTechnologyIcons(overlayIcon: string) {
+function makeTechnologyIcons(overlayIcon: string, effectIcon = false) {
+	const shift = effectIcon ? 12.5 : 50;
 	return [
 		{
 			icon: barrelIcon,
@@ -13,34 +14,12 @@ function makeTechnologyIcons(overlayIcon: string) {
 		{
 			icon: overlayIcon,
 			icon_size: 128,
-			scale: 0.5,
-			shift: [50, 50],
+			scale: effectIcon ? 0.25 : 0.5,
+			shift: [shift, shift],
 			floating: true,
 		},
 	] satisfies Array<IconData>;
 }
-
-const addProductivityTechnology = (level: number) =>
-	addTechnology({
-		type: 'technology',
-		name: names.ns('mining-productivity-' + level),
-		localised_name: LOCALE('technology-name', 'thermite-mining-productivity', level),
-		localised_description: LOCALE('technology-description', 'thermite-mining-productivity'),
-		icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-capacity.png'),
-		effects: [
-			{
-				type: 'nothing',
-				effect_description: LOCALE('technology-effect', 'thermite-mining-productivity', level),
-			},
-		],
-		prerequisites: level === 1 ? [names.recipe] : [names.recipe, names.ns('mining-productivity-' + (level - 1))],
-		unit: {
-			count: level * 100,
-			ingredients: [['automation-science-pack', 1]],
-			time: 10,
-		},
-		upgrade: true,
-	});
 
 const addRadiusTechnology = (level: number, count: number, ingredients: Array<[string, number]>) =>
 	addTechnology({
@@ -52,6 +31,8 @@ const addRadiusTechnology = (level: number, count: number, ingredients: Array<[s
 		effects: [
 			{
 				type: 'nothing',
+				icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-range.png', true),
+				use_icon_overlay_constant: false,
 				effect_description: LOCALE('technology-effect', 'thermite-mining-radius', level),
 			},
 		],
@@ -59,7 +40,7 @@ const addRadiusTechnology = (level: number, count: number, ingredients: Array<[s
 		unit: {
 			count,
 			ingredients,
-			time: 30,
+			time: 10,
 		},
 		upgrade: true,
 	});
@@ -75,11 +56,29 @@ addTechnology({
 		entity: 'iron-ore',
 	},
 });
-addProductivityTechnology(1);
-addProductivityTechnology(2);
-addProductivityTechnology(3);
-addProductivityTechnology(4);
-addProductivityTechnology(5);
+addTechnology({
+	type: 'technology',
+	name: names.miningProductivityRecipe,
+	localised_name: LOCALE('technology-name', 'thermite-mining-productivity'),
+	localised_description: LOCALE('technology-description', 'thermite-mining-productivity'),
+	icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-capacity.png'),
+	max_level: 5,
+	effects: [
+		{
+			type: 'nothing',
+			icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-capacity.png', true),
+			use_icon_overlay_constant: false,
+			effect_description: LOCALE('technology-effect', 'thermite-mining-productivity'),
+		},
+	],
+	prerequisites: [names.recipe],
+	unit: {
+		ingredients: [['automation-science-pack', 1]],
+		time: 10,
+		count_formula: '100 * L',
+	},
+	upgrade: true,
+});
 addRadiusTechnology(1, 500, [['automation-science-pack', 1]]);
 addRadiusTechnology(2, 500, [['logistic-science-pack', 1]]);
 addRadiusTechnology(3, 500, [['chemical-science-pack', 1]]);

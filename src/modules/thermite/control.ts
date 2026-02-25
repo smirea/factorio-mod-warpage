@@ -1,22 +1,15 @@
-import type { BoundingBox, LuaForce, LuaSurface, MapPosition, OnScriptTriggerEffectEvent } from 'factorio:runtime';
+import type {
+	BoundingBox,
+	LuaForce,
+	LuaPlayer,
+	LuaSurface,
+	MapPosition,
+	OnScriptTriggerEffectEvent,
+} from 'factorio:runtime';
 import { names } from './constants';
-import { on_event } from '@/lib/utils';
+import { createEntity, on_event } from '@/lib/utils';
 
-const IMPACT_EFFECT_ID = names.projectile;
-
-const PRODUCTIVITY_TECHNOLOGY_NAMES = [1, 2, 3, 4, 5].map(level => names.ns('mining-productivity-' + level));
 const RADIUS_TECHNOLOGY_NAMES = [1, 2, 3].map(level => names.ns('mining-radius-' + level));
-
-const BASE_BLAST_SIZE = 3;
-const BASE_PRODUCTIVITY_MULTIPLIER = 1;
-const ROCK_DROP_MULTIPLIER = 0.5;
-const BASE_CALCITE_MIN_DROP = 1;
-const BASE_CALCITE_MAX_DROP = 5;
-const CALCITE_MIN_DROP_PER_PRODUCTIVITY_LEVEL = 1;
-const CALCITE_MAX_DROP_PER_PRODUCTIVITY_LEVEL = 2;
-
-const ORE_DROP_STACK_SIZE = 500;
-const ORE_DEFAULT_MULTIPLIER = 0.5;
 const ORE_MULTIPLIER_BY_ITEM_NAME = {
 	'iron-ore': 1,
 	'copper-ore': 1,
@@ -25,10 +18,12 @@ const ORE_MULTIPLIER_BY_ITEM_NAME = {
 	calcite: 0.4,
 	'tungsten-ore': 0.2,
 	scrap: 1,
+	DEFAULT: 0.5,
 } as const;
 
 function init() {
 	on_event('on_script_trigger_effect', on_script_trigger_effect);
+	on_event('on_research_finished', on_research_finished);
 }
 
 const requireSurfaceByIndex = (surfaceIndex: number): LuaSurface => {
@@ -60,7 +55,7 @@ const oreYieldFormula = (removedAmount: number, productivityMultiplier: number, 
 const resolveOreMultiplier = (itemName: string) =>
 	itemName in ORE_MULTIPLIER_BY_ITEM_NAME
 		? ORE_MULTIPLIER_BY_ITEM_NAME[itemName as keyof typeof ORE_MULTIPLIER_BY_ITEM_NAME]
-		: ORE_DEFAULT_MULTIPLIER;
+		: ORE_MULTIPLIER_BY_ITEM_NAME.DEFAULT;
 
 function spillItemInStacks(
 	surface: LuaSurface,
@@ -75,7 +70,7 @@ function spillItemInStacks(
 
 	let remaining = itemCount;
 	while (remaining > 0) {
-		const stackCount = math.min(remaining, ORE_DROP_STACK_SIZE);
+		const stackCount = math.min(remaining, 500);
 		surface.spill_item_stack({
 			position,
 			stack: { name: itemName, count: stackCount },
@@ -169,7 +164,7 @@ function removeRocks(surface: LuaSurface, area: BoundingBox, force: LuaForce) {
 				if (productType !== 'item' || !product.name) continue;
 
 				const minedAmount = resolveMineableProductAmount(product);
-				const dropCount = math.floor(minedAmount * ROCK_DROP_MULTIPLIER);
+				const dropCount = math.floor(minedAmount * 0.5);
 				if (dropCount > 0) {
 					spillItemInStacks(surface, force, entity.position, product.name, dropCount);
 				}
@@ -232,10 +227,10 @@ function detonateBlast({
 }) {
 	const surface = requireSurfaceByIndex(surface_index);
 	const force = requireForce(force_name);
-	const blastSize = BASE_BLAST_SIZE + countResearchedLevels(force, RADIUS_TECHNOLOGY_NAMES);
+	const blastSize = 3 + countResearchedLevels(force, RADIUS_TECHNOLOGY_NAMES);
 	const blastRadius = blastSize / 2;
-	const productivityLevel = countResearchedLevels(force, PRODUCTIVITY_TECHNOLOGY_NAMES);
-	const productivityMultiplier = BASE_PRODUCTIVITY_MULTIPLIER + productivityLevel;
+	const productivityLevel = force.technologies[names.miningProductivityRecipe]!.level;
+	const productivityMultiplier = productivityLevel;
 
 	const blastArea = {
 		left_top: {
@@ -259,15 +254,15 @@ function detonateBlast({
 	const removedByItem = removeOreResources(surface, blastArea);
 	removeRocks(surface, blastArea, force);
 
-	const calciteMinDrop = BASE_CALCITE_MIN_DROP + productivityLevel * CALCITE_MIN_DROP_PER_PRODUCTIVITY_LEVEL;
-	const calciteMaxDrop = BASE_CALCITE_MAX_DROP + productivityLevel * CALCITE_MAX_DROP_PER_PRODUCTIVITY_LEVEL;
+	const calciteMinDrop = productivityLevel;
+	const calciteMaxDrop = 5 + productivityLevel * 2;
 	spillItemInStacks(surface, force, position, 'calcite', math.random(calciteMinDrop, calciteMaxDrop));
 	dropOreYield(surface, force, position, removedByItem, productivityMultiplier);
 }
 
 function on_script_trigger_effect(event: OnScriptTriggerEffectEvent | undefined) {
 	if (!event) return;
-	if (event.effect_id !== IMPACT_EFFECT_ID) return;
+	if (event.effect_id !== names.projectile) return;
 
 	const position = event.target_position ?? event.source_position;
 	if (!position) return;
@@ -282,6 +277,43 @@ function on_script_trigger_effect(event: OnScriptTriggerEffectEvent | undefined)
 		position,
 		force_name: forceName,
 	});
+}
+
+function on_research_finished(event: { research?: { name: string; force: LuaForce } } | undefined) {
+	const research = event?.research;
+	if (research?.name !== names.recipe) return;
+
+	const dropPodsOnPlayer = (player: LuaPlayer, pods: 1 | 2 | 3, count: number) => {
+		for (let i = 0; i < pods; ++i) {
+			const pod = createEntity(player.surface, {
+				name: 'cargo-pod',
+				position: player.position,
+				force: research.force,
+			});
+			pod.get_inventory(defines.inventory.cargo_unit)!.insert({
+				name: names.item,
+				count,
+			});
+			pod.cargo_pod_destination = {
+				type: defines.cargo_destination.surface,
+				surface: player.surface,
+				position: player.position,
+				land_at_exact_position: false,
+			};
+		}
+	};
+
+	if (game.players.length() === 1) {
+		dropPodsOnPlayer(game.players[1]!, 3, 2);
+	} else {
+		// there seems to be a limit of max 3 pods spawned at a time
+		for (let i = 1; i <= 3; ++i) {
+			if (!game.players[i]) continue;
+			dropPodsOnPlayer(game.players[i]!, 1, 2);
+		}
+	}
+
+	game.print('psst, look up, check the hub');
 }
 
 init();

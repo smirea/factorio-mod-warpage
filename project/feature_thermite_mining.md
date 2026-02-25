@@ -1,6 +1,6 @@
 # Thermite mining
 
-Status: implemented (updated 2026-02-21).
+Status: implemented (updated 2026-02-25).
 
 There is no conventional mining in WarpAge in the early game (no burner miners, no electric miners). Mining is done by destructively blasting ore patches to reveal ore item stacks on the ground.
 

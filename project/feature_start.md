@@ -1,6 +1,6 @@
 # Start feature
 
-Status: partially implemented (updated 2026-02-25).
+Status: implemented (updated 2026-02-25).
 
 The start feature replaces vanilla freeplay onboarding so each run begins directly in Warp Age flow.
 
@@ -15,15 +15,15 @@ The start feature replaces vanilla freeplay onboarding so each run begins direct
 
 ### Player setup
 
-- [x] Force spawn is set near the ship entrance.
-- [x] Players are placed at a non-colliding position near the ship entrance.
+- [x] Force spawn is set to the right side of the startup supply box.
+- [x] Players are placed at a non-colliding position to the right of the startup supply box (supports multiple players).
 - [x] Forbidden starter items are stripped from player inventories (`character_main`, `character_guns`, `character_ammo`, `character_trash`).
 
 ### Startup supplies
 
-- [ ] Spawn one startup chest in front of the destroyed hub.
-- [ ] Put the starting kit in that chest: `2x` legendary `steel-furnace`, `50x` `jellynut`.
-- [ ] Do not grant startup kit items directly to individual players.
+- [x] Spawn one wooden startup chest below the destroyed hub.
+- [x] Put the starting kit in that chest: `2x` legendary `steel-furnace`, `50x` `jellynut`.
+- [x] Do not grant startup kit items directly to individual players.
 
 ### Ship handoff
 

@@ -27,7 +27,6 @@ registerGlobal('createDestroyedHub', createDestroyedHub);
 
 let cancelHubRepairCheck: null | (() => void) = null;
 script.on_load(() => {
-	log('on_load: ' + serpent.block(storage));
 	if (storage.hubRepaired) {
 		onHubRepaired();
 	} else {
