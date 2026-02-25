@@ -117,7 +117,6 @@ data.extend([
 				},
 			},
 		],
-		light: undefined,
 	}),
 
 	{
@@ -131,9 +130,9 @@ data.extend([
 				type: 'projectile',
 				activation_type: 'throw',
 				ammo_category: 'grenade',
-				cooldown: 20,
+				cooldown: 25,
 				projectile_creation_distance: 0.6,
-				range: 20,
+				range: 15,
 				ammo_type: {
 					target_type: 'position',
 					action: {

@@ -20,12 +20,9 @@ Status: implemented
    - `wood`
    - `small-electric-pole`
 
-3. Keep initial ship/hub centered at `0,0`.
-   - The initial hub anchor point is fixed at map center.
-
-4. Place players at the ship entrance.
+3. Place players at the hub entrance.
    - Spawn/teleport players near the hub entrance in a non-colliding position.
 
-5. Add starting items once per player.
+4. Add starting items once per player.
    - `2x` legendary `steel-furnace`
    - `50x` `jellynut`
