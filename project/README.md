@@ -1,4 +1,4 @@
-This is an overview of the design document. See the various ./feature_*.md files for detailed info
+This is an overview of the design document. See the various ./feature\_\*.md files for detailed info
 
 # Design Guidelines
 
@@ -10,9 +10,10 @@ This is an overview of the design document. See the various ./feature_*.md files
 6. Single-player focus - optimized for solo, support multiplayer
 7. Promote less used mechanics: combat bots, mines, consumables, quality
 8. Throughput instead of storage - no chests but easy to gather resources, philosophy should be to go to a place and build/research as fast as much as possible
-8.1. This means that researches would have to accomodate sparse resources - all techs needing most research packs is a big limitation
+   8.1. This means that researches would have to accomodate sparse resources - all techs needing most research packs is a big limitation
 
 # Feature files
+
 Store high-level design decisions, the purpose of the feature, and the set of behaviors needed.
 Feature files are rough design docs, not implementation guides.
 Specific implementation details should live in code.
@@ -33,17 +34,16 @@ All early game technologies lead up to a single "A fork in the road" tech that m
 - update the icon of all techs that are affected by your decision to mark how they've been affected (positively or negatively)
 - create dummy researched "researches" for the recipes that were blocked off and describe them as the consequences of your choices
 
-
-| Path of the -->       | Belt    | Box                          | Bot                                                                                                |
-| ----------------------- | --------- | ------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| belt tier             | turbo   | express                      | no belts                                                                                           |
-| belt stack            | 4       | 2                            | 0                                                                                                  |
-| stack inserters       | yes     | no                           | no                                                                                                 |
-| logistics             | no      | no                           | yes                                                                                                |
-| power                 | nuclear | nuclear                      | fusion                                                                                             |
-| factory size research | 1x      | 2x                           | 4x                                                                                                 |
-| **other upsides**     |         | linked chests in each region | 30min one time grace period to rebuild; grants 50 red and blue chests; new research 2by2 requester |
-| **other downsides**   | no legendary quality        |                              | removes all bets                                                                                   |
+| Path of the -->       | Belt                 | Box                          | Bot                                                                                                |
+| --------------------- | -------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| belt tier             | turbo                | express                      | no belts                                                                                           |
+| belt stack            | 4                    | 2                            | 0                                                                                                  |
+| stack inserters       | yes                  | no                           | no                                                                                                 |
+| logistics             | no                   | no                           | yes                                                                                                |
+| power                 | nuclear              | nuclear                      | fusion                                                                                             |
+| factory size research | 1x                   | 2x                           | 4x                                                                                                 |
+| **other upsides**     |                      | linked chests in each region | 30min one time grace period to rebuild; grants 50 red and blue chests; new research 2by2 requester |
+| **other downsides**   | no legendary quality |                              | removes all bets                                                                                   |
 
 ## Containerization and Modularity
 
@@ -54,4 +54,5 @@ In Warp Age, factory size technologies unlock new factory modules, that get conn
 The idea of this is to allow swapping out modules, say you need more defence on the left side, swap out research with a weapons module
 
 # Other Features
+
 - redesign break: get a guaranteed chill warp where the timer is tripled to allow you to rebuild the base in peace. Balance it with increasing the difficulty after the break

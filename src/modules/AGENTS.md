@@ -3,5 +3,9 @@ Modules are a way of co-locating prototypes (data.ts), behavior (control.ts), sh
 Each module folder can contain:
 
 - `data.ts` For defining any entity, technology, prototype etc. included in the data stage, must be imported inside `src/data.ts`
-- `control.ts` for defining behavior, events or any other business logic. runtime stage, must be imported inside `src/control.ts` (see `src/utils.ts` for event utilities that help separate events by modules)
+- `control.ts` for defining behavior, events or any other business logic. runtime stage, must be imported inside `src/control.ts` (see `src/utils.ts` for event utilities that help separate events by modules). Convention is to define a `function init() {}` at the top of the file and call it at the bottom of the file
 - `data-final-fixes.ts` and `data-updates.ts` are the other common factorio data stages, which also need to be imported in their respective `src/*.ts` file
+
+Other module conventions:
+
+- `constants.ts` especially define module `names` (using `modNs` from `@/src/lib/constants.ts`) and other constants that need sharing especially across modules or stages

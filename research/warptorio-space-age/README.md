@@ -8,8 +8,8 @@
 
 ## Demo Images
 
-| Image 1 | Image 2 | Image 3 |
-| --- | --- | --- |
+| Image 1                                                                                                                                                                                           | Image 2                                                                                                                                                                                           | Image 3                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [![demo-1](https://assets-mod.factorio.com/assets/ceaacb21a646fe85b1ff1350bad8f2f96b88a909.thumb.png)](https://assets-mod.factorio.com/assets/ceaacb21a646fe85b1ff1350bad8f2f96b88a909.thumb.png) | [![demo-2](https://assets-mod.factorio.com/assets/3e58341e7dfd8c95f9e37adc88356a501ca83774.thumb.png)](https://assets-mod.factorio.com/assets/3e58341e7dfd8c95f9e37adc88356a501ca83774.thumb.png) | [![demo-3](https://assets-mod.factorio.com/assets/faebdf7cb9a5b6966eec1f1b613e70160a0cdebe.thumb.png)](https://assets-mod.factorio.com/assets/faebdf7cb9a5b6966eec1f1b613e70160a0cdebe.thumb.png) |
 
 ## Mod Info
@@ -32,21 +32,21 @@ Enjoy.
 
 ## New Features
 
-* Balanced and added a bunch of vanilla researches but less that warptorio 2 (they are no longer needed with quality research).
-* Fixed a bunch of essential bugs: Original warptorio did not play well with new QOL so it was redesigned to account for that
-* Added support for all planets + their research. If you want more planets feel free to add them in a same way like you would to normal space exploration.
-* Overhaul: Floors were completely changed to account for gameplay centered around various planets. Now your main floor will be ground (so you can research planet specific things)
-* Overhaul: Science has been completely reworked now with special end game research that will fully test your platform
-* Overhaul: Re-worked how power delivery works to make it easier in early game
-* Overhaul: Re-worked enemies to make them possible on all planets. Feel free to add other enemy mods, if it is too easy
-* New Feature: Warptorio does not start untill you research green science or warp platform, to let you stockup on resources
+- Balanced and added a bunch of vanilla researches but less that warptorio 2 (they are no longer needed with quality research).
+- Fixed a bunch of essential bugs: Original warptorio did not play well with new QOL so it was redesigned to account for that
+- Added support for all planets + their research. If you want more planets feel free to add them in a same way like you would to normal space exploration.
+- Overhaul: Floors were completely changed to account for gameplay centered around various planets. Now your main floor will be ground (so you can research planet specific things)
+- Overhaul: Science has been completely reworked now with special end game research that will fully test your platform
+- Overhaul: Re-worked how power delivery works to make it easier in early game
+- Overhaul: Re-worked enemies to make them possible on all planets. Feel free to add other enemy mods, if it is too easy
+- New Feature: Warptorio does not start untill you research green science or warp platform, to let you stockup on resources
 
 ## Special thanks
 
-* Nonoce for originally creating this fantastic mod - <https://mods.factorio.com/mod/warptorio>
-* PyroFire for expanding on the original mod - <https://mods.factorio.com/mod/warptorio2>
-* Jimmyster for the text translation
-* PreLeyZero For creating assets for Exotic industries that I could use to make things look better
+- Nonoce for originally creating this fantastic mod - <https://mods.factorio.com/mod/warptorio>
+- PyroFire for expanding on the original mod - <https://mods.factorio.com/mod/warptorio2>
+- Jimmyster for the text translation
+- PreLeyZero For creating assets for Exotic industries that I could use to make things look better
 
 ## Discord
 
@@ -72,9 +72,9 @@ Here is short tutorial how to do it.
 
 Complete runs from youtube (If you finished run as well, please let me know, so I can add you to this hall of fame). These should be ordered based on when they were played (Oldest one first)
 
-[ラスコーリニコフ **Japanese**](https://www.youtube.com/watch?v=GOjzMlwYUSw&list=PLblPwPAyrytjkWXMAbRMnU8pkf4HP4uPK)  - As far as I know this is the first time someone finished this mod.  
-[Pettan **English** 1st run](https://www.youtube.com/watch?v=l3_ZGQYay7I&list=PLLbp7fe0RMzvBMStSZUobamHSBocj8vVb&pp=0gcJCbAEOCosWNin)   
-[JohnMegacycle  **English**](https://www.youtube.com/watch?v=UB9UMmoqEB8&list=PLYhuQUmCiA-CCf7KEK47ofUq3qee3LPht)  
+[ラスコーリニコフ **Japanese**](https://www.youtube.com/watch?v=GOjzMlwYUSw&list=PLblPwPAyrytjkWXMAbRMnU8pkf4HP4uPK) - As far as I know this is the first time someone finished this mod.  
+[Pettan **English** 1st run](https://www.youtube.com/watch?v=l3_ZGQYay7I&list=PLLbp7fe0RMzvBMStSZUobamHSBocj8vVb&pp=0gcJCbAEOCosWNin)  
+[JohnMegacycle **English**](https://www.youtube.com/watch?v=UB9UMmoqEB8&list=PLYhuQUmCiA-CCf7KEK47ofUq3qee3LPht)  
 [Pettan **English** 2nd run](https://www.youtube.com/watch?v=ndCnOsOazMI&list=PLLbp7fe0RMzucV0ctakqB5JhuzFLKOfxZ&pp=0gcJCbAEOCosWNin)  
 [Pettan **English** 3nd run](https://www.youtube.com/watch?v=jjjeLazlgdE&list=PLLbp7fe0RMzvTFH7ss4zfYV9R15jOHeJ3)  
 [Eggsceptional **English**](https://www.youtube.com/watch?v=MPK-nKyrwgk)
