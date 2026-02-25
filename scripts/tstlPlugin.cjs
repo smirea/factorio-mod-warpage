@@ -10,6 +10,9 @@ const modName = require(path.join(__dirname, '..', 'info.json')).name;
 if (!modName) throw new Error('info.json must have a "name" field');
 
 const localeFilePath = path.join(__dirname, '..', 'locale', 'en', `${modName}.cfg`);
+const localeNamespacePrefix = `${modName}-`;
+const red = '\x1b[31m';
+const reset = '\x1b[0m';
 
 if (!fs.existsSync(localeFilePath)) {
 	throw new Error(`Missing locale file: ${localeFilePath}`);
@@ -17,6 +20,7 @@ if (!fs.existsSync(localeFilePath)) {
 
 const localeSections = parseLocaleFile(localeFilePath);
 const warnedMissingLocales = new Set();
+const warnedPrefixedLocales = new Set();
 
 /** @type import("typescript-to-lua").Plugin */
 const plugin = {
@@ -51,8 +55,11 @@ const plugin = {
 					if (!ts.isStringLiteralLike(sectionArg) || !ts.isStringLiteralLike(keyArg)) {
 						throw new Error('LOCALE() first two arguments must be string literals at: ' + fileName);
 					}
-					warnMissingLocale(sectionArg.text, keyArg.text, fileName, node);
-					const localeKey = `${sectionArg.text}.${keyArg.text}`;
+					const namespacedKey = keyArg.text.startsWith(localeNamespacePrefix)
+						? (warnPrefixedLocaleKey(keyArg.text, fileName, node), keyArg.text)
+						: localeNamespacePrefix + keyArg.text;
+					warnMissingLocale(sectionArg.text, namespacedKey, fileName, node);
+					const localeKey = `${sectionArg.text}.${namespacedKey}`;
 					const fields = [
 						tstl.createTableFieldExpression(tstl.createStringLiteral(localeKey, node)),
 						...args.map(arg => tstl.createTableFieldExpression(transformLocaleArg(arg, context))),
@@ -126,7 +133,24 @@ function warnMissingLocale(section, key, fileName, node) {
 	if (warnedMissingLocales.has(warningKey)) return;
 
 	warnedMissingLocales.add(warningKey);
-	console.warn(
+	warnInRed(
 		`[tstlPlugin] Missing locale key "${section}.${key}" in ${localeFilePath} (used at ${fileName}:${location.line + 1}:${location.character + 1})`,
 	);
+}
+
+function warnPrefixedLocaleKey(key, fileName, node) {
+	const sourceFile = node.getSourceFile();
+	if (!sourceFile) return;
+	const location = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+	const warningKey = `${fileName}:${location.line}:${location.character}:${key}`;
+	if (warnedPrefixedLocales.has(warningKey)) return;
+
+	warnedPrefixedLocales.add(warningKey);
+	warnInRed(
+		`[tstlPlugin] LOCALE() key "${key}" should not include "${localeNamespacePrefix}" (used at ${fileName}:${location.line + 1}:${location.character + 1})`,
+	);
+}
+
+function warnInRed(message) {
+	console.warn(red + message + reset);
 }

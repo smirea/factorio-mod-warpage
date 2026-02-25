@@ -26,13 +26,13 @@ const addProductivityTechnology = (level: number) =>
 	addTechnology({
 		type: 'technology',
 		name: names.ns('mining-productivity-' + level),
-		localised_name: LOCALE('technology-name', 'warpage-thermite-mining-productivity', level),
-		localised_description: LOCALE('technology-description', 'warpage-thermite-mining-productivity'),
+		localised_name: LOCALE('technology-name', 'thermite-mining-productivity', level),
+		localised_description: LOCALE('technology-description', 'thermite-mining-productivity'),
 		icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-capacity.png'),
 		effects: [
 			{
 				type: 'nothing',
-				effect_description: LOCALE('technology-effect', 'warpage-thermite-mining-productivity', level),
+				effect_description: LOCALE('technology-effect', 'thermite-mining-productivity', level),
 			},
 		],
 		prerequisites: level === 1 ? [names.recipe] : [names.recipe, names.ns('mining-productivity-' + (level - 1))],
@@ -48,13 +48,13 @@ const addRadiusTechnology = (level: number, count: number, ingredients: Array<[s
 	addTechnology({
 		type: 'technology',
 		name: names.ns('mining-radius-' + level),
-		localised_name: LOCALE('technology-name', 'warpage-thermite-mining-radius', level),
-		localised_description: LOCALE('technology-description', 'warpage-thermite-mining-radius'),
+		localised_name: LOCALE('technology-name', 'thermite-mining-radius', level),
+		localised_description: LOCALE('technology-description', 'thermite-mining-radius'),
 		icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-range.png'),
 		effects: [
 			{
 				type: 'nothing',
-				effect_description: LOCALE('technology-effect', 'warpage-thermite-mining-radius', level),
+				effect_description: LOCALE('technology-effect', 'thermite-mining-radius', level),
 			},
 		],
 		prerequisites: level === 1 ? [names.recipe] : [names.recipe, names.ns('mining-radius-' + (level - 1))],
