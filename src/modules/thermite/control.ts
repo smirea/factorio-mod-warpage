@@ -1,23 +1,19 @@
-import type {
-	BoundingBox,
-	LuaForce,
-	LuaSurface,
-	MapPosition,
-	NthTickEventData,
-	OnScriptTriggerEffectEvent,
-	UnitNumber,
-} from 'factorio:runtime';
+import type { BoundingBox, LuaForce, LuaSurface, MapPosition, OnScriptTriggerEffectEvent } from 'factorio:runtime';
 import { names } from './constants';
-import { on_event, on_nth_tick } from '@/lib/utils';
+import { on_event } from '@/lib/utils';
 
 const IMPACT_EFFECT_ID = names.projectile;
 
 const PRODUCTIVITY_TECHNOLOGY_NAMES = [1, 2, 3, 4, 5].map(level => names.ns('mining-productivity-' + level));
 const RADIUS_TECHNOLOGY_NAMES = [1, 2, 3].map(level => names.ns('mining-radius-' + level));
 
+const BASE_BLAST_SIZE = 3;
 const BASE_PRODUCTIVITY_MULTIPLIER = 1;
-const FLAME_LIFETIME_TICKS = 60 * 3;
-const RESCUE_COOLDOWN_TICKS = 60 * 60 * 10;
+const ROCK_DROP_MULTIPLIER = 0.5;
+const BASE_CALCITE_MIN_DROP = 1;
+const BASE_CALCITE_MAX_DROP = 5;
+const CALCITE_MIN_DROP_PER_PRODUCTIVITY_LEVEL = 1;
+const CALCITE_MAX_DROP_PER_PRODUCTIVITY_LEVEL = 2;
 
 const ORE_DROP_STACK_SIZE = 500;
 const ORE_DEFAULT_MULTIPLIER = 0.5;
@@ -33,25 +29,6 @@ const ORE_MULTIPLIER_BY_ITEM_NAME = {
 
 function init() {
 	on_event('on_script_trigger_effect', on_script_trigger_effect);
-
-	on_nth_tick(1, handleBlastUpdates);
-
-	on_event('on_research_finished', event => {
-		if (storage.thermite_research_finished_tick || event.research.name !== names.recipe) return;
-
-		const state = ensureThermiteState();
-		if (!state.unlock_bonus_delivered) {
-			// TODO: update these to use the hub composite entity once it's implemented
-			// const force = requireForce(HUB_FORCE_NAME);
-			// const technology = force.technologies[THERMITE_MINING_TECHNOLOGY_NAME];
-			// if (!technology || !technology.researched) {
-			// 	return;
-			// }
-			// deliverStacksToHub(force, [{ name: THERMITE_ITEM_NAME, count: UNLOCK_POD_STACK_COUNT }], UNLOCK_POD_COUNT);
-			// state.unlock_bonus_delivered = true;
-			// game.print('psst, look up, check the hub');
-		}
-	});
 }
 
 const requireSurfaceByIndex = (surfaceIndex: number): LuaSurface => {
@@ -65,26 +42,6 @@ const requireForce = (name: string): LuaForce => {
 	if (!force) throw new Error(`Missing force '${name}'.`);
 	return force;
 };
-
-function ensureThermiteState(): ThermiteMiningState {
-	let state = storage.thermite_mining;
-	if (!state) {
-		state = {
-			next_blast_id: 1,
-			pending_blasts: {},
-			unlock_bonus_delivered: false,
-		};
-		storage.thermite_mining = state;
-	}
-
-	const legacyLastRescueTick = storage.last_calcite_rescue_tick;
-	if (legacyLastRescueTick !== undefined && storage.thermite_support_timeout === undefined) {
-		storage.thermite_support_timeout = legacyLastRescueTick + RESCUE_COOLDOWN_TICKS;
-	}
-	storage.last_calcite_rescue_tick = undefined;
-
-	return state;
-}
 
 function countResearchedLevels(force: LuaForce, technologies: ReadonlyArray<string>) {
 	let researchedLevels = 0;
@@ -181,102 +138,150 @@ function dropOreYield(
 	}
 }
 
-function cleanupBlastFlame(blast: ThermiteQueuedBlast) {
-	if (blast.flame_unit_number === undefined) return;
-	const flame = game.get_entity_by_unit_number(blast.flame_unit_number as UnitNumber);
-	if (!flame || !flame.valid) return;
-	flame.destroy();
+function resolveMineableProductAmount(product: any) {
+	const probability = product.probability ?? 1;
+	if (probability <= 0 || math.random() > probability) return 0;
+
+	if (product.amount !== undefined) {
+		return product.amount;
+	}
+
+	if (product.amount_min !== undefined && product.amount_max !== undefined) {
+		return math.random(product.amount_min, product.amount_max);
+	}
+
+	return 0;
 }
 
-function detonateBlast(blast: ThermiteQueuedBlast) {
-	const surface = requireSurfaceByIndex(blast.surface_index);
-	const force = requireForce(blast.force_name);
-	const radius = 2 + countResearchedLevels(force, RADIUS_TECHNOLOGY_NAMES);
-	const productivityMultiplier =
-		BASE_PRODUCTIVITY_MULTIPLIER + countResearchedLevels(force, PRODUCTIVITY_TECHNOLOGY_NAMES);
+function removeRocks(surface: LuaSurface, area: BoundingBox, force: LuaForce) {
+	const entities = surface.find_entities_filtered({
+		area,
+		type: 'simple-entity',
+	});
+
+	for (const entity of entities) {
+		if (!entity.valid || !entity.name.includes('rock')) continue;
+
+		const products = prototypes.entity[entity.name]?.mineable_properties?.products;
+		if (products) {
+			for (const product of products) {
+				const productType = product.type ?? 'item';
+				if (productType !== 'item' || !product.name) continue;
+
+				const minedAmount = resolveMineableProductAmount(product);
+				const dropCount = math.floor(minedAmount * ROCK_DROP_MULTIPLIER);
+				if (dropCount > 0) {
+					spillItemInStacks(surface, force, entity.position, product.name, dropCount);
+				}
+			}
+		}
+
+		const destroyed = entity.destroy();
+		if (destroyed !== true && entity.valid) {
+			throw new Error(`Failed to remove rock entity '${entity.name}' at thermite blast position.`);
+		}
+	}
+}
+
+function igniteTrees(surface: LuaSurface, area: BoundingBox) {
+	const treeFlameName = prototypes.entity['fire-flame-on-tree'] ? 'fire-flame-on-tree' : 'fire-flame';
+	const trees = surface.find_entities_filtered({
+		area,
+		type: 'tree',
+	});
+
+	for (const tree of trees) {
+		if (!tree.valid) continue;
+		surface.create_entity({
+			name: treeFlameName,
+			position: tree.position,
+		});
+	}
+}
+
+function spawnBlastFlames(surface: LuaSurface, center: MapPosition, radius: number) {
+	const minX = math.floor(center.x - radius);
+	const maxX = math.ceil(center.x + radius);
+	const minY = math.floor(center.y - radius);
+	const maxY = math.ceil(center.y + radius);
+
+	for (let x = minX; x <= maxX; x += 1) {
+		for (let y = minY; y <= maxY; y += 1) {
+			const dx = x + 0.5 - center.x;
+			const dy = y + 0.5 - center.y;
+			if (dx * dx + dy * dy > radius * radius) {
+				continue;
+			}
+
+			surface.create_entity({
+				name: 'fire-flame',
+				position: { x: x + 0.5, y: y + 0.5 },
+			});
+		}
+	}
+}
+
+function detonateBlast({
+	surface_index,
+	position,
+	force_name,
+}: {
+	surface_index: number;
+	position: MapPosition;
+	force_name: string;
+}) {
+	const surface = requireSurfaceByIndex(surface_index);
+	const force = requireForce(force_name);
+	const blastSize = BASE_BLAST_SIZE + countResearchedLevels(force, RADIUS_TECHNOLOGY_NAMES);
+	const blastRadius = blastSize / 2;
+	const productivityLevel = countResearchedLevels(force, PRODUCTIVITY_TECHNOLOGY_NAMES);
+	const productivityMultiplier = BASE_PRODUCTIVITY_MULTIPLIER + productivityLevel;
+
+	const blastArea = {
+		left_top: {
+			x: position.x - blastRadius,
+			y: position.y - blastRadius,
+		},
+		right_bottom: {
+			x: position.x + blastRadius,
+			y: position.y + blastRadius,
+		},
+	};
+
+	spawnBlastFlames(surface, position, blastRadius);
+	igniteTrees(surface, blastArea);
 
 	surface.create_entity({
 		name: 'grenade-explosion',
-		position: blast.position,
+		position,
 	});
 
-	const removedByItem = removeOreResources(surface, {
-		left_top: {
-			x: blast.position.x - radius / 2,
-			y: blast.position.y - radius / 2,
-		},
-		right_bottom: {
-			x: blast.position.x + radius / 2,
-			y: blast.position.y + radius / 2,
-		},
-	});
+	const removedByItem = removeOreResources(surface, blastArea);
+	removeRocks(surface, blastArea, force);
 
-	spillItemInStacks(surface, force, blast.position, 'calcite', math.random(1, 5) * productivityMultiplier);
-	dropOreYield(surface, force, blast.position, removedByItem, productivityMultiplier);
+	const calciteMinDrop = BASE_CALCITE_MIN_DROP + productivityLevel * CALCITE_MIN_DROP_PER_PRODUCTIVITY_LEVEL;
+	const calciteMaxDrop = BASE_CALCITE_MAX_DROP + productivityLevel * CALCITE_MAX_DROP_PER_PRODUCTIVITY_LEVEL;
+	spillItemInStacks(surface, force, position, 'calcite', math.random(calciteMinDrop, calciteMaxDrop));
+	dropOreYield(surface, force, position, removedByItem, productivityMultiplier);
 }
 
-function on_script_trigger_effect(event: OnScriptTriggerEffectEvent) {
+function on_script_trigger_effect(event: OnScriptTriggerEffectEvent | undefined) {
+	if (!event) return;
 	if (event.effect_id !== IMPACT_EFFECT_ID) return;
 
 	const position = event.target_position ?? event.source_position;
 	if (!position) return;
 
-	const surface = requireSurfaceByIndex(event.surface_index);
+	const forceName =
+		(event.source_entity?.valid && event.source_entity.force.name) ||
+		(event.cause_entity?.valid && event.cause_entity.force.name) ||
+		'player';
 
-	const sourceEntity = event.source_entity;
-	const causeEntity = event.cause_entity;
-	if (!sourceEntity?.valid || !causeEntity?.valid) return;
-
-	const state = ensureThermiteState();
-	const blastId = state.next_blast_id;
-	state.next_blast_id += 1;
-
-	const flame = surface.create_entity({
-		name: 'fire-flame',
-		position,
-		force: sourceEntity.force,
-	});
-
-	const blast: ThermiteQueuedBlast = {
-		id: blastId,
+	detonateBlast({
 		surface_index: event.surface_index,
 		position,
-		force_name: sourceEntity.force!.name,
-		flame_cleanup_tick: event.tick + FLAME_LIFETIME_TICKS,
-	};
-
-	if (flame && flame.unit_number !== undefined) blast.flame_unit_number = flame.unit_number;
-
-	state.pending_blasts[blastId] = blast;
-	detonateBlast(blast);
-}
-
-function handleBlastUpdates(event: NthTickEventData) {
-	const state = ensureThermiteState();
-
-	const [firstPendingBlastId] = next(state.pending_blasts);
-	if (firstPendingBlastId === undefined) {
-		return;
-	}
-
-	const dueBlastIds: number[] = [];
-	for (const [blastId, blast] of pairs(state.pending_blasts)) {
-		if (!blast) {
-			continue;
-		}
-
-		if (event.tick >= blast.flame_cleanup_tick) {
-			dueBlastIds.push(blastId);
-		}
-	}
-
-	for (const blastId of dueBlastIds) {
-		const blast = state.pending_blasts[blastId];
-		if (blast) {
-			cleanupBlastFlame(blast);
-			state.pending_blasts[blastId] = undefined;
-		}
-	}
+		force_name: forceName,
+	});
 }
 
 init();

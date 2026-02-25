@@ -136,9 +136,9 @@ data.extend([
 				type: 'projectile',
 				activation_type: 'throw',
 				ammo_category: 'grenade',
-				cooldown: 30,
+				cooldown: 20,
 				projectile_creation_distance: 0.6,
-				range: 15,
+				range: 20,
 				ammo_type: {
 					target_type: 'position',
 					action: {
@@ -153,7 +153,7 @@ data.extend([
 			},
 		},
 		subgroup: 'capsule',
-		order: 'a[grenade]-c[warpage-thermite-miner]',
+		order: data.raw['mining-drill']['electric-mining-drill']?.order,
 		stack_size: 100,
 	} satisfies CapsulePrototype,
 

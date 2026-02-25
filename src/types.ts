@@ -1,26 +1,7 @@
 declare global {
-	type ThermiteQueuedBlast = {
-		id: number;
-		surface_index: number;
-		position: { x: number; y: number };
-		force_name: string;
-		flame_cleanup_tick: number;
-		flame_unit_number?: number;
-	};
-
-	type ThermiteMiningState = {
-		next_blast_id: number;
-		pending_blasts: Record<number, ThermiteQueuedBlast | undefined>;
-		unlock_bonus_delivered: boolean;
-	};
-
 	type ModStorage = {
 		surface: string;
 		hubRepaired: boolean;
-		thermite_mining: ThermiteMiningState;
-		thermite_research_finished_tick: number;
-		thermite_support_timeout?: number;
-		last_calcite_rescue_tick?: number;
 	};
 
 	const storage: ModStorage;

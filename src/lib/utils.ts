@@ -16,7 +16,6 @@ type NthTickEventData = {
 const nthTickHandlers: Record<
 	number,
 	{
-		fn: (event: NthTickEventData) => void;
 		handlers: Array<(event: NthTickEventData) => void>;
 	}
 > = {};
@@ -29,12 +28,11 @@ const nthTickHandlers: Record<
 export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => void) {
 	if (!nthTickHandlers[tick]) {
 		nthTickHandlers[tick] = {
-			fn: function (event) {
-				nthTickHandlers[tick]?.handlers.forEach(h => h(event));
-			},
 			handlers: [],
 		};
-		script.on_nth_tick(tick, nthTickHandlers[tick].fn);
+		script.on_nth_tick(tick, event => {
+			nthTickHandlers[tick]?.handlers.forEach(h => h(event));
+		});
 	}
 
 	nthTickHandlers[tick].handlers.push(handler);
@@ -42,13 +40,13 @@ export function on_nth_tick(tick: number, handler: (event: NthTickEventData) => 
 	return () => {
 		if (!nthTickHandlers[tick]) return;
 		nthTickHandlers[tick].handlers = nthTickHandlers[tick].handlers.filter(h => h !== handler);
+		if (nthTickHandlers[tick].handlers.length === 0) script.on_nth_tick(tick, undefined);
 	};
 }
 
 const onEventHandlers: Record<
 	string,
 	{
-		fn: (event: any) => void;
 		handlers: Array<(event: any) => void>;
 		filters?: any;
 	}
@@ -66,12 +64,15 @@ export function on_event<Type extends keyof typeof defines.events>(
 ) {
 	if (!onEventHandlers[type]) {
 		onEventHandlers[type] = {
-			fn: function (event) {
-				onEventHandlers[type]?.handlers.forEach(h => h(event));
-			},
 			handlers: [],
 		};
-		script.on_event(defines.events[type] as any, onEventHandlers[type].fn, filters);
+		script.on_event(
+			defines.events[type] as any,
+			event => {
+				onEventHandlers[type]?.handlers.forEach(h => h(event));
+			},
+			filters,
+		);
 	} else if (filters || onEventHandlers[type].filters) {
 		throw new Error(
 			`you cannot register multiple on_event(${type}) when using event filters, either remove the filters or use a single event handler`,
