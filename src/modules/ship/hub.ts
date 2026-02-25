@@ -7,18 +7,19 @@ import type {
 	SpeechBubbleEntity,
 } from 'factorio:runtime';
 import { names } from './constants';
+import { ensureInitialShipModule } from './building';
 
 const hubClearRadius = 4;
 const repairRequirements: Record<string, number> = {
-	stone: 200,
+	calcite: 10,
 	coal: 200,
 	'copper-ore': 100,
 	'iron-plate': 100,
-	calcite: 10,
+	stone: 200,
 };
 const entities = {
-	hub: undefined as undefined | LuaEntity,
 	destroyedHub: undefined as undefined | LuaEntity,
+	hub: undefined as undefined | LuaEntity,
 	repairSpeechBubble: undefined as undefined | SpeechBubbleEntity,
 };
 
@@ -41,6 +42,7 @@ function startHubRepairChecks() {
 
 export function createHub() {
 	const surface = getCurrentSurface();
+	ensureInitialShipModule(surface);
 	const landingPad = createEntity<CargoLandingPadEntity>(surface, {
 		name: names.hubLandingPad,
 		position: [0, 0],
@@ -78,8 +80,12 @@ export function createDestroyedHub(surface = getCurrentSurface()) {
 			[hubClearRadius, hubClearRadius],
 		],
 	})) {
-		if (!entity.valid) continue;
-		if (entity.type === 'character') continue;
+		if (!entity.valid) {
+			continue;
+		}
+		if (entity.type === 'character') {
+			continue;
+		}
 		entity.destroy();
 	}
 
@@ -128,7 +134,9 @@ function handleHubRepairCheck() {
 	}
 
 	const inventory = destroyedHub.get_inventory(defines.inventory.chest);
-	if (!inventory) return;
+	if (!inventory) {
+		return;
+	}
 
 	const extra: Record<string, number> = {};
 	const parts: string[] = [];
@@ -147,10 +155,10 @@ function handleHubRepairCheck() {
 			lastRepairText = text;
 			destroyEntity(entities.repairSpeechBubble);
 			entities.repairSpeechBubble = createHolographicText({
+				offset: { x: 0, y: -1 * destroyedHub.tile_height - 0.5 },
 				target: destroyedHub,
 				text: parts.join(' '),
 				ticks: 2e9,
-				offset: { x: 0, y: -1 * destroyedHub.tile_height - 0.5 },
 			});
 		}
 	} else {
@@ -158,11 +166,11 @@ function handleHubRepairCheck() {
 		createHub();
 		for (const [name, count] of Object.entries(extra)) {
 			getCurrentSurface().spill_item_stack({
-				position: entities.hub!.position,
-				stack: { name, count },
 				allow_belts: false,
 				drop_full_stack: false,
 				enable_looted: true,
+				position: entities.hub!.position,
+				stack: { count, name },
 			});
 		}
 	}
@@ -181,14 +189,16 @@ function onHubRepaired() {
 }
 
 function getDestroyedHub() {
-	if (entities.destroyedHub?.valid) return entities.destroyedHub;
+	if (entities.destroyedHub?.valid) {
+		return entities.destroyedHub;
+	}
 	entities.destroyedHub = getCurrentSurface().find_entity(names.destroyedHub, [0, 0]) ?? undefined;
 	if (entities.destroyedHub?.valid) {
 		makeIndestructible(entities.destroyedHub);
 		return entities.destroyedHub;
 	}
 	entities.destroyedHub = undefined;
-	return undefined;
+	return;
 }
 
 function getTotalItemCount(inventory: LuaInventory, itemName: string) {
@@ -200,12 +210,16 @@ function getTotalItemCount(inventory: LuaInventory, itemName: string) {
 }
 
 function destroyEntity(entity: LuaEntity | SpeechBubbleEntity | undefined) {
-	if (!entity?.valid) return;
+	if (!entity?.valid) {
+		return;
+	}
 	entity.destroy();
 }
 
 function makeIndestructible(entity: { valid: boolean; destructible: boolean } | undefined) {
-	if (!entity?.valid) return;
+	if (!entity?.valid) {
+		return;
+	}
 	entity.destructible = false;
 }
 
@@ -227,29 +241,43 @@ function relativeTo(
 	const targetHeight = target.tile_height;
 
 	switch (rY) {
-		case 'top':
-			if (origin === 'edge') finalY += height / 2;
+		case 'top': {
+			if (origin === 'edge') {
+				finalY += height / 2;
+			}
 			finalY -= targetHeight / 2;
 			break;
-		case 'bottom':
-			if (origin === 'edge') finalY -= height / 2;
+		}
+		case 'bottom': {
+			if (origin === 'edge') {
+				finalY -= height / 2;
+			}
 			finalY += targetHeight / 2;
 			break;
-		case 'middle':
+		}
+		case 'middle': {
 			break;
+		}
 	}
 
 	switch (rX) {
-		case 'left':
-			if (origin === 'edge') finalX += width / 2;
+		case 'left': {
+			if (origin === 'edge') {
+				finalX += width / 2;
+			}
 			finalX -= targetWidth / 2;
 			break;
-		case 'right':
-			if (origin === 'edge') finalX -= width / 2;
+		}
+		case 'right': {
+			if (origin === 'edge') {
+				finalX -= width / 2;
+			}
 			finalX += targetWidth / 2;
 			break;
-		case 'middle':
+		}
+		case 'middle': {
 			break;
+		}
 	}
 
 	return [finalX, finalY];

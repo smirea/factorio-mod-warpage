@@ -2,8 +2,9 @@ import '@/modules/ship/control.ts';
 import '@/modules/thermite/control.ts';
 import type { LuaPlayer, LuaSurface, MapPosition } from 'factorio:runtime';
 import { names as shipNames } from '@/modules/ship/constants';
+import { ensureInitialShipModule } from '@/modules/ship/building';
 import { createDestroyedHub, createHub } from '@/modules/ship/hub';
-import { getCurrentSurface, on_event, registerGlobal } from '@/lib/utils';
+import { createEntity, getCurrentSurface, on_event, on_init, registerGlobal } from '@/lib/utils';
 
 const forbiddenStartItems = [
 	'pistol',
@@ -20,8 +21,8 @@ const forbiddenStartItems = [
 ] as const;
 
 const startingItems = [
-	{ name: 'steel-furnace', count: 2, quality: 'legendary' as const },
-	{ name: 'jellynut', count: 50 },
+	{ count: 2, name: 'steel-furnace', quality: 'legendary' as const },
+	{ count: 50, name: 'jellynut' },
 ] as const;
 
 const playerInventoryIds = [
@@ -31,7 +32,7 @@ const playerInventoryIds = [
 	defines.inventory.character_trash,
 ] as const;
 
-script.on_init(() => {
+on_init(() => {
 	initStorage();
 	initStart();
 });
@@ -43,7 +44,9 @@ script.on_configuration_changed(() => {
 
 on_event('on_player_created', event => {
 	const player = game.get_player(event.player_index);
-	if (!player?.valid) return;
+	if (!player?.valid) {
+		return;
+	}
 	const surface = getCurrentSurface();
 	applyStartupToPlayer(player, surface, resolveStartupAnchor(surface));
 });
@@ -52,14 +55,14 @@ registerGlobal('initStorage', initStorage);
 registerGlobal('initStart', initStart);
 
 function initStorage() {
-	storage.surface ||= shipNames.surface;
+	storage.surface ||= 'nauvis';
 	storage.hubRepaired ??= false;
 	storage.startupSuppliesSeeded ??= false;
 	storage.startConfiguredPlayerIndices ||= {};
 }
 
 function initStart() {
-	const freeplay = remote.interfaces.freeplay;
+	const { freeplay } = remote.interfaces;
 	if (freeplay) {
 		const createdItems = remote.call('freeplay', 'get_created_items') as Record<string, number | undefined>;
 		const respawnItems = remote.call('freeplay', 'get_respawn_items') as Record<string, number | undefined>;
@@ -83,8 +86,10 @@ function initStart() {
 
 	if (hub?.valid) {
 		storage.hubRepaired = true;
+		ensureInitialShipModule(surface);
 		destroyedHub?.destroy();
 	} else if (storage.hubRepaired) {
+		ensureInitialShipModule(surface);
 		destroyedHub?.destroy();
 		createHub();
 	} else if (!destroyedHub?.valid) {
@@ -101,10 +106,9 @@ function initStart() {
 		let startupChest = surface.find_entity('wooden-chest', startupChestPosition);
 		if (!startupChest?.valid) {
 			startupChest =
-				surface.create_entity({
+				createEntity(surface, {
 					name: 'wooden-chest',
 					position: startupChestPosition,
-					force: shipNames.force,
 				}) ?? undefined;
 		}
 
@@ -120,9 +124,11 @@ function initStart() {
 	}
 
 	const startupAnchor = resolveStartupAnchor(surface);
-	game.forces[shipNames.force]?.set_spawn_position(startupAnchor, surface);
+	game.forces.player!.set_spawn_position(startupAnchor, surface);
 	for (const [, player] of pairs(game.players)) {
-		if (!player?.valid) continue;
+		if (!player?.valid) {
+			continue;
+		}
 		applyStartupToPlayer(player, surface, startupAnchor);
 	}
 }
@@ -142,14 +148,20 @@ function resolveStartupAnchor(surface: LuaSurface): MapPosition {
 }
 
 function applyStartupToPlayer(player: LuaPlayer, surface: LuaSurface, startupAnchor: MapPosition) {
-	if (storage.startConfiguredPlayerIndices[player.index]) return;
+	if (storage.startConfiguredPlayerIndices[player.index]) {
+		return;
+	}
 	for (const inventoryId of playerInventoryIds) {
 		const inventory = player.get_inventory(inventoryId);
-		if (!inventory) continue;
+		if (!inventory) {
+			continue;
+		}
 
 		for (const itemName of forbiddenStartItems) {
 			const count = inventory.get_item_count(itemName);
-			if (count > 0) inventory.remove({ name: itemName, count });
+			if (count > 0) {
+				inventory.remove({ count, name: itemName });
+			}
 		}
 	}
 
