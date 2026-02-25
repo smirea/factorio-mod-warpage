@@ -1,4 +1,11 @@
-import type { LocalisedString, LuaEntity, LuaSurface, MapPosition, SurfaceCreateEntity } from 'factorio:runtime';
+import type {
+	LocalisedString,
+	LuaEntity,
+	LuaSurface,
+	MapPosition,
+	SpeechBubbleEntity,
+	SurfaceCreateEntity,
+} from 'factorio:runtime';
 
 type NthTickEventData = {
 	// importing from factorio:runtime causes a module not found error during launch
@@ -81,6 +88,9 @@ export function on_event<Type extends keyof typeof defines.events>(
 }
 
 const onInitEvents: Array<() => void> = [];
+/**
+ * convenience wrapper on top of `script.on_init()` to allow multiple handlers
+ */
 export function on_init(handler: () => void) {
 	onInitEvents.push(handler);
 	if (onInitEvents.length === 1) {
@@ -125,7 +135,7 @@ export function createHolographicText({
 	ticks: number;
 	offset?: MapPosition;
 }) {
-	const textEntity = target.surface.create_entity({
+	return target.surface.create_entity({
 		name: 'compi-speech-bubble',
 		position: {
 			x: target.position.x + (offset?.x ?? 0),
@@ -134,9 +144,7 @@ export function createHolographicText({
 		target,
 		text,
 		lifetime: ticks,
-	} as any);
-
-	return () => textEntity?.destroy();
+	} as any) as SpeechBubbleEntity;
 }
 
 /**

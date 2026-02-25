@@ -12,6 +12,7 @@ registerGlobal('initStart', initStart);
 
 function initStorage() {
 	storage.surface ||= 'nauvis';
+	storage.hubRepaired ??= false;
 }
 
 function initStart() {

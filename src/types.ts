@@ -16,6 +16,7 @@ declare global {
 
 	type ModStorage = {
 		surface: string;
+		hubRepaired: boolean;
 		thermite_mining: ThermiteMiningState;
 		thermite_research_finished_tick: number;
 		thermite_support_timeout?: number;

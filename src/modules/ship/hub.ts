@@ -149,7 +149,6 @@ function handleHubRepairCheck() {
 		onHubRepaired();
 		createHub();
 		for (const [name, count] of Object.entries(extra)) {
-			if (count <= 0) continue;
 			getCurrentSurface().spill_item_stack({
 				position: entities.hub!.position,
 				stack: { name, count },

@@ -129,7 +129,7 @@ data.extend([
 		auto_connect_up_to_n_wires: 0,
 	}),
 	extend(data.raw.container['wooden-chest'], {
-		name: names.destroyedHubContainer,
+		name: names.destroyedHub,
 		icon: '__base__/graphics/icons/cargo-landing-pad.png',
 		flags: ['placeable-neutral', 'player-creation', 'not-deconstructable'],
 		hidden: true,

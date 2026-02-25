@@ -23,7 +23,11 @@ const plugin = {
 	visitors: {
 		[ts.SyntaxKind.CallExpression]: (node, context) => {
 			if (!ts.isIdentifier(node.expression)) return context.superTransformExpression(node);
-			const { fileName } = node.getSourceFile();
+			if (node.expression.text !== 'DIR_PATH_JOIN' && node.expression.text !== 'LOCALE') {
+				return context.superTransformExpression(node);
+			}
+			const sourceFile = node.getSourceFile();
+			const fileName = sourceFile?.fileName ?? '<unknown>';
 
 			switch (node.expression.text) {
 				case 'DIR_PATH_JOIN': {
@@ -115,7 +119,9 @@ function parseLocaleFile(filePath) {
 function warnMissingLocale(section, key, fileName, node) {
 	if (localeSections.get(section)?.has(key)) return;
 
-	const location = node.getSourceFile().getLineAndCharacterOfPosition(node.getStart());
+	const sourceFile = node.getSourceFile();
+	if (!sourceFile) return;
+	const location = sourceFile.getLineAndCharacterOfPosition(node.getStart());
 	const warningKey = `${fileName}:${location.line}:${location.character}:${section}.${key}`;
 	if (warnedMissingLocales.has(warningKey)) return;
 

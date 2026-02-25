@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import {
 	accessSync,
 	constants as fsConstants,
@@ -106,7 +106,7 @@ console.log(`save: ${saveFile}`);
 console.log(`write-data: ${writeData}`);
 console.log(`headless: ${headless}`);
 
-runFactorio(factorioBin, launchArgs);
+runFactorioWithDev(factorioBin, launchArgs);
 
 function parseArgs(args: string[], defaultName: string): ParsedArgs {
 	const firstArg = args[0];
@@ -174,6 +174,9 @@ function writeConfig(filePath: string, dataPath: string, autosaveInterval: strin
 		'',
 		'[other]',
 		`autosave-interval=${autosaveInterval}`,
+		'',
+		'[controls]',
+		'simple-mod-reload=COMMAND + R',
 		'',
 	].join('\n');
 	writeFileSync(filePath, config, 'utf8');
@@ -276,6 +279,37 @@ function getPathType(filePath: string): 'missing' | 'symlink' | 'other' {
 
 function runFactorio(factorioPath: string, args: string[]): void {
 	runCommand([factorioPath, ...args]);
+}
+
+function runFactorioWithDev(factorioPath: string, args: string[]): void {
+	console.log('Starting dev watcher');
+	const devProcess = spawn('bun', ['run', 'dev'], {
+		cwd: repoRoot,
+		stdio: 'inherit',
+		detached: true,
+	});
+	if (devProcess.pid === undefined) {
+		fail('Failed to start "bun run dev".');
+	}
+
+	const factorioResult = spawnSync(factorioPath, args, {
+		stdio: 'inherit',
+	});
+
+	if (devProcess.exitCode === null && devProcess.signalCode === null) {
+		try {
+			process.kill(-devProcess.pid, 'SIGTERM');
+		} catch {
+			devProcess.kill('SIGTERM');
+		}
+	}
+
+	if (factorioResult.error) {
+		fail(`Failed to run "${[factorioPath, ...args].join(' ')}": ${factorioResult.error.message}`);
+	}
+	if (factorioResult.status !== 0) {
+		process.exit(factorioResult.status ?? 1);
+	}
 }
 
 function runCommand(command: string[], options: { cwd?: string } = {}): void {
