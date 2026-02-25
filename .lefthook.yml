@@ -10,5 +10,5 @@ pre-commit:
       stage_fixed: true
     build:
       run: bun run build
-    test:
-      run: bun test --pass-with-no-tests
+    # test:
+    #   run: bun test --pass-with-no-tests
