@@ -1,6 +1,6 @@
 This is a Factorio: Space Age mod using [typed factorio](https://github.com/GlassBricks/typed-factorio) and [typescript-to-lua](https://typescripttolua.github.io/)
 
-This is a hobby mod, not a nuclear reactor. keep things simple, do not over-complicate, avoid tedious future proofing or extensibility unless explicitly needed. Do not write excessive checks, don't use top level constants unless they are re-used in multiple functions or are explcitly requested. Never check `entity.valid` unless it explicitly causes a bug
+REALLY FUCKING IMPORTANT: This is a hobby mod, not a nuclear reactor. keep things simple, do not over-complicate, avoid tedious future proofing or extensibility unless explicitly needed. There are no users, this is purely local development. Do not write excessive checks, don't use top level constants unless they are re-used in multiple functions or are explcitly requested. Never check `entity.valid` unless it explicitly causes a bug. Never implement migrations, legacy support, always refactor always move forward. I will tell you if that is ever not the case
 
 High level design documennts available under `./project/*`, they were true at the time of implementation, don't treat them as gospel, use git history to check updates when they conflict and ask me for clarification if there is still discrapancy, update feature projects to fix discrepancies once resolved.
 

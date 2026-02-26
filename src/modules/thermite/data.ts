@@ -1,6 +1,7 @@
 import { names } from './constants';
 import type { CapsulePrototype, IconData, RecipePrototype } from 'factorio:prototype';
 import { addTechnology, disableRecipe, disableTechnology, extend, hideItem } from '@/lib/data-utils';
+import { SciencePack } from '@/types';
 
 const barrelIcon = DIR_PATH_JOIN('./graphics/thermite-barrel.png');
 
@@ -21,8 +22,9 @@ function makeTechnologyIcons(overlayIcon: string, effectIcon = false) {
 	] satisfies IconData[];
 }
 
-const addRadiusTechnology = (level: number, count: number, ingredients: [string, number][]) =>
+const addRadiusTechnology = (level: number, count: number, ingredients: [SciencePack, number][]) =>
 	addTechnology({
+		name: names.ns('mining-radius-' + level),
 		effects: [
 			{
 				effect_description: LOCALE('technology-effect', 'thermite-mining-radius', level),
@@ -34,9 +36,7 @@ const addRadiusTechnology = (level: number, count: number, ingredients: [string,
 		icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-range.png'),
 		localised_description: LOCALE('technology-description', 'thermite-mining-radius'),
 		localised_name: LOCALE('technology-name', 'thermite-mining-radius', level),
-		name: names.ns('mining-radius-' + level),
 		prerequisites: level === 1 ? [names.recipe] : [names.recipe, names.ns('mining-radius-' + (level - 1))],
-		type: 'technology',
 		unit: {
 			count,
 			ingredients,
@@ -54,7 +54,6 @@ addTechnology({
 		entity: 'iron-ore',
 		type: 'mine-entity',
 	},
-	type: 'technology',
 });
 addTechnology({
 	effects: [
@@ -71,7 +70,6 @@ addTechnology({
 	max_level: 5,
 	name: names.miningProductivityRecipe,
 	prerequisites: [names.recipe],
-	type: 'technology',
 	unit: {
 		count_formula: '100 * L',
 		ingredients: [['automation-science-pack', 1]],

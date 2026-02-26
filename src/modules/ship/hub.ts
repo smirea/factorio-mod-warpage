@@ -66,6 +66,7 @@ export function createHub() {
 }
 
 export function createDestroyedHub(surface = getCurrentSurface()) {
+	ensureInitialShipModule(surface);
 	storage.hubRepaired = false;
 	lastRepairText = '';
 	entities.repairSpeechBubble?.destroy();

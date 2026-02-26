@@ -40,8 +40,22 @@ Repair cost: 200 stone, 200 coal, 100 copper ore, 100 iron plate, 10 calcite
 
 # Ship Building
 
-- buildings can only be constructor on a custom tile that initially is just a copy of the foundation tile - tint it blue for now so it's distinguishable. prevent building anything outside that tile (ideally at the prototype stage, if not then using event). ship tiles are not mineable
-- each ship module is defined in `module/ship/constants` and has a unique id and a blueprint associated with it. each module is unlocked with a separate research
-- the first module is the "hub" module that has the hub in the middle of it and gets created together with the destroyed hub
-- there is a new entity called a "connector" that is a 2x1 entity that can also only be placed inside a module and only on the edges of a module. it must fully fit inside the module. when placed it renders as hazard concrete and allows building anything else on top (that's not a connector, so buildings, belts etc). effectively this is a predefined way of laying out special tiles.
-- ship layout is stored under `storage.shipLayout` and tracks the configuration of the ship
+Status: in progress (updated 2026-02-26).
+
+## Spec checklist
+
+- [x] Buildings are restricted to a custom ship tile via prototype `tile_buildability_rules`.
+- [x] Ship tile is custom and not mineable.
+- [ ] Ship tile visual tint is blue (currently uses base foundation visuals).
+- [x] Ship modules are defined in `src/modules/ship/constants.ts` and include an associated blueprint string.
+- [ ] Each module is unlocked by separate research (not implemented yet).
+- [x] First module is the hub module and is created with startup hub/destroyed-hub setup.
+- [x] Hub module tiles are created from blueprint data at runtime, not hardcoded coordinates.
+- [x] Connector entity exists as a 2x1 placeable (`warpage-connector`).
+- [x] Connector placement is validated to fully fit inside a module and lie on a module edge.
+- [x] Invalid connector placement is rejected, refunded, and shows local floating text: "can only be placed on the edge of a module".
+- [x] Valid connector placement keeps `warpage-connector` as an entity and stores it in `storage.shipLayout`.
+- [x] Connector entity has no collision box, supports 2x1 rotation, and can be built over while remaining mineable via selection box.
+- [x] Hub starts with no default connectors.
+- [x] Ship layout is stored in `storage.shipLayout`.
+- [x] `storage.shipLayout` is initialized during startup and seeded from module defaults.

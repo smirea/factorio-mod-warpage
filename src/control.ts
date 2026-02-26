@@ -2,7 +2,7 @@ import '@/modules/ship/control.ts';
 import '@/modules/thermite/control.ts';
 import type { LuaPlayer, LuaSurface, MapPosition } from 'factorio:runtime';
 import { names as shipNames } from '@/modules/ship/constants';
-import { ensureInitialShipModule } from '@/modules/ship/building';
+import { ensureInitialShipLayout, ensureInitialShipModule } from '@/modules/ship/building';
 import { createDestroyedHub, createHub } from '@/modules/ship/hub';
 import { createEntity, getCurrentSurface, on_event, on_init, registerGlobal } from '@/lib/utils';
 
@@ -56,8 +56,10 @@ registerGlobal('initStart', initStart);
 function initStorage() {
 	storage.surface ||= 'nauvis';
 	storage.hubRepaired ??= false;
+	storage.shipLayout ||= {};
 	storage.startupSuppliesSeeded ??= false;
 	storage.startConfiguredPlayerIndices ||= {};
+	ensureInitialShipLayout();
 }
 
 function initStart() {
@@ -80,15 +82,14 @@ function initStart() {
 	}
 
 	const surface = getCurrentSurface();
+	ensureInitialShipModule(surface);
 	const hub = surface.find_entity(shipNames.hubLandingPad, [0, 0]);
 	const destroyedHub = surface.find_entity(shipNames.destroyedHub, [0, 0]);
 
 	if (hub?.valid) {
 		storage.hubRepaired = true;
-		ensureInitialShipModule(surface);
 		destroyedHub?.destroy();
 	} else if (storage.hubRepaired) {
-		ensureInitialShipModule(surface);
 		destroyedHub?.destroy();
 		createHub();
 	} else if (!destroyedHub?.valid) createDestroyedHub(surface);

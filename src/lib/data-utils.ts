@@ -2,6 +2,7 @@
 
 import * as util from 'util';
 import type { TechnologyPrototype } from 'factorio:prototype';
+import { TypedTechnologyUnit } from '@/types';
 
 const itemTechnology: Record<string, string> = {};
 let itemTechnologyLoaded = false;
@@ -43,7 +44,10 @@ export function extend<T extends Record<string, any> | undefined>(
 	return clone;
 }
 
-export function addTechnology<const T extends TechnologyPrototype>(item: T): T {
+export function addTechnology(
+	input: Omit<TechnologyPrototype, 'type' | 'unit'> & { unit?: TypedTechnologyUnit },
+): TechnologyPrototype {
+	const item = { ...input, type: 'technology' as const };
 	const icons = item.icons ? [...item.icons] : [];
 	if (icons.length === 0) {
 		if (!item.icon || !item.icon_size)
@@ -54,7 +58,6 @@ export function addTechnology<const T extends TechnologyPrototype>(item: T): T {
 			icon_size: item.icon_size,
 		});
 	}
-	item = { ...item };
 	delete item.icon;
 	delete item.icon_size;
 	icons.push({
@@ -64,10 +67,7 @@ export function addTechnology<const T extends TechnologyPrototype>(item: T): T {
 		shift: [-50, -50],
 		scale: 0.6,
 	});
-	item = {
-		...item,
-		icons,
-	};
+	item.icons = icons;
 
 	loadItemTechnologyMap();
 	const prerequisites = item.prerequisites ? [...item.prerequisites] : [];
