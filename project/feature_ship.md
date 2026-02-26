@@ -40,5 +40,8 @@ Repair cost: 200 stone, 200 coal, 100 copper ore, 100 iron plate, 10 calcite
 
 # Ship Building
 
-- buildings can only be constructor on a custom tile that initially is just a copy of the space platform tile. prevent building anything outside that tile (ideally at the prototype stage, if not then using event)
-- the initial ship module that is centered around the hub is a 12x12 square - only after the hub is repaired. the module has ship tiles across it
+- buildings can only be constructor on a custom tile that initially is just a copy of the foundation tile - tint it blue for now so it's distinguishable. prevent building anything outside that tile (ideally at the prototype stage, if not then using event). ship tiles are not mineable
+- each ship module is defined in `module/ship/constants` and has a unique id and a blueprint associated with it. each module is unlocked with a separate research
+- the first module is the "hub" module that has the hub in the middle of it and gets created together with the destroyed hub
+- there is a new entity called a "connector" that is a 2x1 entity that can also only be placed inside a module and only on the edges of a module. it must fully fit inside the module. when placed it renders as hazard concrete and allows building anything else on top (that's not a connector, so buildings, belts etc). effectively this is a predefined way of laying out special tiles.
+- ship layout is stored under `storage.shipLayout` and tracks the configuration of the ship

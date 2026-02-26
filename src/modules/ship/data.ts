@@ -11,7 +11,7 @@ const zeroBox = [
 const order = (segment: string) => `z[${modNs()}]-${segment}`;
 
 const makeShipTile = () => {
-	const clone = extend(data.raw.tile['space-platform-foundation']!, {
+	const clone = extend(data.raw.tile['foundation']!, {
 		hidden: true,
 		hidden_in_factoriopedia: true,
 		minable: undefined,

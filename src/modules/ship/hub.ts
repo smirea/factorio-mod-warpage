@@ -44,31 +44,31 @@ export function createHub() {
 		name: names.hubLandingPad,
 		position: [0, 0],
 	});
-	makeIndestructible(landingPad);
+	lockEntity(landingPad);
 
 	entities.hub = createEntity(surface, { name: names.hubAccumulator, position: landingPad.position });
-	makeIndestructible(entities.hub);
+	lockEntity(entities.hub);
 
 	const hubPowerPole = createEntity(surface, { name: names.hubPowerPole, position: landingPad.position });
-	makeIndestructible(hubPowerPole);
+	lockEntity(hubPowerPole);
 
 	const rightFluidPipe = createEntity(surface, {
 		name: names.hubFluidPipe,
 		position: relativeTo(names.hubFluidPipe, landingPad, 'right', 'bottom'),
 	});
-	makeIndestructible(rightFluidPipe);
+	lockEntity(rightFluidPipe);
 
 	const leftFluidPipe = createEntity(surface, {
 		name: names.hubFluidPipe,
 		position: relativeTo(names.hubFluidPipe, landingPad, 'left', 'bottom'),
 	});
-	makeIndestructible(leftFluidPipe);
+	lockEntity(leftFluidPipe);
 }
 
 export function createDestroyedHub(surface = getCurrentSurface()) {
 	storage.hubRepaired = false;
 	lastRepairText = '';
-	destroyEntity(entities.repairSpeechBubble);
+	entities.repairSpeechBubble?.destroy();
 	entities.repairSpeechBubble = undefined;
 
 	for (const entity of surface.find_entities_filtered({
@@ -88,7 +88,7 @@ export function createDestroyedHub(surface = getCurrentSurface()) {
 		name: names.destroyedHub,
 		position: [0, 0],
 	});
-	makeIndestructible(entities.destroyedHub);
+	lockEntity(entities.destroyedHub);
 	const inventory = entities.destroyedHub!.get_inventory(defines.inventory.chest)!;
 
 	let slotIndex = 1;
@@ -118,7 +118,7 @@ function handleHubRepairCheck() {
 	const destroyedHub = getDestroyedHub();
 	if (!destroyedHub) {
 		lastRepairText = '';
-		destroyEntity(entities.repairSpeechBubble);
+		entities.repairSpeechBubble?.destroy();
 		entities.repairSpeechBubble = undefined;
 		return;
 	}
@@ -138,7 +138,7 @@ function handleHubRepairCheck() {
 		const text = parts.join(' ');
 		if (text !== lastRepairText) {
 			lastRepairText = text;
-			destroyEntity(entities.repairSpeechBubble);
+			entities.repairSpeechBubble?.destroy();
 			entities.repairSpeechBubble = createHolographicText({
 				offset: { x: 0, y: -1 * destroyedHub.tile_height - 0.5 },
 				target: destroyedHub,
@@ -162,10 +162,10 @@ function handleHubRepairCheck() {
 
 function onHubRepaired() {
 	storage.hubRepaired = true;
-	destroyEntity(entities.destroyedHub);
+	entities.destroyedHub?.destroy();
 	entities.destroyedHub = undefined;
 	entities.hub = undefined;
-	destroyEntity(entities.repairSpeechBubble);
+	entities.repairSpeechBubble?.destroy();
 	entities.repairSpeechBubble = undefined;
 	cancelHubRepairCheck?.();
 	cancelHubRepairCheck = null;
@@ -177,7 +177,7 @@ function getDestroyedHub() {
 
 	entities.destroyedHub = getCurrentSurface().find_entity(names.destroyedHub, [0, 0]) ?? undefined;
 	if (entities.destroyedHub?.valid) {
-		makeIndestructible(entities.destroyedHub);
+		lockEntity(entities.destroyedHub);
 		return entities.destroyedHub;
 	}
 	entities.destroyedHub = undefined;
@@ -191,16 +191,11 @@ function getTotalItemCount(inventory: LuaInventory, itemName: string) {
 	return total;
 }
 
-function destroyEntity(entity: LuaEntity | SpeechBubbleEntity | undefined) {
-	if (!entity?.valid) return;
-
-	entity.destroy();
-}
-
-function makeIndestructible(entity: { valid: boolean; destructible: boolean } | undefined) {
+function lockEntity(entity: { valid: boolean; destructible: boolean; minable: boolean } | undefined) {
 	if (!entity?.valid) return;
 
 	entity.destructible = false;
+	entity.minable = false;
 }
 
 function relativeTo(

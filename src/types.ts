@@ -1,7 +1,24 @@
+import { shipModules } from '@/modules/ship/constants';
+import { MapPosition } from 'factorio:prototype';
+
 declare global {
 	interface ModStorage {
 		surface: string;
 		hubRepaired: boolean;
+		shipLayout: Partial<
+			Record<
+				keyof typeof shipModules,
+				{
+					connectors: Array<{
+						/** relative to the center of the module */
+						position: MapPosition;
+						orientation: 'vertical' | 'horizontal';
+						module?: keyof typeof shipModules;
+						moduleConnector?: number;
+					}>;
+				}
+			>
+		>;
 		startupSuppliesSeeded: boolean;
 		startConfiguredPlayerIndices: Record<number, true | undefined>;
 	}
