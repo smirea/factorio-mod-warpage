@@ -37,8 +37,6 @@ export function extend<T extends Record<string, any> | undefined>(
 	if (!base) throw new Error('must pass a table');
 
 	const clone = util.copy(base);
-	if (!clone) throw new Error('util.copy() failed');
-
 	if (diff) Object.assign(clone, diff);
 
 	return clone;
@@ -87,7 +85,7 @@ export function addTechnology(
 
 export function disableRecipe(name: keyof typeof data.raw.recipe) {
 	const recipe = data.raw.recipe[name];
-	if (!recipe) return;
+	if (!recipe) throw new Error(`Missing recipe '${name}'.`);
 	recipe.enabled = false;
 	recipe.hidden = true;
 	recipe.hidden_in_factoriopedia = true;
@@ -100,7 +98,7 @@ export function disableRecipe(name: keyof typeof data.raw.recipe) {
 
 export function disableTechnology(name: keyof typeof data.raw.technology) {
 	const technology = data.raw.technology[name];
-	if (!technology) return;
+	if (!technology) throw new Error(`Missing technology '${name}'.`);
 	technology.enabled = false;
 	technology.visible_when_disabled = false;
 	technology.hidden = true;
@@ -109,7 +107,7 @@ export function disableTechnology(name: keyof typeof data.raw.technology) {
 
 export function hideItem(name: keyof typeof data.raw.item) {
 	const item = data.raw.item[name];
-	if (!item) return;
+	if (!item) throw new Error(`Missing item '${name}'.`);
 	item.hidden = true;
 	item.hidden_in_factoriopedia = true;
 }

@@ -78,63 +78,52 @@ export function ensureInitialShipLayout() {
 
 export function ensureInitialShipModule(surface = getCurrentSurface()) {
 	ensureInitialShipLayout();
+	const layout = storage.shipLayout.hub as ShipLayoutModule | undefined;
+	if (!layout) return;
 
-	for (const moduleId of Object.keys(storage.shipLayout) as ShipModuleId[]) {
-		if (moduleId !== 'hub') continue;
-		const layout = storage.shipLayout[moduleId] as ShipLayoutModule | undefined;
-		if (!layout) continue;
-		const template = requireModuleTemplate(moduleId);
-		const tiles: TileWrite[] = [];
+	const template = requireModuleTemplate('hub');
+	const tiles: TileWrite[] = [];
 
-		for (const tile of template.tiles)
-			tiles.push({
-				name: names.tile,
-				position: {
-					x: hubCenter.x + tile.x,
-					y: hubCenter.y + tile.y,
-				},
-			});
-		surface.set_tiles(tiles, true, false);
+	for (const tile of template.tiles)
+		tiles.push({
+			name: names.tile,
+			position: {
+				x: hubCenter.x + tile.x,
+				y: hubCenter.y + tile.y,
+			},
+		});
+	surface.set_tiles(tiles, true, false);
 
-		for (const connector of layout.connectors) {
-			const topLeft = { x: hubCenter.x + connector.position.x, y: hubCenter.y + connector.position.y };
-			const connectorPosition = connectorEntityPosition(topLeft, connector.orientation);
-			const existing = surface.find_entity(names.connector, connectorPosition);
-			if (existing?.valid) continue;
+	for (const connector of layout.connectors) {
+		const topLeft = { x: hubCenter.x + connector.position.x, y: hubCenter.y + connector.position.y };
+		const connectorPosition = connectorEntityPosition(topLeft, connector.orientation);
+		const existing = surface.find_entity(names.connector, connectorPosition);
+		if (existing?.valid) continue;
 
-			createEntity(surface, {
-				name: names.connector,
-				position: connectorPosition,
-				direction: connectorDirection(connector.orientation),
-			});
-		}
+		createEntity(surface, {
+			name: names.connector,
+			position: connectorPosition,
+			direction: connectorDirection(connector.orientation),
+		});
 	}
 }
 
 function handleConnectorBuilt(entity: LuaEntity, playerIndex?: number) {
 	ensureInitialShipLayout();
 	const placement = readConnectorPlacement(entity);
-	if (!placement) return rejectConnector(entity, playerIndex);
+	const layout = storage.shipLayout.hub as ShipLayoutModule | undefined;
+	if (!layout) return rejectConnector(entity, playerIndex);
+	if (!connectorInsideModule('hub', hubCenter, placement)) return rejectConnector(entity, playerIndex);
+	if (!connectorOnEdge('hub', hubCenter, placement)) return rejectConnector(entity, playerIndex);
+	if (connectorOverlaps(layout, hubCenter, placement)) return rejectConnector(entity, playerIndex);
 
-	for (const moduleId of Object.keys(storage.shipLayout) as ShipModuleId[]) {
-		const layout = storage.shipLayout[moduleId] as ShipLayoutModule | undefined;
-		if (!layout) continue;
-		if (moduleId !== 'hub') continue;
-		if (!connectorInsideModule(moduleId, hubCenter, placement)) continue;
-		if (!connectorOnEdge(moduleId, hubCenter, placement)) return rejectConnector(entity, playerIndex);
-		if (connectorOverlaps(layout, hubCenter, placement)) return rejectConnector(entity, playerIndex);
-
-		layout.connectors.push({
-			orientation: placement.orientation,
-			position: {
-				x: placement.topLeft.x - hubCenter.x,
-				y: placement.topLeft.y - hubCenter.y,
-			},
-		});
-		return;
-	}
-
-	rejectConnector(entity, playerIndex);
+	layout.connectors.push({
+		orientation: placement.orientation,
+		position: {
+			x: placement.topLeft.x - hubCenter.x,
+			y: placement.topLeft.y - hubCenter.y,
+		},
+	});
 }
 
 function rejectConnector(entity: LuaEntity, playerIndex?: number) {
@@ -355,27 +344,21 @@ function connectorEntityPosition(topLeft: MapPosition, orientation: ShipConnecto
 
 function removeConnectorFromLayout(entity: LuaEntity) {
 	const placement = readConnectorPlacement(entity);
-	if (!placement) return;
+	const layout = storage.shipLayout.hub as ShipLayoutModule | undefined;
+	if (!layout) return;
 
-	for (const moduleId of Object.keys(storage.shipLayout) as ShipModuleId[]) {
-		const layout = storage.shipLayout[moduleId] as ShipLayoutModule | undefined;
-		if (!layout) continue;
-		if (moduleId !== 'hub') continue;
-
-		const relativeTopLeft = {
-			x: placement.topLeft.x - hubCenter.x,
-			y: placement.topLeft.y - hubCenter.y,
-		};
-		const index = layout.connectors.findIndex(
-			connector =>
-				connector.orientation === placement.orientation &&
-				connector.position.x === relativeTopLeft.x &&
-				connector.position.y === relativeTopLeft.y,
-		);
-		if (index < 0) continue;
-		layout.connectors.splice(index, 1);
-		return;
-	}
+	const relativeTopLeft = {
+		x: placement.topLeft.x - hubCenter.x,
+		y: placement.topLeft.y - hubCenter.y,
+	};
+	const index = layout.connectors.findIndex(
+		connector =>
+			connector.orientation === placement.orientation &&
+			connector.position.x === relativeTopLeft.x &&
+			connector.position.y === relativeTopLeft.y,
+	);
+	if (index < 0) return;
+	layout.connectors.splice(index, 1);
 }
 
 registerGlobal('ensureInitialShipLayout', ensureInitialShipLayout);

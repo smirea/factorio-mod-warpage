@@ -34,7 +34,7 @@ const applyShipTileBuildabilityRule = () => {
 		},
 	};
 	const rawByType = data.raw as Record<string, Record<string, any> | undefined>;
-	const placeableEntityNames: Record<string, true | undefined> = {};
+	const placeableEntityNames = new Set<string>();
 
 	for (const prototypesByName of Object.values(rawByType)) {
 		if (!prototypesByName) continue;
@@ -42,7 +42,7 @@ const applyShipTileBuildabilityRule = () => {
 		for (const prototype of Object.values(prototypesByName)) {
 			if (typeof prototype?.place_result !== 'string') continue;
 
-			placeableEntityNames[prototype.place_result] = true;
+			placeableEntityNames.add(prototype.place_result);
 		}
 	}
 
@@ -52,7 +52,7 @@ const applyShipTileBuildabilityRule = () => {
 		for (const prototype of Object.values(prototypesByName)) {
 			if (!prototype?.name || !prototype.collision_box) continue;
 
-			if (!placeableEntityNames[prototype.name]) continue;
+			if (!placeableEntityNames.has(prototype.name)) continue;
 
 			prototype.tile_buildability_rules = [
 				...(prototype.tile_buildability_rules ?? []),

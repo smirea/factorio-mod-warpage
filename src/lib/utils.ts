@@ -70,6 +70,7 @@ export function on_event<Type extends keyof typeof defines.events>(
 	if (!onEventHandlers[type]) {
 		onEventHandlers[type] = {
 			handlers: [],
+			filters,
 		};
 		// oxlint-disable-next-line factorio/no-restricted-api
 		script.on_event(

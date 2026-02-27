@@ -103,11 +103,10 @@ function initStart() {
 
 		let startupChest = surface.find_entity('wooden-chest', startupChestPosition);
 		if (!startupChest?.valid)
-			startupChest =
-				createEntity(surface, {
-					name: 'wooden-chest',
-					position: startupChestPosition,
-				}) ?? undefined;
+			startupChest = createEntity(surface, {
+				name: 'wooden-chest',
+				position: startupChestPosition,
+			});
 
 		if (startupChest?.valid && !storage.startupSuppliesSeeded) {
 			const inventory = startupChest.get_inventory(defines.inventory.chest);

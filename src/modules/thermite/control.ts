@@ -18,7 +18,6 @@ const ORE_MULTIPLIER_BY_ITEM_NAME = {
 	calcite: 0.4,
 	'tungsten-ore': 0.2,
 	scrap: 1,
-	DEFAULT: 0.5,
 } as const;
 
 function init() {
@@ -26,34 +25,8 @@ function init() {
 	on_event('on_research_finished', on_research_finished);
 }
 
-const requireSurfaceByIndex = (surfaceIndex: number): LuaSurface => {
-	const surface = game.surfaces[surfaceIndex];
-	if (!surface) throw new Error(`Missing surface index '${surfaceIndex}'.`);
-	return surface;
-};
-
-const requireForce = (name: string): LuaForce => {
-	const force = game.forces[name];
-	if (!force) throw new Error(`Missing force '${name}'.`);
-	return force;
-};
-
-function countResearchedLevels(force: LuaForce, technologies: ReadonlyArray<string>) {
-	let researchedLevels = 0;
-	for (const technologyName of technologies) {
-		const technology = force.technologies[technologyName];
-		if (technology && technology.researched) researchedLevels += 1;
-	}
-	return researchedLevels;
-}
-
 const oreYieldFormula = (removedAmount: number, productivityMultiplier: number, oreMultiplier: number) =>
 	math.ceil(math.max(5, math.min(removedAmount / 100, 25)) * productivityMultiplier * oreMultiplier);
-
-const resolveOreMultiplier = (itemName: string) =>
-	itemName in ORE_MULTIPLIER_BY_ITEM_NAME
-		? ORE_MULTIPLIER_BY_ITEM_NAME[itemName as keyof typeof ORE_MULTIPLIER_BY_ITEM_NAME]
-		: ORE_MULTIPLIER_BY_ITEM_NAME.DEFAULT;
 
 function spillItemInStacks(
 	surface: LuaSurface,
@@ -112,7 +85,7 @@ function dropOreYield(
 	for (const [itemName, removedAmount] of pairs(removedByItem)) {
 		if (!removedAmount || removedAmount <= 0) continue;
 
-		const oreMultiplier = resolveOreMultiplier(itemName);
+		const oreMultiplier = (ORE_MULTIPLIER_BY_ITEM_NAME as Partial<Record<string, number>>)[itemName] ?? 0.5;
 		const yieldCount = oreYieldFormula(removedAmount, productivityMultiplier, oreMultiplier);
 		if (yieldCount < 1) throw new Error(`Thermite ore yield for item '${itemName}' must be at least 1.`);
 
@@ -202,9 +175,18 @@ function detonateBlast({
 	position: MapPosition;
 	force_name: string;
 }) {
-	const surface = requireSurfaceByIndex(surface_index);
-	const force = requireForce(force_name);
-	const blastSize = 3 + countResearchedLevels(force, RADIUS_TECHNOLOGY_NAMES);
+	const surface = game.surfaces[surface_index];
+	if (!surface) throw new Error(`Missing surface index '${surface_index}'.`);
+
+	const force = game.forces[force_name];
+	if (!force) throw new Error(`Missing force '${force_name}'.`);
+
+	let researchedLevels = 0;
+	for (const technologyName of RADIUS_TECHNOLOGY_NAMES) {
+		const technology = force.technologies[technologyName];
+		if (technology && technology.researched) researchedLevels += 1;
+	}
+	const blastSize = 3 + researchedLevels;
 	const blastRadius = blastSize / 2;
 	const productivityLevel = force.technologies[names.miningProductivityRecipe]!.level;
 	const productivityMultiplier = productivityLevel;
@@ -258,7 +240,7 @@ function on_script_trigger_effect(event: OnScriptTriggerEffectEvent | undefined)
 
 function on_research_finished(event: { research?: { name: string; force: LuaForce } } | undefined) {
 	const research = event?.research;
-	if (research?.name !== names.recipe) return;
+	if (research?.name !== names.item) return;
 
 	const dropPodsOnPlayer = (player: LuaPlayer, pods: 1 | 2 | 3, count: number) => {
 		for (let i = 0; i < pods; ++i) {

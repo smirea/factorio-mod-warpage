@@ -36,7 +36,7 @@ const addRadiusTechnology = (level: number, count: number, ingredients: [Science
 		icons: makeTechnologyIcons('__core__/graphics/icons/technology/constants/constant-range.png'),
 		localised_description: LOCALE('technology-description', 'thermite-mining-radius'),
 		localised_name: LOCALE('technology-name', 'thermite-mining-radius', level),
-		prerequisites: level === 1 ? [names.recipe] : [names.recipe, names.ns('mining-radius-' + (level - 1))],
+		prerequisites: level === 1 ? [names.item] : [names.item, names.ns('mining-radius-' + (level - 1))],
 		unit: {
 			count,
 			ingredients,
@@ -46,10 +46,10 @@ const addRadiusTechnology = (level: number, count: number, ingredients: [Science
 	});
 
 addTechnology({
-	effects: [{ recipe: names.recipe, type: 'unlock-recipe' }],
+	effects: [{ recipe: names.item, type: 'unlock-recipe' }],
 	icon: barrelIcon,
 	icon_size: 256,
-	name: names.recipe,
+	name: names.item,
 	research_trigger: {
 		entity: 'iron-ore',
 		type: 'mine-entity',
@@ -69,7 +69,7 @@ addTechnology({
 	localised_name: LOCALE('technology-name', 'thermite-mining-productivity'),
 	max_level: 5,
 	name: names.miningProductivityRecipe,
-	prerequisites: [names.recipe],
+	prerequisites: [names.item],
 	unit: {
 		count_formula: '100 * L',
 		ingredients: [['automation-science-pack', 1]],
@@ -91,7 +91,7 @@ data.extend([
 			{ amount: 1, name: 'copper-plate', type: 'item' },
 			{ amount: 1, name: 'calcite', type: 'item' },
 		],
-		name: names.recipe,
+		name: names.item,
 		order: data.raw.item['electric-mining-drill']!.order,
 		results: [{ amount: 1, name: names.item, type: 'item' }],
 		subgroup: data.raw.item['electric-mining-drill']!.subgroup,
