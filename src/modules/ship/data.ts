@@ -1,5 +1,5 @@
 import * as util from 'util';
-import { names, shipModuleIds, shipModules, ShipModuleId } from './constants';
+import { names, shipConnectorSizes, shipModuleIds, shipModules, ShipConnectorSize, ShipModuleId } from './constants';
 import { shipGeneratedGeometry, shipGeneratedIcons, shipGeneratedPlacementPreviews } from './generated';
 import { addTechnology, extend } from '@/lib/data-utils';
 
@@ -23,15 +23,46 @@ const connectorIcons = [
 ] as const;
 const connectorTileSprite = (path: string, xShift: number, yShift: number) => ({
 	filename: path,
-	width: 512,
-	height: 512,
-	scale: 1 / 16,
+	width: 64,
+	height: 64,
+	x: 0,
+	y: 0,
+	scale: 0.5,
 	shift: [xShift, yShift] as const,
 });
-const connectorHazardLeft = (xShift: number, yShift: number) =>
+const connectorHazardLeftSprite = (xShift: number, yShift: number) =>
 	connectorTileSprite('__base__/graphics/terrain/hazard-concrete-left/hazard-concrete-left.png', xShift, yShift);
-const connectorHazardRight = (xShift: number, yShift: number) =>
+const connectorHazardRightSprite = (xShift: number, yShift: number) =>
 	connectorTileSprite('__base__/graphics/terrain/hazard-concrete-right/hazard-concrete-right.png', xShift, yShift);
+const connectorTileOffsets = (size: ShipConnectorSize) => {
+	const offsets: number[] = [];
+	const firstOffset = -size / 2 + 0.5;
+	for (let index = 0; index < size; index += 1) offsets.push(firstOffset + index);
+	return offsets;
+};
+const connectorLayers = (size: ShipConnectorSize, orientation: 'horizontal' | 'vertical') => {
+	const layers: Array<{
+		filename: string;
+		height: number;
+		scale: number;
+		width: number;
+		shift: readonly [number, number];
+	}> = [];
+	const offsets = connectorTileOffsets(size);
+	for (let index = 0; index < offsets.length; index += 1) {
+		const offset = offsets[index]!;
+		const sprite = index % 2 === 0 ? connectorHazardLeftSprite : connectorHazardRightSprite;
+		if (orientation === 'horizontal') layers.push(sprite(offset, 0));
+		else layers.push(sprite(0, offset));
+	}
+	return layers;
+};
+const connectorPicture = (size: ShipConnectorSize) => ({
+	north: { layers: connectorLayers(size, 'horizontal') },
+	south: { layers: connectorLayers(size, 'horizontal') },
+	east: { layers: connectorLayers(size, 'vertical') },
+	west: { layers: connectorLayers(size, 'vertical') },
+});
 const applyShipTileBuildabilityRule = () => {
 	const requiredTiles = {
 		layers: {
@@ -42,6 +73,8 @@ const applyShipTileBuildabilityRule = () => {
 	const placeableEntityNames = new Set<string>();
 	const ignoredPlaceResults = new Set<string>();
 	for (const moduleId of shipModuleIds) ignoredPlaceResults.add(names.modulePlacementEntity(moduleId));
+	for (const connectorSize of shipConnectorSizes)
+		ignoredPlaceResults.add(names.connectorPlacementEntity(connectorSize));
 
 	for (const prototypesByName of Object.values(rawByType)) {
 		if (!prototypesByName) continue;
@@ -73,22 +106,70 @@ const applyShipTileBuildabilityRule = () => {
 	}
 };
 
-const makeConnectorItem = () => {
-	const item = extend(data.raw.item['hazard-concrete']!, {
-		name: names.connector,
+const connectorSelectionBox = (size: ShipConnectorSize) =>
+	[
+		[-size / 2, -0.5],
+		[size / 2, 0.5],
+	] as const;
+const makeConnectorEntity = (size: ShipConnectorSize) =>
+	extend(data.raw['simple-entity-with-owner']['simple-entity-with-owner']!, {
+		name: names.connectorEntity(size),
 		icons: connectorIcons,
-		place_result: names.connector,
+		collision_box: zeroBox,
+		corpse: undefined,
 		hidden: false,
 		hidden_in_factoriopedia: false,
+		icon: undefined,
+		max_health: 1000,
+		order: order(`c[connector-entity-${size}]`),
+		picture: connectorPicture(size),
+		render_layer: 'floor',
+		selection_box: connectorSelectionBox(size),
+		tile_width: size,
+		tile_height: 1,
+		minable: {
+			mining_time: 0.1,
+		},
+	});
+const makeConnectorPlacementItem = (size: ShipConnectorSize) => {
+	const item = extend(data.raw.item['hazard-concrete']!, {
+		name: names.connectorPlacementItem(size),
+		icons: connectorIcons,
+		place_result: names.connectorPlacementEntity(size),
+		hidden: true,
+		hidden_in_factoriopedia: true,
+		flags: ['only-in-cursor'] as const,
 		subgroup: 'space-interactors',
-		order: order('c[connector-item]'),
-		stack_size: 10,
+		order: order(`c[connector-placement-item-${size}]`),
+		stack_size: 1,
 	});
 
 	delete item.place_as_tile;
 	delete item.icon;
 	return item;
 };
+const makeConnectorPlacementEntity = (size: ShipConnectorSize) =>
+	extend(data.raw['simple-entity-with-owner']['simple-entity-with-owner']!, {
+		name: names.connectorPlacementEntity(size),
+		icons: connectorIcons,
+		icon: undefined,
+		collision_box: zeroBox,
+		selection_box: zeroBox,
+		corpse: undefined,
+		hidden: true,
+		hidden_in_factoriopedia: true,
+		max_health: 1,
+		order: order(`c[connector-placement-entity-${size}]`),
+		render_layer: 'object',
+		selectable_in_game: false,
+		tile_width: size,
+		tile_height: 1,
+		flags: ['placeable-player', 'player-creation', 'not-on-map'] as const,
+		allow_copy_paste: false,
+		minable: undefined,
+		placeable_position_visualization: undefined,
+		picture: connectorPicture(size),
+	});
 
 const moduleIconPath = (moduleId: ShipModuleId) => shipGeneratedIcons[moduleId];
 const modulePlacementPreviewScale = (moduleId: ShipModuleId) => {
@@ -159,6 +240,7 @@ const makeModulePlacementEntity = (moduleId: ShipModuleId) => {
 		flags: ['placeable-player', 'player-creation', 'not-on-map'] as const,
 		allow_copy_paste: false,
 		minable: undefined,
+		placeable_position_visualization: undefined,
 		picture: {
 			north: {
 				filename: shipGeneratedPlacementPreviews[moduleId].north,
@@ -194,6 +276,12 @@ for (const moduleId of shipModuleIds) {
 	if (moduleId === 'hub') continue;
 	modulePlacementPrototypes.push(makeModulePlacementEntity(moduleId));
 	modulePlacementPrototypes.push(makeModulePlacementItem(moduleId));
+}
+const connectorPrototypes: any[] = [];
+for (const connectorSize of shipConnectorSizes) {
+	connectorPrototypes.push(makeConnectorEntity(connectorSize));
+	connectorPrototypes.push(makeConnectorPlacementEntity(connectorSize));
+	connectorPrototypes.push(makeConnectorPlacementItem(connectorSize));
 }
 
 const makeHubFluidPipe = () => {
@@ -306,6 +394,21 @@ for (const moduleId of shipModuleIds) {
 		unit: tech,
 	});
 }
+for (const connectorSize of shipConnectorSizes)
+	addTechnology({
+		name: names.connectorTech(connectorSize),
+		icon: '__base__/graphics/icons/hazard-concrete.png',
+		icon_size: 64,
+		localised_name: LOCALE('technology-name', 'ship-connector-unlock', connectorSize),
+		localised_description: LOCALE('technology-description', 'ship-connector-unlock', connectorSize),
+		prerequisites:
+			connectorSize === 2 ? [names.ns('module-hub')] : [names.connectorTech((connectorSize - 1) as ShipConnectorSize)],
+		unit: {
+			count: connectorSize === 2 ? 20 : connectorSize === 3 ? 40 : 80,
+			time: 15,
+			ingredients: [['automation-science-pack', 1]],
+		},
+	});
 
 data.extend([
 	{
@@ -324,43 +427,7 @@ data.extend([
 			},
 		},
 	}),
-	extend(data.raw['simple-entity-with-owner']['simple-entity-with-owner']!, {
-		name: names.connector,
-		icons: connectorIcons,
-		collision_box: zeroBox,
-		corpse: undefined,
-		hidden: false,
-		hidden_in_factoriopedia: false,
-		icon: undefined,
-		max_health: 1000,
-		order: order('c[connector-entity]'),
-		picture: {
-			north: { layers: [connectorHazardLeft(-0.5, 0), connectorHazardRight(0.5, 0)] },
-			south: { layers: [connectorHazardLeft(-0.5, 0), connectorHazardRight(0.5, 0)] },
-			east: { layers: [connectorHazardLeft(0, -0.5), connectorHazardRight(0, 0.5)] },
-			west: { layers: [connectorHazardLeft(0, -0.5), connectorHazardRight(0, 0.5)] },
-		},
-		render_layer: 'floor',
-		selection_box: [
-			[-1, -0.5],
-			[1, 0.5],
-		],
-		tile_width: 2,
-		tile_height: 1,
-		minable: {
-			mining_time: 0.1,
-			result: names.connector,
-		},
-	}),
-	makeConnectorItem(),
-	extend(data.raw.recipe['hazard-concrete']!, {
-		enabled: true,
-		energy_required: 0.5,
-		ingredients: [],
-		name: names.connector,
-		results: [{ amount: 1, name: names.connector, type: 'item' }],
-		subgroup: 'space-interactors',
-	}),
+	...connectorPrototypes,
 	makeHubFluidPipe(),
 	...modulePlacementPrototypes,
 	caragoLandingPad,

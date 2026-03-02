@@ -5,15 +5,23 @@ const ns = nsFactory(modNs('ship'));
 
 export const shipModuleIds = ['hub', 'box1', 'box2', 'box3', 'box4', 'uModule', 'iModule', 'tModule'] as const;
 export type ShipModuleId = (typeof shipModuleIds)[number];
+export const shipConnectorSizes = [2, 3, 4] as const;
+export type ShipConnectorSize = (typeof shipConnectorSizes)[number];
 
 export const names = {
 	ns,
 	connector: ns('connector'),
+	connectorEntity: (size: ShipConnectorSize) => (size === 2 ? ns('connector') : ns(`connector-${size}`)),
+	connectorPlacementEntity: (size: ShipConnectorSize) => ns(`connector-placement-entity-${size}`),
+	connectorPlacementItem: (size: ShipConnectorSize) => ns(`connector-placement-item-${size}`),
+	connectorTech: (size: ShipConnectorSize) => ns(`connector-size-${size}`),
 	destroyedHub: ns('destroyed-hub-container'),
 	hubAccumulator: ns('hub-accumulator'),
 	hubFluidPipe: ns('hub-fluid-pipe'),
 	hubLandingPad: ns('hub-landing-pad'),
 	hubPowerPole: ns('hub-power-pole'),
+	connectorRosterSection: ns('connector-roster-section'),
+	connectorRosterButton: (size: ShipConnectorSize) => ns(`connector-roster-button-${size}`),
 	modulePlacementEntity: (moduleId: ShipModuleId) => ns(`module-placement-entity-${moduleId}`),
 	modulePlacementItem: (moduleId: ShipModuleId) => ns(`module-placement-item-${moduleId}`),
 	moduleIconSprite: (moduleId: ShipModuleId) => ns(`module-icon-${moduleId}`),

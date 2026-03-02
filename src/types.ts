@@ -1,4 +1,4 @@
-import { ShipModuleId } from '@/modules/ship/constants';
+import { ShipConnectorSize, ShipModuleId } from '@/modules/ship/constants';
 import { TechnologyUnit } from 'factorio:prototype';
 import { MapPosition } from 'factorio:runtime';
 
@@ -21,8 +21,17 @@ declare global {
 			{
 				moduleId: ShipModuleId;
 				orientation: 'vertical' | 'horizontal';
+				size: ShipConnectorSize;
 				side: 'north' | 'east' | 'south' | 'west';
 				topLeft: MapPosition;
+			}
+		>;
+		shipConnectorStock: Record<
+			ShipConnectorSize,
+			{
+				available: number;
+				total: number;
+				unlocked: boolean;
 			}
 		>;
 		shipBridges: Record<
@@ -36,8 +45,14 @@ declare global {
 		shipPlacementByPlayer: Record<
 			number,
 			| {
+					kind: 'module';
 					mode: 'move' | 'place';
 					moduleId: ShipModuleId;
+					renderIds: number[];
+			  }
+			| {
+					connectorSize: ShipConnectorSize;
+					kind: 'connector';
 					renderIds: number[];
 			  }
 			| undefined

@@ -1,6 +1,6 @@
 import type { LocalisedString, LuaEntity, LuaPlayer, LuaSurface, MapPosition, TileWrite } from 'factorio:runtime';
 import { createEntity, getCurrentSurface, on_event, on_nth_tick, registerGlobal } from '@/lib/utils';
-import { names, ShipModuleId, shipModuleIds } from './constants';
+import { names, ShipConnectorSize, ShipModuleId, shipConnectorSizes, shipModuleIds } from './constants';
 import {
 	ShipConnectorPlacement,
 	ShipConnectorSide,
@@ -9,6 +9,7 @@ import {
 	connectorEntityPosition,
 	connectorPlacementEdgeSide,
 	connectorToTiles,
+	moduleConnectorCandidates,
 	moduleDefaultConnectorPlacements,
 	moduleWorldBounds,
 	moduleWorldTileKeys,
@@ -20,6 +21,7 @@ import {
 	rotateConnectorTopLeftAroundCenter,
 	rotateSide,
 	rotationDelta,
+	shipRotations,
 	tileKey,
 	translateConnectorPlacement,
 } from './runtime';
@@ -28,10 +30,20 @@ const bridgeMaxRange = 6;
 const rosterModuleIds = shipModuleIds.filter(
 	(moduleId): moduleId is Exclude<ShipModuleId, 'hub'> => moduleId !== 'hub',
 );
-const placementCarrierItemNames = rosterModuleIds.map(moduleId => names.modulePlacementItem(moduleId));
+const connectorUnlockTotals: Record<ShipConnectorSize, number> = {
+	2: 12,
+	3: 8,
+	4: 6,
+};
+const placementCarrierItemNames = [
+	...rosterModuleIds.map(moduleId => names.modulePlacementItem(moduleId)),
+	...shipConnectorSizes.map(size => names.connectorPlacementItem(size)),
+];
 const placementCarrierItems: Record<string, true | undefined> = {};
 for (const itemName of placementCarrierItemNames) placementCarrierItems[itemName] = true;
 type PlacementResult = { ok: true } | { ok: false; message: LocalisedString };
+type ShipPlacementSession = Exclude<ModStorage['shipPlacementByPlayer'][number], undefined>;
+type ModulePlacementSession = Extract<ShipPlacementSession, { kind: 'module' }>;
 
 on_event('on_built_entity', event => {
 	const entity = event.entity;
@@ -42,49 +54,62 @@ on_event('on_built_entity', event => {
 		handlePlacementCarrierBuilt(entity, event.player_index, moduleId);
 		return;
 	}
-	if (entity.name === names.connector) handleConnectorBuilt(entity, event.player_index);
+	const placementConnectorSize = connectorSizeFromPlacementEntityName(entity.name);
+	if (placementConnectorSize) {
+		handleConnectorPlacementCarrierBuilt(entity, placementConnectorSize, event.player_index);
+		return;
+	}
+	const builtConnectorSize = connectorSizeFromEntityName(entity.name);
+	if (builtConnectorSize) handleConnectorBuilt(entity, builtConnectorSize, event.player_index);
 });
 
 on_event('on_robot_built_entity', event => {
 	const entity = event.entity;
 	if (!entity) return;
-	if (entity.name === names.connector) handleConnectorBuilt(entity);
+	const connectorSize = connectorSizeFromEntityName(entity.name);
+	if (connectorSize) handleConnectorBuilt(entity, connectorSize);
 });
 
 on_event('script_raised_built', event => {
 	const entity = event.entity;
 	if (!entity) return;
-	if (entity.name === names.connector) handleConnectorBuilt(entity);
+	const connectorSize = connectorSizeFromEntityName(entity.name);
+	if (connectorSize) handleConnectorBuilt(entity, connectorSize);
 });
 
 on_event('script_raised_revive', event => {
 	const entity = event.entity;
 	if (!entity) return;
-	if (entity.name === names.connector) handleConnectorBuilt(entity);
+	const connectorSize = connectorSizeFromEntityName(entity.name);
+	if (connectorSize) handleConnectorBuilt(entity, connectorSize);
 });
 
 on_event('on_player_mined_entity', event => {
 	const entity = event.entity;
 	if (!entity) return;
-	if (entity.name === names.connector) removeConnectorFromLayout(entity);
+	const connectorSize = connectorSizeFromEntityName(entity.name);
+	if (connectorSize) removeConnectorFromLayout(entity, 'refund');
 });
 
 on_event('on_robot_mined_entity', event => {
 	const entity = event.entity;
 	if (!entity) return;
-	if (entity.name === names.connector) removeConnectorFromLayout(entity);
+	const connectorSize = connectorSizeFromEntityName(entity.name);
+	if (connectorSize) removeConnectorFromLayout(entity, 'refund');
 });
 
 on_event('on_entity_died', event => {
 	const entity = event.entity;
 	if (!entity) return;
-	if (entity.name === names.connector) removeConnectorFromLayout(entity);
+	const connectorSize = connectorSizeFromEntityName(entity.name);
+	if (connectorSize) removeConnectorFromLayout(entity, 'destroy');
 });
 
 on_event('script_raised_destroy', event => {
 	const entity = event.entity;
 	if (!entity) return;
-	if (entity.name === names.connector) removeConnectorFromLayout(entity);
+	const connectorSize = connectorSizeFromEntityName(entity.name);
+	if (connectorSize) removeConnectorFromLayout(entity, 'destroy');
 });
 
 on_event('on_gui_click', event => {
@@ -95,11 +120,22 @@ on_event('on_gui_click', event => {
 	for (const moduleId of rosterModuleIds) {
 		if (element.name !== names.moduleRosterButton(moduleId)) continue;
 		const session = storage.shipPlacementByPlayer[player.index];
-		if (session?.moduleId === moduleId) {
+		if (session?.kind === 'module' && session.moduleId === moduleId) {
 			clearPlacementSession(player.index);
 			return;
 		}
 		startPlacementSession(player, moduleId);
+		return;
+	}
+
+	for (const connectorSize of shipConnectorSizes) {
+		if (element.name !== names.connectorRosterButton(connectorSize)) continue;
+		const session = storage.shipPlacementByPlayer[player.index];
+		if (session?.kind === 'connector' && session.connectorSize === connectorSize) {
+			clearPlacementSession(player.index);
+			return;
+		}
+		startConnectorPlacementSession(player, connectorSize);
 		return;
 	}
 });
@@ -128,8 +164,14 @@ on_event('on_player_cursor_stack_changed', event => {
 		return;
 	}
 
-	const cursorModuleId = moduleIdFromPlacementItemName(stack.name);
-	if (!cursorModuleId || cursorModuleId !== session.moduleId) clearPlacementSession(player.index);
+	if (session.kind === 'module') {
+		const cursorModuleId = moduleIdFromPlacementItemName(stack.name);
+		if (!cursorModuleId || cursorModuleId !== session.moduleId) clearPlacementSession(player.index);
+		return;
+	}
+
+	const cursorConnectorSize = connectorSizeFromPlacementItemName(stack.name);
+	if (!cursorConnectorSize || cursorConnectorSize !== session.connectorSize) clearPlacementSession(player.index);
 });
 
 on_event('on_player_left_game', event => {
@@ -162,6 +204,7 @@ on_nth_tick(30, () => {
 export function ensureInitialShipLayout() {
 	storage.shipModules ||= {} as ModStorage['shipModules'];
 	storage.shipConnectors ||= {};
+	storage.shipConnectorStock ||= {} as ModStorage['shipConnectorStock'];
 	storage.shipBridges ||= {};
 	storage.shipPlacementByPlayer ||= {};
 
@@ -175,6 +218,15 @@ export function ensureInitialShipLayout() {
 			unlocked: moduleId === 'hub',
 		};
 	}
+	for (const connectorSize of shipConnectorSizes) {
+		if (storage.shipConnectorStock[connectorSize]) continue;
+		storage.shipConnectorStock[connectorSize] = {
+			available: 0,
+			total: 0,
+			unlocked: false,
+		};
+	}
+	normalizeConnectorEntries();
 }
 
 export function refreshShipModuleUnlocks(force = game.forces.player!) {
@@ -187,6 +239,20 @@ export function refreshShipModuleUnlocks(force = game.forces.player!) {
 		}
 		state.unlocked = force.technologies[names.ns(`module-${moduleId}`)]?.researched === true;
 	}
+	for (const connectorSize of shipConnectorSizes) {
+		const connectorState = storage.shipConnectorStock[connectorSize];
+		const researched = force.technologies[names.connectorTech(connectorSize)]?.researched === true;
+		if (researched && !connectorState.unlocked) {
+			const unlockedTotal = connectorUnlockTotals[connectorSize];
+			if (unlockedTotal > connectorState.total) {
+				const delta = unlockedTotal - connectorState.total;
+				connectorState.total += delta;
+				connectorState.available += delta;
+			}
+		}
+		connectorState.unlocked = researched;
+	}
+	reconcileConnectorStock();
 }
 
 export function ensureInitialShipModule(surface = getCurrentSurface()) {
@@ -249,6 +315,40 @@ export function ensureModuleRoster(player: LuaPlayer) {
 			});
 	}
 
+	let connectorSection = flow[names.connectorRosterSection];
+	if (!connectorSection)
+		connectorSection = flow.add({
+			type: 'frame',
+			name: names.connectorRosterSection,
+			direction: 'vertical',
+			caption: ['warpage.connector-roster-title'],
+		});
+
+	for (const connectorSize of shipConnectorSizes) {
+		const rowName = names.ns(`connector-row-${connectorSize}`);
+		let row = connectorSection[rowName];
+		if (!row)
+			row = connectorSection.add({
+				type: 'flow',
+				name: rowName,
+				direction: 'horizontal',
+			});
+		if (!row[names.connectorRosterButton(connectorSize)])
+			row.add({
+				type: 'sprite-button',
+				name: names.connectorRosterButton(connectorSize),
+				sprite: 'item/hazard-concrete',
+				style: 'slot_sized_button',
+			});
+		const labelName = names.ns(`connector-label-${connectorSize}`);
+		if (!row[labelName])
+			row.add({
+				type: 'label',
+				name: labelName,
+				caption: '',
+			});
+	}
+
 	refreshModuleRoster(player);
 }
 
@@ -279,11 +379,27 @@ function refreshModuleRoster(player: LuaPlayer) {
 			: state.placed
 				? ['warpage.module-status-placed']
 				: ['warpage.module-status-unplaced'];
-		const isSelected = session?.moduleId === moduleId;
+		const isSelected = session?.kind === 'module' && session.moduleId === moduleId;
 		button.enabled = state.unlocked;
 		button.style = isSelected ? 'slot_sized_button_pressed' : 'slot_sized_button';
 		button.tooltip = ['warpage.module-button-tooltip', moduleId, statusText];
 		label.caption = moduleId;
+	}
+
+	const connectorSection = flow[names.connectorRosterSection];
+	if (!connectorSection) return;
+	for (const connectorSize of shipConnectorSizes) {
+		const row = connectorSection[names.ns(`connector-row-${connectorSize}`)];
+		if (!row) continue;
+		const button = row[names.connectorRosterButton(connectorSize)];
+		const label = row[names.ns(`connector-label-${connectorSize}`)];
+		if (!button || !label) continue;
+		const stock = storage.shipConnectorStock[connectorSize];
+		const isSelected = session?.kind === 'connector' && session.connectorSize === connectorSize;
+		button.enabled = stock.unlocked && stock.available > 0;
+		button.style = isSelected ? 'slot_sized_button_pressed' : 'slot_sized_button';
+		button.tooltip = ['warpage.connector-button-tooltip', connectorSize, stock.available, stock.total];
+		label.caption = ['warpage.connector-button-label', connectorSize, stock.available, stock.total];
 	}
 }
 
@@ -299,6 +415,7 @@ function startPlacementSession(player: LuaPlayer, moduleId: ShipModuleId) {
 	clearPlacementSession(player.index);
 	const mode = module.placed ? 'move' : 'place';
 	storage.shipPlacementByPlayer[player.index] = {
+		kind: 'module',
 		mode,
 		moduleId,
 		renderIds: [],
@@ -314,12 +431,53 @@ function startPlacementSession(player: LuaPlayer, moduleId: ShipModuleId) {
 	refreshPlacementSessionRenders(player, storage.shipPlacementByPlayer[player.index]!);
 }
 
+function startConnectorPlacementSession(player: LuaPlayer, connectorSize: ShipConnectorSize) {
+	ensureInitialShipLayout();
+	const stock = storage.shipConnectorStock[connectorSize];
+	if (!stock.unlocked) {
+		showFlyingText(player, player.position, ['warpage.connector-locked']);
+		return;
+	}
+	if (stock.available <= 0) {
+		showFlyingText(player, player.position, ['warpage.connector-none-available']);
+		return;
+	}
+
+	clearPlacementSession(player.index);
+	storage.shipPlacementByPlayer[player.index] = {
+		kind: 'connector',
+		connectorSize,
+		renderIds: [],
+	};
+	refreshModuleRoster(player);
+	if (!giveConnectorPlacementCarrier(player, connectorSize)) {
+		clearPlacementSession(player.index);
+		showFlyingText(player, player.position, ['warpage.module-placement-cursor-blocked']);
+		return;
+	}
+
+	showFlyingText(player, player.position, ['warpage.connector-placement-selected', connectorSize]);
+	refreshPlacementSessionRenders(player, storage.shipPlacementByPlayer[player.index]!);
+}
+
 function givePlacementCarrier(player: LuaPlayer, moduleId: ShipModuleId) {
 	if (!player.clear_cursor()) return false;
 	const cursor = player.cursor_stack;
 	if (!cursor) return false;
 	cursor.set_stack({
 		name: names.modulePlacementItem(moduleId),
+		count: 1,
+	});
+	player.cursor_stack_temporary = true;
+	return true;
+}
+
+function giveConnectorPlacementCarrier(player: LuaPlayer, connectorSize: ShipConnectorSize) {
+	if (!player.clear_cursor()) return false;
+	const cursor = player.cursor_stack;
+	if (!cursor) return false;
+	cursor.set_stack({
+		name: names.connectorPlacementItem(connectorSize),
 		count: 1,
 	});
 	player.cursor_stack_temporary = true;
@@ -338,16 +496,27 @@ function clearPlacementSession(playerIndex: number) {
 	}
 }
 
-function refreshPlacementSessionRenders(
-	player: LuaPlayer,
-	session: {
-		mode: 'move' | 'place';
-		moduleId: ShipModuleId;
-		renderIds: number[];
-	},
-) {
+function refreshPlacementSessionRenders(player: LuaPlayer, session: ShipPlacementSession) {
 	destroyRenderIds(session.renderIds);
 	session.renderIds = [];
+
+	if (session.kind === 'connector') {
+		const candidates = findAvailableConnectorPlacements(session.connectorSize);
+		for (const candidate of candidates) {
+			const bounds = placementBounds(candidate);
+			const candidateArea = rendering.draw_rectangle({
+				color: { r: 0.95, g: 0.7, b: 0.2, a: 0.18 },
+				filled: true,
+				left_top: { x: bounds.minX, y: bounds.minY },
+				right_bottom: { x: bounds.maxX + 1, y: bounds.maxY + 1 },
+				surface: player.surface,
+				players: [player.index],
+				draw_on_ground: true,
+			});
+			session.renderIds.push(candidateArea.id as number);
+		}
+		return;
+	}
 
 	if (session.mode === 'move') {
 		const module = storage.shipModules[session.moduleId];
@@ -370,15 +539,16 @@ function refreshPlacementSessionRenders(
 		if (!connector) continue;
 		if (connector.moduleId === session.moduleId && session.mode === 'move') continue;
 		const placement = {
+			size: connector.size,
 			topLeft: connector.topLeft,
 			orientation: connector.orientation,
-			tiles: connectorToTiles(connector.topLeft, connector.orientation),
+			tiles: connectorToTiles(connector.topLeft, connector.orientation, connector.size),
 		};
 		const outward = outwardVector(connector.side);
 		const center =
 			connector.orientation === 'horizontal'
-				? { x: connector.topLeft.x + 1, y: connector.topLeft.y + 0.5 }
-				: { x: connector.topLeft.x + 0.5, y: connector.topLeft.y + 1 };
+				? { x: connector.topLeft.x + connector.size / 2, y: connector.topLeft.y + 0.5 }
+				: { x: connector.topLeft.x + 0.5, y: connector.topLeft.y + connector.size / 2 };
 
 		const marker = rendering.draw_rectangle({
 			color: { r: 0.95, g: 0.65, b: 0.2, a: 0.9 },
@@ -394,28 +564,36 @@ function refreshPlacementSessionRenders(
 		const wantedSide = oppositeSide(connector.side);
 		let previewPlacement: ShipConnectorPlacement | undefined;
 		let previewIsExistingConnector = false;
+		let previewModuleScore: number | undefined;
 		for (let step = 1; step <= bridgeMaxRange; step += 1) {
 			const candidate = translateConnectorPlacement(placement, outward, step);
-			const existing = findConnectorAtPlacement(candidate);
-			if (existing) {
-				if (existing.side === wantedSide) {
+			const overlapping = findConnectorOverlappingPlacement(candidate);
+			if (overlapping) {
+				if (connectorMatchesPlacement(overlapping.connector, candidate) && overlapping.connector.side === wantedSide) {
 					previewPlacement = candidate;
 					previewIsExistingConnector = true;
 				}
-				break;
+				if (connectorMatchesPlacement(overlapping.connector, candidate)) break;
+				continue;
 			}
-			const owner = findEdgeOwnerForConnector(candidate, wantedSide, connector.moduleId);
+			const owner = findEdgeOwnerForConnector(candidate, connector.size, wantedSide, connector.moduleId);
 			if (owner) {
 				previewPlacement = candidate;
 				break;
 			}
+			if (connectorPlacementOverlapsAny(candidate)) continue;
+			const moduleScore = moduleBridgeCandidateScore(player, session, candidate, wantedSide);
+			if (moduleScore === undefined) continue;
+			if (previewModuleScore !== undefined && moduleScore >= previewModuleScore) continue;
+			previewModuleScore = moduleScore;
+			previewPlacement = candidate;
 		}
 		if (!previewPlacement) continue;
 
 		const targetCenter =
 			previewPlacement.orientation === 'horizontal'
-				? { x: previewPlacement.topLeft.x + 1, y: previewPlacement.topLeft.y + 0.5 }
-				: { x: previewPlacement.topLeft.x + 0.5, y: previewPlacement.topLeft.y + 1 };
+				? { x: previewPlacement.topLeft.x + previewPlacement.size / 2, y: previewPlacement.topLeft.y + 0.5 }
+				: { x: previewPlacement.topLeft.x + 0.5, y: previewPlacement.topLeft.y + previewPlacement.size / 2 };
 		const previewLine = rendering.draw_line({
 			from: center,
 			to: targetCenter,
@@ -429,17 +607,12 @@ function refreshPlacementSessionRenders(
 		});
 		session.renderIds.push(previewLine.id as number);
 
-		const tileA = previewPlacement.tiles[0];
-		const tileB = previewPlacement.tiles[1];
-		const minX = tileA.x < tileB.x ? tileA.x : tileB.x;
-		const minY = tileA.y < tileB.y ? tileA.y : tileB.y;
-		const maxX = tileA.x > tileB.x ? tileA.x : tileB.x;
-		const maxY = tileA.y > tileB.y ? tileA.y : tileB.y;
+		const bounds = placementBounds(previewPlacement);
 		const candidateArea = rendering.draw_rectangle({
 			color: previewIsExistingConnector ? { r: 0.15, g: 0.95, b: 0.3, a: 0.2 } : { r: 0.25, g: 0.8, b: 1, a: 0.18 },
 			filled: true,
-			left_top: { x: minX, y: minY },
-			right_bottom: { x: maxX + 1, y: maxY + 1 },
+			left_top: { x: bounds.minX, y: bounds.minY },
+			right_bottom: { x: bounds.maxX + 1, y: bounds.maxY + 1 },
 			surface: player.surface,
 			players: [player.index],
 			draw_on_ground: true,
@@ -466,7 +639,7 @@ function handlePlacementCarrierBuilt(entity: LuaEntity, playerIndex: number | un
 	const player = game.players[playerIndex];
 	if (!player) return;
 	const session = storage.shipPlacementByPlayer[playerIndex];
-	if (!session || session.moduleId !== moduleId) return;
+	if (!session || session.kind !== 'module' || session.moduleId !== moduleId) return;
 
 	const result = placeOrMoveModule(moduleId, targetCenter, targetRotation, surface);
 	if (!result.ok) {
@@ -478,6 +651,48 @@ function handlePlacementCarrierBuilt(entity: LuaEntity, playerIndex: number | un
 
 	clearPlacementSession(player.index);
 	recomputeBridges(surface);
+	refreshAllShipModuleRosters();
+}
+
+function handleConnectorPlacementCarrierBuilt(
+	entity: LuaEntity,
+	connectorSize: ShipConnectorSize,
+	playerIndex: number | undefined,
+) {
+	const surface = entity.surface;
+	const placement = readConnectorPlacement(entity, connectorSize);
+	entity.destroy();
+	if (playerIndex === undefined) return;
+	const player = game.players[playerIndex];
+	if (!player) return;
+	const session = storage.shipPlacementByPlayer[playerIndex];
+	if (!session || session.kind !== 'connector' || session.connectorSize !== connectorSize) return;
+
+	const result = placeConnector(connectorSize, placement, surface, playerIndex);
+	if (!result.ok) {
+		showFlyingText(
+			player,
+			connectorEntityPosition(placement.topLeft, placement.orientation, connectorSize),
+			result.message,
+		);
+		const stock = storage.shipConnectorStock[connectorSize];
+		if (stock.available > 0) giveConnectorPlacementCarrier(player, connectorSize);
+		refreshPlacementSessionRenders(player, session);
+		return;
+	}
+
+	const stock = storage.shipConnectorStock[connectorSize];
+	if (stock.available <= 0) {
+		clearPlacementSession(player.index);
+		refreshAllShipModuleRosters();
+		return;
+	}
+	if (!giveConnectorPlacementCarrier(player, connectorSize)) {
+		clearPlacementSession(player.index);
+		showFlyingText(player, player.position, ['warpage.module-placement-cursor-blocked']);
+		return;
+	}
+	refreshPlacementSessionRenders(player, session);
 	refreshAllShipModuleRosters();
 }
 
@@ -554,7 +769,7 @@ function moveModule(
 		const sourceEntities = entitiesInsideTileSet(surface, sourceTileKeys);
 		for (const entity of sourceEntities) {
 			if (entity.type === 'character') continue;
-			if (entity.name === names.connector) continue;
+			if (connectorSizeFromEntityName(entity.name)) continue;
 			rollback();
 			return { ok: false, message: ['warpage.module-move-rotate-blocked'] };
 		}
@@ -635,6 +850,7 @@ function snapshotModuleConnectors(moduleId: ShipModuleId) {
 			if (!connector) return;
 			return {
 				orientation: connector.orientation,
+				size: connector.size,
 				side: connector.side,
 				topLeft: {
 					x: connector.topLeft.x,
@@ -644,6 +860,7 @@ function snapshotModuleConnectors(moduleId: ShipModuleId) {
 		})
 		.filter(connector => connector !== undefined) as Array<{
 		orientation: 'vertical' | 'horizontal';
+		size: ShipConnectorSize;
 		side: 'north' | 'east' | 'south' | 'west';
 		topLeft: MapPosition;
 	}>;
@@ -653,7 +870,7 @@ function removeModuleConnectors(moduleId: ShipModuleId) {
 	const module = storage.shipModules[moduleId];
 	for (const unitNumber of module.connectorUnitNumbers) {
 		const connectorEntity = game.get_entity_by_unit_number(unitNumber as any);
-		if (!connectorEntity || connectorEntity.name !== names.connector) continue;
+		if (!connectorEntity || !connectorSizeFromEntityName(connectorEntity.name)) continue;
 		connectorEntity.destroy();
 		delete storage.shipConnectors[`${unitNumber}`];
 	}
@@ -665,6 +882,7 @@ function restoreModuleConnectors(
 	moduleId: ShipModuleId,
 	connectors: Array<{
 		orientation: 'vertical' | 'horizontal';
+		size: ShipConnectorSize;
 		side: 'north' | 'east' | 'south' | 'west';
 		topLeft: MapPosition;
 	}>,
@@ -678,17 +896,18 @@ function restoreModuleConnectors(
 	module.connectorUnitNumbers = [];
 	for (const connector of connectors) {
 		const created = createEntity(surface, {
-			name: names.connector,
-			position: connectorEntityPosition(connector.topLeft, connector.orientation),
+			name: names.connectorEntity(connector.size),
+			position: connectorEntityPosition(connector.topLeft, connector.orientation, connector.size),
 			direction: connectorDirection(connector.orientation),
 		});
 		registerConnectorEntity(
 			created,
 			moduleId,
 			{
+				size: connector.size,
 				topLeft: connector.topLeft,
 				orientation: connector.orientation,
-				tiles: connectorToTiles(connector.topLeft, connector.orientation),
+				tiles: connectorToTiles(connector.topLeft, connector.orientation, connector.size),
 			},
 			connector.side,
 		);
@@ -699,6 +918,7 @@ function recreateModuleConnectorsWithTransform(
 	moduleId: ShipModuleId,
 	connectors: Array<{
 		orientation: 'vertical' | 'horizontal';
+		size: ShipConnectorSize;
 		side: 'north' | 'east' | 'south' | 'west';
 		topLeft: MapPosition;
 	}>,
@@ -716,15 +936,20 @@ function recreateModuleConnectorsWithTransform(
 			x: connector.topLeft.x - sourceCenter.x,
 			y: connector.topLeft.y - sourceCenter.y,
 		};
-		const relativeConnector = rotateConnectorTopLeftAroundCenter(relativeTopLeft, connector.orientation, deltaRotation);
+		const relativeConnector = rotateConnectorTopLeftAroundCenter(
+			relativeTopLeft,
+			connector.orientation,
+			deltaRotation,
+			connector.size,
+		);
 		const worldTopLeft = {
 			x: destinationCenter.x + relativeConnector.topLeft.x,
 			y: destinationCenter.y + relativeConnector.topLeft.y,
 		};
 		const side = rotateSide(connector.side, deltaRotation);
 		const created = createEntity(surface, {
-			name: names.connector,
-			position: connectorEntityPosition(worldTopLeft, relativeConnector.orientation),
+			name: names.connectorEntity(connector.size),
+			position: connectorEntityPosition(worldTopLeft, relativeConnector.orientation, connector.size),
 			direction: connectorDirection(relativeConnector.orientation),
 		});
 		const unitNumber = created.unit_number;
@@ -734,9 +959,10 @@ function recreateModuleConnectorsWithTransform(
 			created,
 			moduleId,
 			{
+				size: connector.size,
 				topLeft: worldTopLeft,
 				orientation: relativeConnector.orientation,
-				tiles: connectorToTiles(worldTopLeft, relativeConnector.orientation),
+				tiles: connectorToTiles(worldTopLeft, relativeConnector.orientation, connector.size),
 			},
 			side,
 		);
@@ -850,35 +1076,71 @@ function restoreTileNames(surface: LuaSurface, snapshot: Record<string, string>)
 function removeConnectorsByUnitNumber(unitNumbers: number[]) {
 	for (const unitNumber of unitNumbers) {
 		const connector = game.get_entity_by_unit_number(unitNumber as any);
-		if (!connector || connector.name !== names.connector) continue;
+		if (!connector || !connectorSizeFromEntityName(connector.name)) continue;
 		connector.destroy();
 		delete storage.shipConnectors[`${unitNumber}`];
 	}
 }
 
-function handleConnectorBuilt(entity: LuaEntity, playerIndex?: number) {
+function handleConnectorBuilt(entity: LuaEntity, connectorSize: ShipConnectorSize, playerIndex?: number) {
 	ensureInitialShipLayout();
-	const placement = readConnectorPlacement(entity);
-	const owner = findConnectorOwner(placement);
+	const placement = readConnectorPlacement(entity, connectorSize);
+	const stock = storage.shipConnectorStock[connectorSize];
+	if (stock.available <= 0) return rejectConnector(entity, playerIndex);
+	const owner = findConnectorOwner(placement, connectorSize);
 	if (!owner) return rejectConnector(entity, playerIndex);
-	if (findConnectorAtPlacement(placement)) return rejectConnector(entity, playerIndex);
+	if (connectorPlacementOverlapsAny(placement)) return rejectConnector(entity, playerIndex);
 
 	registerConnectorEntity(entity, owner.moduleId, placement, owner.side);
+	stock.available -= 1;
 	recomputeBridges(entity.surface);
-	for (const player of game.connected_players) {
-		const session = storage.shipPlacementByPlayer[player.index];
-		if (!session) continue;
-		if (session.moduleId !== owner.moduleId) continue;
-		refreshPlacementSessionRenders(player, session);
-	}
+	refreshAllShipModuleRosters();
+	refreshActivePlacementRenders();
 }
 
-function findConnectorOwner(placement: ShipConnectorPlacement) {
+function placeConnector(
+	connectorSize: ShipConnectorSize,
+	placement: ShipConnectorPlacement,
+	surface: LuaSurface,
+	playerIndex?: number,
+): PlacementResult {
+	const stock = storage.shipConnectorStock[connectorSize];
+	if (!stock.unlocked) return { ok: false, message: ['warpage.connector-locked'] };
+	if (stock.available <= 0) return { ok: false, message: ['warpage.connector-none-available'] };
+	const owner = findConnectorOwner(placement, connectorSize);
+	if (!owner) return { ok: false, message: ['warpage.connector-edge-error'] };
+	if (connectorPlacementOverlapsAny(placement)) return { ok: false, message: ['warpage.connector-edge-error'] };
+
+	const created = createEntity(surface, {
+		name: names.connectorEntity(connectorSize),
+		position: connectorEntityPosition(placement.topLeft, placement.orientation, connectorSize),
+		direction: connectorDirection(placement.orientation),
+	});
+	registerConnectorEntity(created, owner.moduleId, placement, owner.side);
+	stock.available -= 1;
+	recomputeBridges(surface);
+	refreshAllShipModuleRosters();
+	refreshActivePlacementRenders();
+	if (playerIndex !== undefined) {
+		const player = game.players[playerIndex];
+		if (player) showFlyingText(player, created.position, ['warpage.connector-placed', connectorSize]);
+	}
+	return { ok: true };
+}
+
+function findConnectorOwner(placement: ShipConnectorPlacement, connectorSize: ShipConnectorSize) {
 	let matched: { moduleId: ShipModuleId; side: ShipConnectorSide } | undefined;
 	for (const moduleId of shipModuleIds) {
 		const module = storage.shipModules[moduleId];
 		if (!module.placed) continue;
-		const side = connectorPlacementEdgeSide(moduleId, module.center, module.rotation, placement, placement.sideHint);
+		const side = connectorPlacementEdgeSide(
+			moduleId,
+			module.center,
+			module.rotation,
+			placement,
+			connectorSize,
+			placement.sideHint,
+		);
 		if (!side) continue;
 		if (connectorPlacementOverlapsModule(moduleId, placement)) continue;
 		if (matched) return;
@@ -893,7 +1155,7 @@ function connectorPlacementOverlapsModule(moduleId: ShipModuleId, placement: Shi
 	for (const unitNumber of module.connectorUnitNumbers) {
 		const connector = storage.shipConnectors[`${unitNumber}`];
 		if (!connector) continue;
-		for (const tile of connectorToTiles(connector.topLeft, connector.orientation))
+		for (const tile of connectorToTiles(connector.topLeft, connector.orientation, connector.size))
 			occupied[tileKey(tile.x, tile.y)] = true;
 	}
 	for (const tile of placement.tiles) if (occupied[tileKey(tile.x, tile.y)]) return true;
@@ -903,11 +1165,44 @@ function connectorPlacementOverlapsModule(moduleId: ShipModuleId, placement: Shi
 function findConnectorAtPlacement(placement: ShipConnectorPlacement) {
 	for (const connector of Object.values(storage.shipConnectors)) {
 		if (!connector) continue;
-		if (connector.orientation !== placement.orientation) continue;
-		if (connector.topLeft.x !== placement.topLeft.x) continue;
-		if (connector.topLeft.y !== placement.topLeft.y) continue;
+		if (!connectorMatchesPlacement(connector, placement)) continue;
 		return connector;
 	}
+}
+
+function connectorMatchesPlacement(
+	connector: {
+		moduleId: ShipModuleId;
+		orientation: 'vertical' | 'horizontal';
+		size: ShipConnectorSize;
+		side: 'north' | 'east' | 'south' | 'west';
+		topLeft: MapPosition;
+	},
+	placement: ShipConnectorPlacement,
+) {
+	if (connector.size !== placement.size) return false;
+	if (connector.orientation !== placement.orientation) return false;
+	if (connector.topLeft.x !== placement.topLeft.x) return false;
+	if (connector.topLeft.y !== placement.topLeft.y) return false;
+	return true;
+}
+
+function findConnectorOverlappingPlacement(placement: ShipConnectorPlacement) {
+	for (const [unitKey, connector] of Object.entries(storage.shipConnectors)) {
+		if (!connector) continue;
+		const tiles = connectorToTiles(connector.topLeft, connector.orientation, connector.size);
+		for (const tile of tiles)
+			for (const candidateTile of placement.tiles)
+				if (tile.x === candidateTile.x && tile.y === candidateTile.y)
+					return {
+						unitNumber: Number(unitKey),
+						connector,
+					};
+	}
+}
+
+function connectorPlacementOverlapsAny(placement: ShipConnectorPlacement) {
+	return findConnectorOverlappingPlacement(placement) !== undefined;
 }
 
 function registerConnectorEntity(
@@ -923,6 +1218,7 @@ function registerConnectorEntity(
 	storage.shipConnectors[unitKey] = {
 		moduleId,
 		orientation: placement.orientation,
+		size: placement.size,
 		side,
 		topLeft: {
 			x: placement.topLeft.x,
@@ -945,20 +1241,9 @@ function rejectConnector(entity: LuaEntity, playerIndex?: number) {
 		}
 
 	entity.destroy();
-	entity.surface.spill_item_stack({
-		allow_belts: false,
-		drop_full_stack: false,
-		enable_looted: true,
-		force: entity.force,
-		position: entity.position,
-		stack: {
-			count: 1,
-			name: names.connector,
-		},
-	});
 }
 
-function removeConnectorFromLayout(entity: LuaEntity) {
+function removeConnectorFromLayout(entity: LuaEntity, mode: 'refund' | 'destroy') {
 	const unitNumber = entity.unit_number;
 	if (!unitNumber) return;
 
@@ -967,17 +1252,22 @@ function removeConnectorFromLayout(entity: LuaEntity) {
 	const module = storage.shipModules[connector.moduleId];
 	module.connectorUnitNumbers = module.connectorUnitNumbers.filter(value => value !== unitNumber);
 	delete storage.shipConnectors[`${unitNumber}`];
+	if (mode === 'refund') {
+		const stock = storage.shipConnectorStock[connector.size];
+		stock.available = math.min(stock.total, stock.available + 1);
+		refreshAllShipModuleRosters();
+	}
 	recomputeBridges(entity.surface);
+	refreshActivePlacementRenders();
 }
 
 function ensureModuleDefaultConnectors(moduleId: ShipModuleId, surface: LuaSurface) {
 	const module = storage.shipModules[moduleId];
 	for (const connector of moduleDefaultConnectorPlacements(moduleId, module.center, module.rotation)) {
-		const existing = findConnectorAtPlacement(connector);
-		if (existing) continue;
+		if (connectorPlacementOverlapsAny(connector)) continue;
 		const created = createEntity(surface, {
-			name: names.connector,
-			position: connectorEntityPosition(connector.topLeft, connector.orientation),
+			name: names.connectorEntity(connector.size),
+			position: connectorEntityPosition(connector.topLeft, connector.orientation, connector.size),
 			direction: connectorDirection(connector.orientation),
 		});
 		registerConnectorEntity(created, moduleId, connector, connector.side);
@@ -1053,44 +1343,75 @@ function recomputeBridges(surface: LuaSurface) {
 	if (setWrites.length > 0) surface.set_tiles(setWrites, true, false);
 
 	storage.shipBridges = newBridges;
+	refreshAllShipModuleRosters();
+	refreshActivePlacementRenders();
 }
 
 function pruneInvalidConnectors() {
+	normalizeConnectorEntries();
 	for (const [unitKey, connector] of Object.entries(storage.shipConnectors)) {
 		const unitNumber = Number(unitKey);
 		const entity = game.get_entity_by_unit_number(unitNumber as any);
-		if (entity && entity.name === names.connector) continue;
+		if (entity && connectorSizeFromEntityName(entity.name)) continue;
 		const module = storage.shipModules[connector.moduleId];
 		module.connectorUnitNumbers = module.connectorUnitNumbers.filter(value => value !== unitNumber);
 		delete storage.shipConnectors[unitKey];
 	}
+	const occupied: Record<string, true | undefined> = {};
+	for (const [unitKey, connector] of Object.entries(storage.shipConnectors)) {
+		if (!connector) continue;
+		const tiles = connectorToTiles(connector.topLeft, connector.orientation, connector.size);
+		let overlaps = false;
+		for (const tile of tiles)
+			if (occupied[tileKey(tile.x, tile.y)]) {
+				overlaps = true;
+				break;
+			}
+		if (!overlaps) {
+			for (const tile of tiles) occupied[tileKey(tile.x, tile.y)] = true;
+			continue;
+		}
+		const unitNumber = Number(unitKey);
+		const entity = game.get_entity_by_unit_number(unitNumber as any);
+		if (entity && connectorSizeFromEntityName(entity.name)) entity.destroy();
+		const module = storage.shipModules[connector.moduleId];
+		module.connectorUnitNumbers = module.connectorUnitNumbers.filter(value => value !== unitNumber);
+		delete storage.shipConnectors[unitKey];
+	}
+	reconcileConnectorStock();
 }
 
 function autoCreateEdgeConnectors(surface: LuaSurface) {
 	const newConnectors: Array<{
 		moduleId: ShipModuleId;
 		placement: ShipConnectorPlacement;
+		size: ShipConnectorSize;
 		side: ShipConnectorSide;
 	}> = [];
 	for (const connector of Object.values(storage.shipConnectors)) {
 		if (!connector) continue;
 		const sourcePlacement = {
+			size: connector.size,
 			topLeft: connector.topLeft,
 			orientation: connector.orientation,
-			tiles: connectorToTiles(connector.topLeft, connector.orientation),
+			tiles: connectorToTiles(connector.topLeft, connector.orientation, connector.size),
 		};
 		const outward = outwardVector(connector.side);
 		const wantedSide = oppositeSide(connector.side);
 		for (let distance = 1; distance <= bridgeMaxRange; distance += 1) {
 			const candidate = translateConnectorPlacement(sourcePlacement, outward, distance);
-			const existing = findConnectorAtPlacement(candidate);
-			if (existing) break;
+			const overlapping = findConnectorOverlappingPlacement(candidate);
+			if (overlapping) {
+				if (connectorMatchesPlacement(overlapping.connector, candidate)) break;
+				continue;
+			}
 
-			const owner = findEdgeOwnerForConnector(candidate, wantedSide, connector.moduleId);
+			const owner = findEdgeOwnerForConnector(candidate, connector.size, wantedSide, connector.moduleId);
 			if (!owner) continue;
 			newConnectors.push({
 				moduleId: owner.moduleId,
 				placement: candidate,
+				size: connector.size,
 				side: owner.side,
 			});
 			break;
@@ -1098,18 +1419,22 @@ function autoCreateEdgeConnectors(surface: LuaSurface) {
 	}
 
 	for (const connector of newConnectors) {
-		if (findConnectorAtPlacement(connector.placement)) continue;
+		if (connectorPlacementOverlapsAny(connector.placement)) continue;
+		const stock = storage.shipConnectorStock[connector.size];
+		if (stock.available <= 0) continue;
 		const created = createEntity(surface, {
-			name: names.connector,
-			position: connectorEntityPosition(connector.placement.topLeft, connector.placement.orientation),
+			name: names.connectorEntity(connector.size),
+			position: connectorEntityPosition(connector.placement.topLeft, connector.placement.orientation, connector.size),
 			direction: connectorDirection(connector.placement.orientation),
 		});
 		registerConnectorEntity(created, connector.moduleId, connector.placement, connector.side);
+		stock.available -= 1;
 	}
 }
 
 function findEdgeOwnerForConnector(
 	placement: ShipConnectorPlacement,
+	size: ShipConnectorSize,
 	side: ShipConnectorSide,
 	excludedModuleId: ShipModuleId,
 ): { moduleId: ShipModuleId; side: ShipConnectorSide } | undefined {
@@ -1117,7 +1442,7 @@ function findEdgeOwnerForConnector(
 		if (moduleId === excludedModuleId) continue;
 		const module = storage.shipModules[moduleId];
 		if (!module.placed) continue;
-		const edge = connectorPlacementEdgeSide(moduleId, module.center, module.rotation, placement, side);
+		const edge = connectorPlacementEdgeSide(moduleId, module.center, module.rotation, placement, size, side);
 		if (!edge || edge !== side) continue;
 		if (connectorPlacementOverlapsModule(moduleId, placement)) continue;
 		return {
@@ -1130,13 +1455,15 @@ function findEdgeOwnerForConnector(
 function findBridgeTarget(source: {
 	moduleId: ShipModuleId;
 	orientation: 'vertical' | 'horizontal';
+	size: ShipConnectorSize;
 	side: 'north' | 'east' | 'south' | 'west';
 	topLeft: MapPosition;
 }) {
 	const sourcePlacement = {
+		size: source.size,
 		topLeft: source.topLeft,
 		orientation: source.orientation,
-		tiles: connectorToTiles(source.topLeft, source.orientation),
+		tiles: connectorToTiles(source.topLeft, source.orientation, source.size),
 	};
 	const outward = outwardVector(source.side);
 	const wantedSide = oppositeSide(source.side);
@@ -1144,6 +1471,7 @@ function findBridgeTarget(source: {
 		const candidate = translateConnectorPlacement(sourcePlacement, outward, distance);
 		const target = findConnectorAtPlacement(candidate);
 		if (!target) continue;
+		if (target.size !== source.size) continue;
 		if (target.side !== wantedSide) continue;
 		const targetUnitNumber = findConnectorUnitNumber(target);
 		if (!targetUnitNumber) continue;
@@ -1157,6 +1485,7 @@ function findBridgeTarget(source: {
 function findConnectorUnitNumber(connector: {
 	moduleId: ShipModuleId;
 	orientation: 'vertical' | 'horizontal';
+	size: ShipConnectorSize;
 	side: 'north' | 'east' | 'south' | 'west';
 	topLeft: MapPosition;
 }) {
@@ -1164,6 +1493,7 @@ function findConnectorUnitNumber(connector: {
 		if (!entry) continue;
 		if (entry.moduleId !== connector.moduleId) continue;
 		if (entry.orientation !== connector.orientation) continue;
+		if (entry.size !== connector.size) continue;
 		if (entry.side !== connector.side) continue;
 		if (entry.topLeft.x !== connector.topLeft.x || entry.topLeft.y !== connector.topLeft.y) continue;
 		return Number(unitKey);
@@ -1174,6 +1504,7 @@ function bridgeTilesBetween(
 	source: {
 		moduleId: ShipModuleId;
 		orientation: 'vertical' | 'horizontal';
+		size: ShipConnectorSize;
 		side: 'north' | 'east' | 'south' | 'west';
 		topLeft: MapPosition;
 	},
@@ -1182,15 +1513,17 @@ function bridgeTilesBetween(
 		record: {
 			moduleId: ShipModuleId;
 			orientation: 'vertical' | 'horizontal';
+			size: ShipConnectorSize;
 			side: 'north' | 'east' | 'south' | 'west';
 			topLeft: MapPosition;
 		};
 	},
 ) {
 	const sourcePlacement = {
+		size: source.size,
 		topLeft: source.topLeft,
 		orientation: source.orientation,
-		tiles: connectorToTiles(source.topLeft, source.orientation),
+		tiles: connectorToTiles(source.topLeft, source.orientation, source.size),
 	};
 	const outward = outwardVector(source.side);
 	const distance =
@@ -1210,6 +1543,101 @@ function setTilesToShip(surface: LuaSurface, tiles: MapPosition[]) {
 		position: tile,
 	}));
 	surface.set_tiles(writes, true, false);
+}
+
+function placementBounds(placement: ShipConnectorPlacement) {
+	let minX = placement.tiles[0]!.x;
+	let maxX = placement.tiles[0]!.x;
+	let minY = placement.tiles[0]!.y;
+	let maxY = placement.tiles[0]!.y;
+	for (const tile of placement.tiles) {
+		if (tile.x < minX) minX = tile.x;
+		if (tile.x > maxX) maxX = tile.x;
+		if (tile.y < minY) minY = tile.y;
+		if (tile.y > maxY) maxY = tile.y;
+	}
+	return { minX, minY, maxX, maxY };
+}
+
+function normalizeConnectorEntries() {
+	for (const [unitKey, connector] of Object.entries(storage.shipConnectors)) {
+		if (!connector) continue;
+		if (connector.size === 2 || connector.size === 3 || connector.size === 4) continue;
+		const unitNumber = Number(unitKey);
+		const entity = game.get_entity_by_unit_number(unitNumber as any);
+		const inferredSize = connectorSizeFromEntityName(entity?.name ?? '') ?? 2;
+		(connector as ModStorage['shipConnectors'][string]).size = inferredSize;
+	}
+}
+
+function reconcileConnectorStock() {
+	const usedBySize: Record<ShipConnectorSize, number> = {
+		2: 0,
+		3: 0,
+		4: 0,
+	};
+	for (const connector of Object.values(storage.shipConnectors)) {
+		if (!connector) continue;
+		if (connector.size === 2 || connector.size === 3 || connector.size === 4) usedBySize[connector.size] += 1;
+	}
+	for (const connectorSize of shipConnectorSizes) {
+		const stock = storage.shipConnectorStock[connectorSize];
+		stock.available = math.max(0, stock.total - usedBySize[connectorSize]);
+	}
+}
+
+function moduleBridgeCandidateScore(
+	player: LuaPlayer,
+	session: ModulePlacementSession,
+	candidate: ShipConnectorPlacement,
+	wantedSide: ShipConnectorSide,
+) {
+	let bestDistanceSq: number | undefined;
+	for (const rotation of shipRotations) {
+		const relativeCandidates = moduleConnectorCandidates(session.moduleId, { x: 0, y: 0 }, rotation, candidate.size);
+		for (const relativeCandidate of relativeCandidates) {
+			if (relativeCandidate.orientation !== candidate.orientation) continue;
+			if (relativeCandidate.side !== wantedSide) continue;
+			const center = {
+				x: candidate.topLeft.x - relativeCandidate.topLeft.x,
+				y: candidate.topLeft.y - relativeCandidate.topLeft.y,
+			};
+			const validation = validateDestination(
+				session.moduleId,
+				center,
+				rotation,
+				player.surface,
+				session.mode === 'move' ? session.moduleId : undefined,
+			);
+			if (!validation.ok) continue;
+			const distanceSq = (center.x - player.position.x) ** 2 + (center.y - player.position.y) ** 2;
+			if (bestDistanceSq === undefined || distanceSq < bestDistanceSq) bestDistanceSq = distanceSq;
+		}
+	}
+	return bestDistanceSq;
+}
+
+function findAvailableConnectorPlacements(connectorSize: ShipConnectorSize) {
+	const deduped: Record<string, ShipConnectorPlacement | undefined> = {};
+	for (const moduleId of shipModuleIds) {
+		const module = storage.shipModules[moduleId];
+		if (!module.placed) continue;
+		const candidates = moduleConnectorCandidates(moduleId, module.center, module.rotation, connectorSize);
+		for (const candidate of candidates) {
+			if (connectorPlacementOverlapsAny(candidate)) continue;
+			const key = `${candidate.topLeft.x},${candidate.topLeft.y},${candidate.orientation},${candidate.size}`;
+			if (!deduped[key]) deduped[key] = candidate;
+		}
+	}
+	return Object.values(deduped).filter(value => value !== undefined) as ShipConnectorPlacement[];
+}
+
+function refreshActivePlacementRenders() {
+	for (const player of game.connected_players) {
+		const session = storage.shipPlacementByPlayer[player.index];
+		if (!session) continue;
+		refreshPlacementSessionRenders(player, session);
+	}
 }
 
 function showFlyingText(player: LuaPlayer, position: MapPosition, text: LocalisedString) {
@@ -1245,6 +1673,21 @@ function moduleIdFromPlacementEntityName(name: string) {
 
 function moduleIdFromPlacementItemName(name: string) {
 	for (const moduleId of shipModuleIds) if (name === names.modulePlacementItem(moduleId)) return moduleId;
+}
+
+function connectorSizeFromEntityName(name: string) {
+	for (const connectorSize of shipConnectorSizes)
+		if (name === names.connectorEntity(connectorSize)) return connectorSize;
+}
+
+function connectorSizeFromPlacementEntityName(name: string) {
+	for (const connectorSize of shipConnectorSizes)
+		if (name === names.connectorPlacementEntity(connectorSize)) return connectorSize;
+}
+
+function connectorSizeFromPlacementItemName(name: string) {
+	for (const connectorSize of shipConnectorSizes)
+		if (name === names.connectorPlacementItem(connectorSize)) return connectorSize;
 }
 
 registerGlobal('ensureInitialShipLayout', ensureInitialShipLayout);

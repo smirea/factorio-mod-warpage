@@ -1,5 +1,5 @@
 import type { LuaEntity, MapPosition } from 'factorio:runtime';
-import { ShipModuleId } from './constants';
+import { ShipConnectorSize, ShipModuleId } from './constants';
 import { GeneratedShipRotation, shipGeneratedGeometry } from './generated';
 
 export type ShipRotation =
@@ -14,9 +14,10 @@ export type ShipTilePosition = {
 	y: number;
 };
 export type ShipConnectorPlacement = {
+	size: ShipConnectorSize;
 	topLeft: ShipTilePosition;
 	orientation: ShipConnectorOrientation;
-	tiles: [ShipTilePosition, ShipTilePosition];
+	tiles: ShipTilePosition[];
 	sideHint?: ShipConnectorSide;
 };
 export type ShipConnectorPlacementWithSide = ShipConnectorPlacement & {
@@ -31,7 +32,8 @@ type RotatedModuleGeometry = {
 		minY: number;
 		maxY: number;
 	};
-	connectorCandidateSides: Record<string, ShipConnectorSide[] | undefined>;
+	connectorCandidateSidesBySize: Record<ShipConnectorSize, Record<string, ShipConnectorSide[] | undefined>>;
+	connectorCandidatesBySize: Record<ShipConnectorSize, ShipConnectorPlacementWithSide[]>;
 	defaultConnectors: ShipConnectorPlacementWithSide[];
 	tiles: ShipTilePosition[];
 	tileKeys: Record<string, true | undefined>;
@@ -56,30 +58,34 @@ export function tileKey(x: number, y: number) {
 	return `${x},${y}`;
 }
 
-export function connectorToTiles(topLeft: ShipTilePosition, orientation: ShipConnectorOrientation) {
-	if (orientation === 'horizontal')
-		return [
-			{ x: topLeft.x, y: topLeft.y },
-			{ x: topLeft.x + 1, y: topLeft.y },
-		] as [ShipTilePosition, ShipTilePosition];
-
-	return [
-		{ x: topLeft.x, y: topLeft.y },
-		{ x: topLeft.x, y: topLeft.y + 1 },
-	] as [ShipTilePosition, ShipTilePosition];
+export function connectorToTiles(
+	topLeft: ShipTilePosition,
+	orientation: ShipConnectorOrientation,
+	size: ShipConnectorSize,
+) {
+	const tiles: ShipTilePosition[] = [];
+	for (let index = 0; index < size; index += 1)
+		tiles.push(
+			orientation === 'horizontal' ? { x: topLeft.x + index, y: topLeft.y } : { x: topLeft.x, y: topLeft.y + index },
+		);
+	return tiles;
 }
 
 export function connectorDirection(orientation: ShipConnectorOrientation) {
 	return orientation === 'horizontal' ? defines.direction.north : defines.direction.east;
 }
 
-export function connectorEntityPosition(topLeft: ShipTilePosition, orientation: ShipConnectorOrientation) {
+export function connectorEntityPosition(
+	topLeft: ShipTilePosition,
+	orientation: ShipConnectorOrientation,
+	size: ShipConnectorSize,
+) {
 	return orientation === 'horizontal'
-		? { x: topLeft.x + 1, y: topLeft.y + 0.5 }
-		: { x: topLeft.x + 0.5, y: topLeft.y + 1 };
+		? { x: topLeft.x + size / 2, y: topLeft.y + 0.5 }
+		: { x: topLeft.x + 0.5, y: topLeft.y + size / 2 };
 }
 
-export function readConnectorPlacement(entity: LuaEntity): ShipConnectorPlacement {
+export function readConnectorPlacement(entity: LuaEntity, size: ShipConnectorSize): ShipConnectorPlacement {
 	const orientation: ShipConnectorOrientation =
 		entity.direction === defines.direction.east || entity.direction === defines.direction.west
 			? 'vertical'
@@ -87,18 +93,19 @@ export function readConnectorPlacement(entity: LuaEntity): ShipConnectorPlacemen
 	const topLeft =
 		orientation === 'horizontal'
 			? {
-					x: math.floor(entity.position.x - 1 + 0.001),
+					x: math.floor(entity.position.x - size / 2 + 0.001),
 					y: math.floor(entity.position.y - 0.5 + 0.001),
 				}
 			: {
 					x: math.floor(entity.position.x - 0.5 + 0.001),
-					y: math.floor(entity.position.y - 1 + 0.001),
+					y: math.floor(entity.position.y - size / 2 + 0.001),
 				};
 
 	return {
+		size,
 		topLeft,
 		orientation,
-		tiles: connectorToTiles(topLeft, orientation),
+		tiles: connectorToTiles(topLeft, orientation, size),
 		sideHint: directionToSide(entity.direction),
 	};
 }
@@ -126,6 +133,7 @@ export function connectorPlacementEdgeSide(
 	center: MapPosition,
 	rotation: ShipRotation,
 	placement: ShipConnectorPlacement,
+	size: ShipConnectorSize,
 	preferredSide?: ShipConnectorSide,
 ) {
 	const geometry = getRotatedModuleGeometry(moduleId, rotation);
@@ -134,7 +142,7 @@ export function connectorPlacementEdgeSide(
 		y: placement.topLeft.y - center.y,
 	};
 	const key = connectorCandidateKey(relativeTopLeft.x, relativeTopLeft.y, placement.orientation);
-	const sides = geometry.connectorCandidateSides[key];
+	const sides = geometry.connectorCandidateSidesBySize[size][key];
 	if (!sides || sides.length === 0) return;
 
 	if (preferredSide && sides.includes(preferredSide)) return preferredSide;
@@ -169,6 +177,7 @@ export function moduleWorldBounds(moduleId: ShipModuleId, center: MapPosition, r
 export function moduleDefaultConnectorPlacements(moduleId: ShipModuleId, center: MapPosition, rotation: ShipRotation) {
 	const geometry = getRotatedModuleGeometry(moduleId, rotation);
 	return geometry.defaultConnectors.map(connector => ({
+		size: connector.size,
 		orientation: connector.orientation,
 		side: connector.side,
 		outward: connector.outward,
@@ -179,7 +188,30 @@ export function moduleDefaultConnectorPlacements(moduleId: ShipModuleId, center:
 		tiles: connector.tiles.map(tile => ({
 			x: center.x + tile.x,
 			y: center.y + tile.y,
-		})) as [ShipTilePosition, ShipTilePosition],
+		})),
+	}));
+}
+
+export function moduleConnectorCandidates(
+	moduleId: ShipModuleId,
+	center: MapPosition,
+	rotation: ShipRotation,
+	size: ShipConnectorSize,
+) {
+	const geometry = getRotatedModuleGeometry(moduleId, rotation);
+	return geometry.connectorCandidatesBySize[size].map(connector => ({
+		size: connector.size,
+		orientation: connector.orientation,
+		side: connector.side,
+		outward: connector.outward,
+		topLeft: {
+			x: center.x + connector.topLeft.x,
+			y: center.y + connector.topLeft.y,
+		},
+		tiles: connector.tiles.map(tile => ({
+			x: center.x + tile.x,
+			y: center.y + tile.y,
+		})),
 	}));
 }
 
@@ -221,9 +253,10 @@ export function translateConnectorPlacement(
 		y: placement.topLeft.y + y,
 	};
 	return {
+		size: placement.size,
 		topLeft,
 		orientation: placement.orientation,
-		tiles: connectorToTiles(topLeft, placement.orientation),
+		tiles: connectorToTiles(topLeft, placement.orientation, placement.size),
 	};
 }
 
@@ -279,17 +312,19 @@ export function rotateConnectorPlacementRelative(
 	placement: ShipConnectorPlacement,
 	rotation: ShipRotation,
 ): ShipConnectorPlacement {
-	const tileA = rotateRelativeTile(placement.tiles[0], rotation);
-	const tileB = rotateRelativeTile(placement.tiles[1], rotation);
+	const rotatedTiles = placement.tiles.map(tile => rotateRelativeTile(tile, rotation));
+	const tileA = rotatedTiles[0]!;
+	const tileB = rotatedTiles[1]!;
 	const orientation: ShipConnectorOrientation = tileA.y === tileB.y ? 'horizontal' : 'vertical';
 	const topLeft = {
-		x: tileA.x < tileB.x ? tileA.x : tileB.x,
-		y: tileA.y < tileB.y ? tileA.y : tileB.y,
+		x: Math.min(...rotatedTiles.map(tile => tile.x)),
+		y: Math.min(...rotatedTiles.map(tile => tile.y)),
 	};
 	return {
+		size: placement.size,
 		topLeft,
 		orientation,
-		tiles: connectorToTiles(topLeft, orientation),
+		tiles: connectorToTiles(topLeft, orientation, placement.size),
 	};
 }
 
@@ -297,12 +332,14 @@ export function rotateConnectorTopLeftAroundCenter(
 	topLeft: ShipTilePosition,
 	orientation: ShipConnectorOrientation,
 	rotation: ShipRotation,
+	size: ShipConnectorSize,
 ) {
 	return rotateConnectorPlacementRelative(
 		{
+			size,
 			topLeft,
 			orientation,
-			tiles: connectorToTiles(topLeft, orientation),
+			tiles: connectorToTiles(topLeft, orientation, size),
 		},
 		rotation,
 	);
@@ -321,43 +358,70 @@ function getRotatedModuleGeometry(moduleId: ShipModuleId, rotation: ShipRotation
 		tileKeys[tileKey(x, y)] = true;
 		return tile;
 	});
-	const connectorCandidateSides: Record<string, ShipConnectorSide[] | undefined> = {};
-	for (const connector of generated.connectorCandidates) {
-		const key = connectorCandidateKey(connector.topLeft[0], connector.topLeft[1], connector.orientation);
-		const existing = connectorCandidateSides[key];
-		if (existing) {
-			if (!existing.includes(connector.side)) existing.push(connector.side);
-			continue;
-		}
-		connectorCandidateSides[key] = [connector.side];
-	}
 
 	const toPlacement = (input: {
 		topLeft: [number, number];
 		orientation: ShipConnectorOrientation;
 		side: ShipConnectorSide;
+		size: ShipConnectorSize;
 	}): ShipConnectorPlacementWithSide => {
 		const topLeft = {
 			x: input.topLeft[0],
 			y: input.topLeft[1],
 		};
 		return {
+			size: input.size,
 			topLeft,
 			orientation: input.orientation,
 			side: input.side,
 			outward: outwardVector(input.side),
-			tiles: connectorToTiles(topLeft, input.orientation),
+			tiles: connectorToTiles(topLeft, input.orientation, input.size),
 		};
 	};
 
+	const connectorCandidateSidesBySize = {} as RotatedModuleGeometry['connectorCandidateSidesBySize'];
+	const connectorCandidatesBySize = {} as RotatedModuleGeometry['connectorCandidatesBySize'];
+	for (const size of [2, 3, 4] as const) {
+		const key = `${size}` as keyof typeof generated.connectorCandidatesBySize;
+		const generatedCandidates = generated.connectorCandidatesBySize[key];
+		const sideMap: Record<string, ShipConnectorSide[] | undefined> = {};
+		const placements: ShipConnectorPlacementWithSide[] = [];
+		for (const connector of generatedCandidates) {
+			const candidateKey = connectorCandidateKey(connector.topLeft[0], connector.topLeft[1], connector.orientation);
+			const existing = sideMap[candidateKey];
+			if (existing) {
+				if (!existing.includes(connector.side)) existing.push(connector.side);
+			} else sideMap[candidateKey] = [connector.side];
+			placements.push(
+				toPlacement({
+					topLeft: connector.topLeft,
+					orientation: connector.orientation,
+					side: connector.side,
+					size,
+				}),
+			);
+		}
+		connectorCandidateSidesBySize[size] = sideMap;
+		connectorCandidatesBySize[size] = placements;
+	}
+
 	const defaultConnectors: ShipConnectorPlacementWithSide[] = [];
-	for (const connector of generated.defaultConnectors) defaultConnectors.push(toPlacement(connector));
+	for (const connector of generated.defaultConnectors)
+		defaultConnectors.push(
+			toPlacement({
+				topLeft: connector.topLeft,
+				orientation: connector.orientation,
+				side: connector.side,
+				size: 2,
+			}),
+		);
 
 	const geometry: RotatedModuleGeometry = {
 		tiles,
 		tileKeys,
 		bounds: generated.bounds,
-		connectorCandidateSides,
+		connectorCandidateSidesBySize,
+		connectorCandidatesBySize,
 		defaultConnectors,
 	};
 	moduleCache[normalizedRotation] = geometry;

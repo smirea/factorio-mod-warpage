@@ -61,18 +61,23 @@ Status: implemented baseline (updated 2026-03-02).
 - Translation moves preserve entity state through area clone where possible.
 - Rotation moves are strict and abort if preservation cannot be guaranteed.
 - Move finalization clears source area entities and ship tiles before commit completes.
+- Connector placement is UI-driven (no connector recipe/items in player inventory).
+- Connector roster has size 2/3/4 buttons, each gated by research unlock.
+- Connector stock is tracked per size in storage as `[available] / [total]`.
+- Mining a connector refunds its stock count directly (no dropped connector item).
 - Connector ownership and orientation/side are stored in `storage.shipConnectors`.
 - Bridge state is rebuilt deterministically into `storage.shipBridges`.
 - Active placement sessions and render ids are stored in `storage.shipPlacementByPlayer`.
 
 ## Connector perimeter rule
 
-- A connector must fully fit inside module tiles as a 2x1 footprint.
+- A connector must fully fit inside module tiles as an Nx1 footprint (N = 2, 3, or 4).
 - A connector is valid only when its open side touches outside-reachable empty space.
 - Outside-reachable means reachable by flood-fill from outside the module bounding box.
 - This includes concave interiors that are open to exterior space (example: U-shaped module interior opening).
 - Closed internal cavities are not valid connector targets.
 - Placement highlights all perimeter candidate connector positions.
+- Connector placement mode highlights all currently valid positions for the selected connector size.
 - During module placement, nearby connector links are previewed as bridge visuals.
 - Bridge preview/evaluation can target valid perimeter candidates on other modules even if the placed module has no connector entity yet.
 - Connector entity visuals use hazard-concrete terrain sprites so placed connectors read like hazard concrete placement, not inventory icons.

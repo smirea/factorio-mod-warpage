@@ -30,7 +30,7 @@ type RotationGeometry = {
 		minX: number;
 		minY: number;
 	};
-	connectorCandidates: ConnectorWithSide[];
+	connectorCandidatesBySize: Record<'2' | '3' | '4', ConnectorWithSide[]>;
 	defaultConnectors: ConnectorWithSide[];
 	tiles: Array<[number, number]>;
 };
@@ -127,7 +127,7 @@ function generateShipModuleArtifacts() {
 			keepIconNames[placementFileName] = true;
 			placementPreviewPaths[rotation] = placementPath;
 			const tiles = geometry[rotation].tiles.map(([x, y]) => ({ x, y }));
-			const candidateTileKeys = connectorCandidateTileKeys(geometry[rotation].connectorCandidates);
+			const candidateTileKeys = connectorCandidateTileKeys(geometry[rotation].connectorCandidatesBySize['2']);
 			writePng(path.join(iconDir, placementFileName), 64, 64, rasterizeShape(tiles, candidateTileKeys));
 		}
 		moduleBuildData.push({
@@ -264,20 +264,28 @@ function buildModuleGeometry(baseTiles: Point[], baseDefaultConnectors: Connecto
 	const northTiles = normalizeTiles(baseTiles.map(tile => rotateRelativeTile(tile, 0)));
 	const northTileSet = toTileSet(northTiles);
 	const northBounds = computeBounds(northTiles);
-	const northConnectorCandidates = computeConnectorCandidates(northTiles, northTileSet, northBounds);
+	const northConnectorCandidates = computeConnectorCandidates(northTiles, northTileSet, northBounds, 2);
 
 	for (const rotation of ['north', 'east', 'south', 'west'] as const) {
 		const steps = rotationStepsByName[rotation];
 		const rotatedTiles = normalizeTiles(baseTiles.map(tile => rotateRelativeTile(tile, steps)));
 		const tileSet = toTileSet(rotatedTiles);
 		const bounds = computeBounds(rotatedTiles);
-		const connectorCandidates = computeConnectorCandidates(rotatedTiles, tileSet, bounds);
+		const connectorCandidatesBySize = {
+			'2': computeConnectorCandidates(rotatedTiles, tileSet, bounds, 2),
+			'3': computeConnectorCandidates(rotatedTiles, tileSet, bounds, 3),
+			'4': computeConnectorCandidates(rotatedTiles, tileSet, bounds, 4),
+		} as const;
 		const defaultConnectors = rotateDefaultConnectors(baseDefaultConnectors, northConnectorCandidates, steps);
 
 		byRotation[rotation] = {
 			bounds,
 			tiles: rotatedTiles.map(tile => [tile.x, tile.y]),
-			connectorCandidates,
+			connectorCandidatesBySize: {
+				'2': [...connectorCandidatesBySize['2']],
+				'3': [...connectorCandidatesBySize['3']],
+				'4': [...connectorCandidatesBySize['4']],
+			},
 			defaultConnectors,
 		};
 	}
@@ -371,31 +379,62 @@ function computeConnectorCandidates(
 	tiles: Point[],
 	tileSet: Record<string, true | undefined>,
 	bounds: RotationGeometry['bounds'],
+	size: 2 | 3 | 4,
 ) {
 	const outside = computeOutsideReachable(tileSet, bounds);
 	const candidates: ConnectorWithSide[] = [];
 	for (const tile of tiles) {
 		const horizontalTopLeft: [number, number] = [tile.x, tile.y];
-		if (tileSet[tileKey(tile.x + 1, tile.y)]) {
-			const northOpen =
-				outside[tileKey(tile.x, tile.y - 1)] === true && outside[tileKey(tile.x + 1, tile.y - 1)] === true;
-			const southOpen =
-				outside[tileKey(tile.x, tile.y + 1)] === true && outside[tileKey(tile.x + 1, tile.y + 1)] === true;
+		if (connectorTilesInside(horizontalTopLeft, 'horizontal', size, tileSet)) {
+			const northOpen = connectorSideOutside(horizontalTopLeft, 'horizontal', size, outside, 'north');
+			const southOpen = connectorSideOutside(horizontalTopLeft, 'horizontal', size, outside, 'south');
 			if (northOpen) candidates.push({ topLeft: horizontalTopLeft, orientation: 'horizontal', side: 'north' });
 			if (southOpen) candidates.push({ topLeft: horizontalTopLeft, orientation: 'horizontal', side: 'south' });
 		}
 
 		const verticalTopLeft: [number, number] = [tile.x, tile.y];
-		if (tileSet[tileKey(tile.x, tile.y + 1)]) {
-			const westOpen =
-				outside[tileKey(tile.x - 1, tile.y)] === true && outside[tileKey(tile.x - 1, tile.y + 1)] === true;
-			const eastOpen =
-				outside[tileKey(tile.x + 1, tile.y)] === true && outside[tileKey(tile.x + 1, tile.y + 1)] === true;
+		if (connectorTilesInside(verticalTopLeft, 'vertical', size, tileSet)) {
+			const westOpen = connectorSideOutside(verticalTopLeft, 'vertical', size, outside, 'west');
+			const eastOpen = connectorSideOutside(verticalTopLeft, 'vertical', size, outside, 'east');
 			if (eastOpen) candidates.push({ topLeft: verticalTopLeft, orientation: 'vertical', side: 'east' });
 			if (westOpen) candidates.push({ topLeft: verticalTopLeft, orientation: 'vertical', side: 'west' });
 		}
 	}
 	return sortConnectors(dedupeConnectors(candidates));
+}
+
+function connectorTilesInside(
+	topLeft: [number, number],
+	orientation: Orientation,
+	size: 2 | 3 | 4,
+	tileSet: Record<string, true | undefined>,
+) {
+	if (orientation === 'horizontal') {
+		for (let offset = 0; offset < size; offset += 1)
+			if (!tileSet[tileKey(topLeft[0] + offset, topLeft[1])]) return false;
+		return true;
+	}
+
+	for (let offset = 0; offset < size; offset += 1) if (!tileSet[tileKey(topLeft[0], topLeft[1] + offset)]) return false;
+	return true;
+}
+
+function connectorSideOutside(
+	topLeft: [number, number],
+	orientation: Orientation,
+	size: 2 | 3 | 4,
+	outside: Record<string, true | undefined>,
+	side: Side,
+) {
+	if (orientation === 'horizontal') {
+		const y = side === 'north' ? topLeft[1] - 1 : topLeft[1] + 1;
+		for (let offset = 0; offset < size; offset += 1) if (!outside[tileKey(topLeft[0] + offset, y)]) return false;
+		return true;
+	}
+
+	const x = side === 'west' ? topLeft[0] - 1 : topLeft[0] + 1;
+	for (let offset = 0; offset < size; offset += 1) if (!outside[tileKey(x, topLeft[1] + offset)]) return false;
+	return true;
 }
 
 function dedupeConnectors(connectors: ConnectorWithSide[]) {
@@ -548,7 +587,7 @@ function renderGeneratedTs(modules: ModuleBuildData[]) {
 		'\t\tminX: number;',
 		'\t\tminY: number;',
 		'\t};',
-		'\tconnectorCandidates: GeneratedShipConnector[];',
+		"\tconnectorCandidatesBySize: Record<'2' | '3' | '4', GeneratedShipConnector[]>;",
 		'\tdefaultConnectors: GeneratedShipConnector[];',
 		'\ttiles: Array<[number, number]>;',
 		'};',
