@@ -1582,7 +1582,9 @@ function reconcileConnectorStock() {
 	}
 	for (const connectorSize of shipConnectorSizes) {
 		const stock = storage.shipConnectorStock[connectorSize];
-		stock.available = math.max(0, stock.total - usedBySize[connectorSize]);
+		const maxAvailable = math.max(0, stock.total - usedBySize[connectorSize]);
+		if (stock.available > maxAvailable) stock.available = maxAvailable;
+		if (stock.available < 0) stock.available = 0;
 	}
 }
 
