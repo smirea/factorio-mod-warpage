@@ -1,24 +1,46 @@
-import { shipModules } from '@/modules/ship/constants';
+import { ShipModuleId } from '@/modules/ship/constants';
 import { TechnologyUnit } from 'factorio:prototype';
-import { MapPosition } from 'factorio:prototype';
+import { MapPosition } from 'factorio:runtime';
 
 declare global {
 	interface ModStorage {
 		surface: string;
 		hubRepaired: boolean;
-		shipLayout: Partial<
-			Record<
-				keyof typeof shipModules,
-				{
-					connectors: Array<{
-						/** relative to the center of the module */
-						position: MapPosition;
-						orientation: 'vertical' | 'horizontal';
-						module?: keyof typeof shipModules;
-						moduleConnector?: number;
-					}>;
-				}
-			>
+		shipModules: Record<
+			ShipModuleId,
+			{
+				center: MapPosition;
+				connectorUnitNumbers: number[];
+				placed: boolean;
+				rotation: defines.direction.north | defines.direction.east | defines.direction.south | defines.direction.west;
+				unlocked: boolean;
+			}
+		>;
+		shipConnectors: Record<
+			string,
+			{
+				moduleId: ShipModuleId;
+				orientation: 'vertical' | 'horizontal';
+				side: 'north' | 'east' | 'south' | 'west';
+				topLeft: MapPosition;
+			}
+		>;
+		shipBridges: Record<
+			string,
+			{
+				connectorUnitNumber: number;
+				targetConnectorUnitNumber?: number;
+				tiles: MapPosition[];
+			}
+		>;
+		shipPlacementByPlayer: Record<
+			number,
+			| {
+					mode: 'move' | 'place';
+					moduleId: ShipModuleId;
+					renderIds: number[];
+			  }
+			| undefined
 		>;
 		startupSuppliesSeeded: boolean;
 		startConfiguredPlayerIndices: Record<number, true | undefined>;

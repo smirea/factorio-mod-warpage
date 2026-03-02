@@ -40,22 +40,60 @@ Repair cost: 200 stone, 200 coal, 100 copper ore, 100 iron plate, 10 calcite
 
 # Ship Building
 
-Status: in progress (updated 2026-02-26).
+Status: implemented baseline (updated 2026-03-02).
 
-## Spec checklist
+## Current specification
 
-- [x] Buildings are restricted to a custom ship tile via prototype `tile_buildability_rules`.
-- [x] Ship tile is custom and not mineable.
-- [ ] Ship tile visual tint is blue (currently uses base foundation visuals).
-- [x] Ship modules are defined in `src/modules/ship/constants.ts` and include an associated blueprint string.
-- [ ] Each module is unlocked by separate research (not implemented yet).
-- [x] First module is the hub module and is created with startup hub/destroyed-hub setup.
-- [x] Hub module tiles are created from blueprint data at runtime, not hardcoded coordinates.
-- [x] Connector entity exists as a 2x1 placeable (`warpage-connector`).
-- [x] Connector placement is validated to fully fit inside a module and lie on a module edge.
-- [x] Invalid connector placement is rejected, refunded, and shows local floating text: "can only be placed on the edge of a module".
-- [x] Valid connector placement keeps `warpage-connector` as an entity and stores it in `storage.shipLayout`.
-- [x] Connector entity has no collision box, supports 2x1 rotation, and can be built over while remaining mineable via selection box.
-- [x] Hub starts with no default connectors.
-- [x] Ship layout is stored in `storage.shipLayout`.
-- [x] `storage.shipLayout` is initialized during startup and seeded from module defaults.
+- Buildings are restricted to a custom ship tile via prototype `tile_buildability_rules`.
+- Ship tile is custom and not mineable.
+- Ship modules are defined in `src/modules/ship/constants.ts` and each contains a blueprint string.
+- Hub is the initial placed module and is created through startup hub/destroyed-hub flow.
+- Module unlock state is research-driven and synced into runtime module state.
+- Module management UI is a top-left roster (`warpage.module-roster-*`).
+- Hub is fixed in place and is not shown in the movable module roster.
+- Each module definition has one persistent instance in `storage.shipModules` (no inventory module items).
+- Placement uses temporary hidden carrier item/entity for native rotate/place controls.
+- Module button click toggles placement on/off for that module.
+- Any placement cancellation path cleans cursor carrier item state (no leaked items).
+- Placement ghost uses generated full blueprint footprint preview per rotation (not 1x1 icon ghost).
+- Placing an unplaced module stamps rotated module tiles and any default module connectors.
+- Placing an already placed module performs a move transaction.
+- Translation moves preserve entity state through area clone where possible.
+- Rotation moves are strict and abort if preservation cannot be guaranteed.
+- Move finalization clears source area entities and ship tiles before commit completes.
+- Connector ownership and orientation/side are stored in `storage.shipConnectors`.
+- Bridge state is rebuilt deterministically into `storage.shipBridges`.
+- Active placement sessions and render ids are stored in `storage.shipPlacementByPlayer`.
+
+## Connector perimeter rule
+
+- A connector must fully fit inside module tiles as a 2x1 footprint.
+- A connector is valid only when its open side touches outside-reachable empty space.
+- Outside-reachable means reachable by flood-fill from outside the module bounding box.
+- This includes concave interiors that are open to exterior space (example: U-shaped module interior opening).
+- Closed internal cavities are not valid connector targets.
+- Placement highlights all perimeter candidate connector positions.
+- During module placement, nearby connector links are previewed as bridge visuals.
+- Bridge preview/evaluation can target valid perimeter candidates on other modules even if the placed module has no connector entity yet.
+- Connector entity visuals use hazard-concrete terrain sprites so placed connectors read like hazard concrete placement, not inventory icons.
+
+## Build-time generated artifacts
+
+- Build script computes module geometry as the first step before TSTL.
+- Build script decodes module blueprints and precomputes all rotations.
+- Build output includes normalized tiles per rotation.
+- Build output includes per-rotation bounds.
+- Build output includes all outside-reachable perimeter connector candidates.
+- Build output includes rotated default connectors.
+- Build script writes [src/modules/ship/generated.ts](/Users/stefan/code/factorio-mod-warpage/src/modules/ship/generated.ts).
+- `generated.ts` exports `shipGeneratedGeometry`.
+- `generated.ts` exports `shipGeneratedIcons`.
+- Runtime uses generated geometry and does not decode blueprint geometry on load.
+- Module icon PNGs and placement previews are generated to `src/modules/ship/graphics/`.
+- Data stage sprite/item/entity icon paths are sourced from `shipGeneratedIcons`.
+- Module shape image is used as the module technology icon.
+
+## Known deferred
+
+- Ship tile visual tinting is still using base foundation visuals.
+- Naming/tinting per module instance is not implemented yet.

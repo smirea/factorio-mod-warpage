@@ -1,5 +1,6 @@
 import * as util from 'util';
-import { names, shipModules } from './constants';
+import { names, shipModuleIds, shipModules, ShipModuleId } from './constants';
+import { shipGeneratedGeometry, shipGeneratedIcons, shipGeneratedPlacementPreviews } from './generated';
 import { addTechnology, extend } from '@/lib/data-utils';
 
 const hiddenOffGridFlags = ['placeable-neutral', 'placeable-off-grid', 'not-on-map'] as const;
@@ -20,13 +21,17 @@ const connectorIcons = [
 		shift: [16, 16] as const,
 	},
 ] as const;
-const connectorSprite = (xShift: number, yShift: number) => ({
-	filename: '__base__/graphics/icons/hazard-concrete.png',
-	height: 64,
-	scale: 0.5,
-	width: 64,
+const connectorTileSprite = (path: string, xShift: number, yShift: number) => ({
+	filename: path,
+	width: 512,
+	height: 512,
+	scale: 1 / 16,
 	shift: [xShift, yShift] as const,
 });
+const connectorHazardLeft = (xShift: number, yShift: number) =>
+	connectorTileSprite('__base__/graphics/terrain/hazard-concrete-left/hazard-concrete-left.png', xShift, yShift);
+const connectorHazardRight = (xShift: number, yShift: number) =>
+	connectorTileSprite('__base__/graphics/terrain/hazard-concrete-right/hazard-concrete-right.png', xShift, yShift);
 const applyShipTileBuildabilityRule = () => {
 	const requiredTiles = {
 		layers: {
@@ -35,12 +40,15 @@ const applyShipTileBuildabilityRule = () => {
 	};
 	const rawByType = data.raw as Record<string, Record<string, any> | undefined>;
 	const placeableEntityNames = new Set<string>();
+	const ignoredPlaceResults = new Set<string>();
+	for (const moduleId of shipModuleIds) ignoredPlaceResults.add(names.modulePlacementEntity(moduleId));
 
 	for (const prototypesByName of Object.values(rawByType)) {
 		if (!prototypesByName) continue;
 
 		for (const prototype of Object.values(prototypesByName)) {
 			if (typeof prototype?.place_result !== 'string') continue;
+			if (ignoredPlaceResults.has(prototype.place_result)) continue;
 
 			placeableEntityNames.add(prototype.place_result);
 		}
@@ -81,6 +89,112 @@ const makeConnectorItem = () => {
 	delete item.icon;
 	return item;
 };
+
+const moduleIconPath = (moduleId: ShipModuleId) => shipGeneratedIcons[moduleId];
+const modulePlacementPreviewScale = (moduleId: ShipModuleId) => {
+	const rotations = shipGeneratedGeometry[moduleId];
+	let maxSpan = 0;
+	for (const key of ['north', 'east', 'south', 'west'] as const) {
+		const bounds = rotations[key].bounds;
+		const width = bounds.maxX - bounds.minX + 1;
+		const height = bounds.maxY - bounds.minY + 1;
+		const span = math.max(width, height);
+		if (span > maxSpan) maxSpan = span;
+	}
+	const rasterTileSize = math.max(4, math.floor(52 / maxSpan));
+	return 32 / rasterTileSize;
+};
+const makeModuleIconSprite = (moduleId: ShipModuleId) => ({
+	type: 'sprite' as const,
+	name: names.moduleIconSprite(moduleId),
+	filename: moduleIconPath(moduleId),
+	width: 64,
+	height: 64,
+	flags: ['gui-icon'] as const,
+});
+const makeModulePlacementItem = (moduleId: ShipModuleId) => {
+	const item = extend(data.raw.item['hazard-concrete']!, {
+		name: names.modulePlacementItem(moduleId),
+		icons: [
+			{
+				icon: moduleIconPath(moduleId),
+				icon_size: 64,
+			},
+		],
+		place_result: names.modulePlacementEntity(moduleId),
+		hidden: true,
+		hidden_in_factoriopedia: true,
+		flags: ['only-in-cursor'] as const,
+		subgroup: 'space-interactors',
+		order: order(`m[module-placement-item-${moduleId}]`),
+		stack_size: 1,
+	});
+
+	delete item.place_as_tile;
+	delete item.icon;
+	return item;
+};
+const makeModulePlacementEntity = (moduleId: ShipModuleId) => {
+	const previewScale = modulePlacementPreviewScale(moduleId);
+	return extend(data.raw['simple-entity-with-owner']['simple-entity-with-owner']!, {
+		name: names.modulePlacementEntity(moduleId),
+		icons: [
+			{
+				icon: moduleIconPath(moduleId),
+				icon_size: 64,
+			},
+		],
+		icon: undefined,
+		collision_box: zeroBox,
+		selection_box: zeroBox,
+		corpse: undefined,
+		hidden: true,
+		hidden_in_factoriopedia: true,
+		max_health: 1,
+		order: order(`m[module-placement-entity-${moduleId}]`),
+		render_layer: 'object',
+		selectable_in_game: false,
+		tile_width: 1,
+		tile_height: 1,
+		flags: ['placeable-player', 'player-creation', 'not-on-map'] as const,
+		allow_copy_paste: false,
+		minable: undefined,
+		picture: {
+			north: {
+				filename: shipGeneratedPlacementPreviews[moduleId].north,
+				width: 64,
+				height: 64,
+				scale: previewScale,
+			},
+			east: {
+				filename: shipGeneratedPlacementPreviews[moduleId].east,
+				width: 64,
+				height: 64,
+				scale: previewScale,
+			},
+			south: {
+				filename: shipGeneratedPlacementPreviews[moduleId].south,
+				width: 64,
+				height: 64,
+				scale: previewScale,
+			},
+			west: {
+				filename: shipGeneratedPlacementPreviews[moduleId].west,
+				width: 64,
+				height: 64,
+				scale: previewScale,
+			},
+		},
+	});
+};
+
+const modulePlacementPrototypes: any[] = [];
+for (const moduleId of shipModuleIds) {
+	modulePlacementPrototypes.push(makeModuleIconSprite(moduleId));
+	if (moduleId === 'hub') continue;
+	modulePlacementPrototypes.push(makeModulePlacementEntity(moduleId));
+	modulePlacementPrototypes.push(makeModulePlacementItem(moduleId));
+}
 
 const makeHubFluidPipe = () => {
 	const clone = extend(data.raw['storage-tank']['storage-tank']!, {
@@ -166,13 +280,14 @@ const caragoLandingPad = extend(data.raw['cargo-landing-pad']['cargo-landing-pad
 	radar_range: 20,
 });
 
-for (const [key, { tech, expands }] of Object.entries(shipModules)) {
-	if (key === 'hub') {
+for (const moduleId of shipModuleIds) {
+	const { tech, expands } = shipModules[moduleId];
+	if (moduleId === 'hub') {
 		addTechnology({
 			name: names.ns('module-hub'),
-			icon: '__core__/graphics/icons/mod-manager/cubes.png',
+			icon: moduleIconPath(moduleId),
 			icon_size: 64,
-			localised_name: LOCALE('technology-name', 'ship-module-unlock', key),
+			localised_name: LOCALE('technology-name', 'ship-module-unlock', moduleId),
 			localised_description: LOCALE('technology-description', 'ship-module-unlock'),
 			prerequisites: [],
 			research_trigger: {
@@ -182,10 +297,10 @@ for (const [key, { tech, expands }] of Object.entries(shipModules)) {
 		continue;
 	}
 	addTechnology({
-		name: names.ns(`module-${key}`),
-		icon: '__core__/graphics/icons/mod-manager/cubes.png',
+		name: names.ns(`module-${moduleId}`),
+		icon: moduleIconPath(moduleId),
 		icon_size: 64,
-		localised_name: LOCALE('technology-name', 'ship-module-unlock', key),
+		localised_name: LOCALE('technology-name', 'ship-module-unlock', moduleId),
 		localised_description: LOCALE('technology-description', 'ship-module-unlock'),
 		prerequisites: expands ? [names.ns(`module-${expands}`)] : [],
 		unit: tech,
@@ -220,10 +335,10 @@ data.extend([
 		max_health: 1000,
 		order: order('c[connector-entity]'),
 		picture: {
-			north: { layers: [connectorSprite(-0.5, 0), connectorSprite(0.5, 0)] },
-			south: { layers: [connectorSprite(-0.5, 0), connectorSprite(0.5, 0)] },
-			east: { layers: [connectorSprite(0, -0.5), connectorSprite(0, 0.5)] },
-			west: { layers: [connectorSprite(0, -0.5), connectorSprite(0, 0.5)] },
+			north: { layers: [connectorHazardLeft(-0.5, 0), connectorHazardRight(0.5, 0)] },
+			south: { layers: [connectorHazardLeft(-0.5, 0), connectorHazardRight(0.5, 0)] },
+			east: { layers: [connectorHazardLeft(0, -0.5), connectorHazardRight(0, 0.5)] },
+			west: { layers: [connectorHazardLeft(0, -0.5), connectorHazardRight(0, 0.5)] },
 		},
 		render_layer: 'floor',
 		selection_box: [
@@ -247,6 +362,7 @@ data.extend([
 		subgroup: 'space-interactors',
 	}),
 	makeHubFluidPipe(),
+	...modulePlacementPrototypes,
 	caragoLandingPad,
 	extend(data.raw['electric-energy-interface']['hidden-electric-energy-interface'], {
 		collision_box: zeroBox,

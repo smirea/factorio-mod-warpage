@@ -43,6 +43,8 @@
 		"build",
 		"generated",
 		"**/generated",
+		"src/modules/ship/generated.ts",
+		"**/generated.ts",
 		"**/*.generated.ts",
 		"**/*.gen.ts",
 		"bun.lock"
