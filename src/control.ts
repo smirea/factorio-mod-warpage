@@ -3,7 +3,6 @@ import '@/modules/thermite/control.ts';
 import type { LuaPlayer, LuaSurface, MapPosition } from 'factorio:runtime';
 import { names as shipNames } from '@/modules/ship/constants';
 import {
-	ensureInitialShipLayout,
 	ensureInitialShipModule,
 	ensureModuleRoster,
 	refreshAllShipModuleRosters,
@@ -11,6 +10,7 @@ import {
 } from '@/modules/ship/building';
 import { createDestroyedHub, createHub } from '@/modules/ship/hub';
 import { createEntity, getCurrentSurface, on_event, on_init, registerGlobal } from '@/lib/utils';
+import { initStorage } from './storage';
 
 const forbiddenStartItems = [
 	'pistol',
@@ -59,15 +59,6 @@ on_event('on_player_created', event => {
 
 registerGlobal('initStorage', initStorage);
 registerGlobal('initStart', initStart);
-
-function initStorage() {
-	storage.surface ||= 'nauvis';
-	storage.hubRepaired ??= false;
-	storage.startupSuppliesSeeded ??= false;
-	storage.startConfiguredPlayerIndices ||= {};
-	ensureInitialShipLayout();
-	refreshShipModuleUnlocks();
-}
 
 function initStart() {
 	const { freeplay } = remote.interfaces;

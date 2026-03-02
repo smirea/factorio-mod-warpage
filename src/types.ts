@@ -1,68 +1,6 @@
-import { ShipConnectorSize, ShipModuleId } from '@/modules/ship/constants';
 import { TechnologyUnit } from 'factorio:prototype';
-import { MapPosition } from 'factorio:runtime';
 
 declare global {
-	interface ModStorage {
-		surface: string;
-		hubRepaired: boolean;
-		shipModules: Record<
-			ShipModuleId,
-			{
-				center: MapPosition;
-				connectorUnitNumbers: number[];
-				placed: boolean;
-				rotation: defines.direction.north | defines.direction.east | defines.direction.south | defines.direction.west;
-				unlocked: boolean;
-			}
-		>;
-		shipConnectors: Record<
-			string,
-			{
-				moduleId: ShipModuleId;
-				orientation: 'vertical' | 'horizontal';
-				size: ShipConnectorSize;
-				side: 'north' | 'east' | 'south' | 'west';
-				topLeft: MapPosition;
-			}
-		>;
-		shipConnectorStock: Record<
-			ShipConnectorSize,
-			{
-				available: number;
-				total: number;
-				unlocked: boolean;
-			}
-		>;
-		shipBridges: Record<
-			string,
-			{
-				connectorUnitNumber: number;
-				targetConnectorUnitNumber?: number;
-				tiles: MapPosition[];
-			}
-		>;
-		shipPlacementByPlayer: Record<
-			number,
-			| {
-					kind: 'module';
-					mode: 'move' | 'place';
-					moduleId: ShipModuleId;
-					renderIds: number[];
-			  }
-			| {
-					connectorSize: ShipConnectorSize;
-					kind: 'connector';
-					renderIds: number[];
-			  }
-			| undefined
-		>;
-		startupSuppliesSeeded: boolean;
-		startConfiguredPlayerIndices: Record<number, true | undefined>;
-	}
-
-	const storage: ModStorage;
-
 	/** Build time macro evals to `path.join(__dirname, ...parts)` since there is no __dirname natively */
 	const DIR_PATH_JOIN: (...parts: string[]) => string;
 

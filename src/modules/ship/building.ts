@@ -1,5 +1,5 @@
 import type { LocalisedString, LuaEntity, LuaPlayer, LuaSurface, MapPosition, TileWrite } from 'factorio:runtime';
-import { createEntity, getCurrentSurface, on_event, on_nth_tick, registerGlobal } from '@/lib/utils';
+import { createEntity, getCurrentSurface, on_event, on_nth_tick } from '@/lib/utils';
 import { names, ShipConnectorSize, ShipModuleId, shipConnectorSizes, shipModuleIds } from './constants';
 import {
 	ShipConnectorPlacement,
@@ -42,7 +42,7 @@ const placementCarrierItemNames = [
 const placementCarrierItems: Record<string, true | undefined> = {};
 for (const itemName of placementCarrierItemNames) placementCarrierItems[itemName] = true;
 type PlacementResult = { ok: true } | { ok: false; message: LocalisedString };
-type ShipPlacementSession = Exclude<ModStorage['shipPlacementByPlayer'][number], undefined>;
+type ShipPlacementSession = Exclude<(typeof storage)['shipPlacementByPlayer'][number], undefined>;
 type ModulePlacementSession = Extract<ShipPlacementSession, { kind: 'module' }>;
 
 on_event('on_built_entity', event => {
@@ -202,9 +202,9 @@ on_nth_tick(30, () => {
 });
 
 export function ensureInitialShipLayout() {
-	storage.shipModules ||= {} as ModStorage['shipModules'];
+	storage.shipModules ||= {} as (typeof storage)['shipModules'];
 	storage.shipConnectors ||= {};
-	storage.shipConnectorStock ||= {} as ModStorage['shipConnectorStock'];
+	storage.shipConnectorStock ||= {} as (typeof storage)['shipConnectorStock'];
 	storage.shipBridges ||= {};
 	storage.shipPlacementByPlayer ||= {};
 
@@ -1566,7 +1566,7 @@ function normalizeConnectorEntries() {
 		const unitNumber = Number(unitKey);
 		const entity = game.get_entity_by_unit_number(unitNumber as any);
 		const inferredSize = connectorSizeFromEntityName(entity?.name ?? '') ?? 2;
-		(connector as ModStorage['shipConnectors'][string]).size = inferredSize;
+		(connector as (typeof storage)['shipConnectors'][string]).size = inferredSize;
 	}
 }
 
@@ -1691,9 +1691,3 @@ function connectorSizeFromPlacementItemName(name: string) {
 	for (const connectorSize of shipConnectorSizes)
 		if (name === names.connectorPlacementItem(connectorSize)) return connectorSize;
 }
-
-registerGlobal('ensureInitialShipLayout', ensureInitialShipLayout);
-registerGlobal('ensureInitialShipModule', ensureInitialShipModule);
-registerGlobal('refreshShipModuleUnlocks', refreshShipModuleUnlocks);
-registerGlobal('ensureModuleRoster', ensureModuleRoster);
-registerGlobal('refreshAllShipModuleRosters', refreshAllShipModuleRosters);
