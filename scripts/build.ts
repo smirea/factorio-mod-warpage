@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync, inflateSync } from 'node:zlib';
+import { shipModuleIds, shipModules } from '../src/modules/ship/constants';
 
 type ModuleId = string;
 type Rotation = 'north' | 'east' | 'south' | 'west';
@@ -13,10 +14,6 @@ type Side = 'north' | 'east' | 'south' | 'west';
 type Point = {
 	x: number;
 	y: number;
-};
-type ConnectorDefinition = {
-	orientation: Orientation;
-	topLeft: [number, number];
 };
 type ConnectorWithSide = {
 	orientation: Orientation;
@@ -36,7 +33,6 @@ type RotationGeometry = {
 };
 type ModuleGeometry = Record<Rotation, RotationGeometry>;
 type ModuleBuildData = {
-	defaultConnectors: ConnectorDefinition[];
 	geometry: ModuleGeometry;
 	iconPath: string;
 	placementPreviewPaths: Record<Rotation, string>;
@@ -50,7 +46,6 @@ const mustImportNames = ['control.ts', 'data-final-fixes.ts', 'data-updates.ts',
 const toCopy: string[] = ['locale', 'info.json', 'thumbnail.png'];
 const generatedFilePath = path.join(srcDir, 'modules', 'ship', 'generated.ts');
 const iconDir = path.join(srcDir, 'modules', 'ship', 'graphics');
-const legacyGeneratedIconDir = path.join(srcDir, 'modules', 'ship', 'graphics', 'generated');
 
 function main() {
 	generateShipModuleArtifacts();
@@ -101,30 +96,26 @@ function main() {
 }
 
 function generateShipModuleArtifacts() {
-	const constantsPath = path.join(srcDir, 'modules', 'ship', 'constants.ts');
-	const constantsSource = fs.readFileSync(constantsPath, 'utf8');
-	const moduleIds = readShipModuleIds(constantsSource);
-	const moduleDefinitions = readModuleDefinitions(constantsSource, moduleIds);
 	const moduleBuildData: ModuleBuildData[] = [];
-	const keepIconNames: Record<string, true | undefined> = {};
+	const keepIconNames = new Set<string>();
 
 	fs.mkdirSync(iconDir, { recursive: true });
-	for (const moduleId of moduleIds) {
-		const definition = moduleDefinitions[moduleId];
-		if (!definition) throw new Error(`Missing module definition for '${moduleId}'.`);
+	for (const moduleId of shipModuleIds) {
+		const moduleBlueprint = shipModules[moduleId]?.blueprint;
+		if (!moduleBlueprint) throw new Error(`Missing blueprint for '${moduleId}'.`);
 
-		const normalizedTiles = normalizeTiles(decodeBlueprintTiles(definition.blueprint));
+		const normalizedTiles = normalizeTiles(decodeBlueprintTiles(moduleBlueprint));
 		const iconFileName = `module-${moduleId}.png`;
 		const iconPath = `__warpage__/modules/ship/graphics/${iconFileName}`;
-		keepIconNames[iconFileName] = true;
+		keepIconNames.add(iconFileName);
 		writePng(path.join(iconDir, iconFileName), 64, 64, rasterizeShape(normalizedTiles));
 
-		const geometry = buildModuleGeometry(normalizedTiles, definition.connectors);
+		const geometry = buildModuleGeometry(normalizedTiles);
 		const placementPreviewPaths = {} as Record<Rotation, string>;
 		for (const rotation of ['north', 'east', 'south', 'west'] as const) {
 			const placementFileName = `module-${moduleId}-placement-${rotation}.png`;
 			const placementPath = `__warpage__/modules/ship/graphics/${placementFileName}`;
-			keepIconNames[placementFileName] = true;
+			keepIconNames.add(placementFileName);
 			placementPreviewPaths[rotation] = placementPath;
 			const tiles = geometry[rotation].tiles.map(([x, y]) => ({ x, y }));
 			const candidateTileKeys = connectorCandidateTileKeys(geometry[rotation].connectorCandidatesBySize['2']);
@@ -135,68 +126,17 @@ function generateShipModuleArtifacts() {
 			iconPath,
 			placementPreviewPaths,
 			geometry,
-			defaultConnectors: definition.connectors,
 		});
 	}
 
 	for (const file of fs.readdirSync(iconDir)) {
 		if (!file.startsWith('module-')) continue;
 		if (!file.endsWith('.png')) continue;
-		if (keepIconNames[file]) continue;
+		if (keepIconNames.has(file)) continue;
 		fs.unlinkSync(path.join(iconDir, file));
-	}
-	if (fs.existsSync(legacyGeneratedIconDir)) {
-		for (const file of fs.readdirSync(legacyGeneratedIconDir)) {
-			if (!file.startsWith('module-')) continue;
-			if (!file.endsWith('.png')) continue;
-			fs.unlinkSync(path.join(legacyGeneratedIconDir, file));
-		}
-		if (fs.readdirSync(legacyGeneratedIconDir).length === 0) fs.rmdirSync(legacyGeneratedIconDir);
 	}
 
 	fs.writeFileSync(generatedFilePath, renderGeneratedTs(moduleBuildData), 'utf8');
-}
-
-function readShipModuleIds(constantsSource: string) {
-	const match = constantsSource.match(/export const shipModuleIds = \[([^\]]+)\] as const;/);
-	if (!match) throw new Error('Unable to parse shipModuleIds.');
-	return match[1]
-		.split(',')
-		.map(raw => raw.trim().replaceAll("'", ''))
-		.filter(value => value.length > 0);
-}
-
-function readModuleDefinitions(constantsSource: string, moduleIds: string[]) {
-	const definitions: Record<ModuleId, { blueprint: string; connectors: ConnectorDefinition[] } | undefined> = {};
-	const moduleBlockRegex = /^\t([a-zA-Z0-9_]+):\s*{([\s\S]*?)\n\t},?/gm;
-	for (const match of constantsSource.matchAll(moduleBlockRegex)) {
-		const moduleId = match[1];
-		if (!moduleIds.includes(moduleId)) continue;
-		const block = match[2];
-		const blueprintMatch = block.match(/\n\t\tblueprint:\s*'([^']+)'/);
-		if (!blueprintMatch) throw new Error(`Missing blueprint for '${moduleId}'.`);
-		definitions[moduleId] = {
-			blueprint: blueprintMatch[1],
-			connectors: readModuleConnectors(block),
-		};
-	}
-	return definitions;
-}
-
-function readModuleConnectors(block: string) {
-	const connectorsMatch = block.match(/\n\t\tconnectors:\s*\[([\s\S]*?)\n\t\t],?/m);
-	if (!connectorsMatch) return [];
-	const connectorsBlock = connectorsMatch[1];
-	const connectors: ConnectorDefinition[] = [];
-	const connectorRegex =
-		/{\s*orientation:\s*'(horizontal|vertical)'\s*,\s*position:\s*{\s*x:\s*(-?\d+(?:\.\d+)?)\s*,\s*y:\s*(-?\d+(?:\.\d+)?)\s*}\s*}/gm;
-	for (const match of connectorsBlock.matchAll(connectorRegex))
-		connectors.push({
-			orientation: match[1] as Orientation,
-			topLeft: [Number(match[2]), Number(match[3])],
-		});
-
-	return connectors;
 }
 
 function decodeBlueprintTiles(blueprint: string) {
@@ -237,7 +177,7 @@ function normalizeTiles(tiles: Point[]) {
 		x: Math.ceil((minX + maxX) / 2),
 		y: Math.ceil((minY + maxY) / 2),
 	};
-	const unique: Record<string, true | undefined> = {};
+	const unique = new Set<string>();
 	const normalized: Point[] = [];
 	for (const tile of tiles) {
 		const normalizedTile = {
@@ -245,15 +185,15 @@ function normalizeTiles(tiles: Point[]) {
 			y: tile.y - center.y,
 		};
 		const key = `${normalizedTile.x},${normalizedTile.y}`;
-		if (unique[key]) continue;
-		unique[key] = true;
+		if (unique.has(key)) continue;
+		unique.add(key);
 		normalized.push(normalizedTile);
 	}
 	normalized.sort((a, b) => (a.y - b.y === 0 ? a.x - b.x : a.y - b.y));
 	return normalized;
 }
 
-function buildModuleGeometry(baseTiles: Point[], baseDefaultConnectors: ConnectorDefinition[]): ModuleGeometry {
+function buildModuleGeometry(baseTiles: Point[]): ModuleGeometry {
 	const byRotation = {} as ModuleGeometry;
 	const rotationStepsByName: Record<Rotation, number> = {
 		north: 0,
@@ -261,10 +201,6 @@ function buildModuleGeometry(baseTiles: Point[], baseDefaultConnectors: Connecto
 		south: 2,
 		west: 3,
 	};
-	const northTiles = normalizeTiles(baseTiles.map(tile => rotateRelativeTile(tile, 0)));
-	const northTileSet = toTileSet(northTiles);
-	const northBounds = computeBounds(northTiles);
-	const northConnectorCandidates = computeConnectorCandidates(northTiles, northTileSet, northBounds, 2);
 
 	for (const rotation of ['north', 'east', 'south', 'west'] as const) {
 		const steps = rotationStepsByName[rotation];
@@ -276,73 +212,16 @@ function buildModuleGeometry(baseTiles: Point[], baseDefaultConnectors: Connecto
 			'3': computeConnectorCandidates(rotatedTiles, tileSet, bounds, 3),
 			'4': computeConnectorCandidates(rotatedTiles, tileSet, bounds, 4),
 		} as const;
-		const defaultConnectors = rotateDefaultConnectors(baseDefaultConnectors, northConnectorCandidates, steps);
 
 		byRotation[rotation] = {
 			bounds,
 			tiles: rotatedTiles.map(tile => [tile.x, tile.y]),
-			connectorCandidatesBySize: {
-				'2': [...connectorCandidatesBySize['2']],
-				'3': [...connectorCandidatesBySize['3']],
-				'4': [...connectorCandidatesBySize['4']],
-			},
-			defaultConnectors,
+			connectorCandidatesBySize,
+			defaultConnectors: [],
 		};
 	}
 
 	return byRotation;
-}
-
-function rotateDefaultConnectors(
-	baseDefaultConnectors: ConnectorDefinition[],
-	northConnectorCandidates: ConnectorWithSide[],
-	steps: number,
-) {
-	if (baseDefaultConnectors.length === 0) return [];
-
-	const northSidesByPlacement: Record<string, Side[] | undefined> = {};
-	for (const candidate of northConnectorCandidates) {
-		const key = connectorPlacementKey(candidate.topLeft, candidate.orientation);
-		const existing = northSidesByPlacement[key];
-		if (existing) {
-			if (!existing.includes(candidate.side)) existing.push(candidate.side);
-			continue;
-		}
-		northSidesByPlacement[key] = [candidate.side];
-	}
-
-	const defaultConnectors: ConnectorWithSide[] = [];
-	for (const connector of baseDefaultConnectors) {
-		const sides = northSidesByPlacement[connectorPlacementKey(connector.topLeft, connector.orientation)];
-		if (!sides || sides.length === 0)
-			throw new Error(
-				`Default connector ${connector.orientation}@${connector.topLeft[0]},${connector.topLeft[1]} is not on outside-reachable perimeter.`,
-			);
-		const side = pickDefaultSide(sides);
-		const rotatedPlacement = rotateConnectorPlacement(connector.topLeft, connector.orientation, steps);
-		defaultConnectors.push({
-			topLeft: rotatedPlacement.topLeft,
-			orientation: rotatedPlacement.orientation,
-			side: rotateSide(side, steps),
-		});
-	}
-	return sortConnectors(defaultConnectors);
-}
-
-function pickDefaultSide(sides: Side[]) {
-	for (const side of ['north', 'east', 'south', 'west'] as const) if (sides.includes(side)) return side;
-	return sides[0]!;
-}
-
-function rotateConnectorPlacement(topLeft: [number, number], orientation: Orientation, steps: number) {
-	const tiles = connectorToTiles(topLeft, orientation).map(tile => rotateRelativeTile(tile, steps));
-	const orientationAfterRotation: Orientation = tiles[0]!.y === tiles[1]!.y ? 'horizontal' : 'vertical';
-	const minX = Math.min(tiles[0]!.x, tiles[1]!.x);
-	const minY = Math.min(tiles[0]!.y, tiles[1]!.y);
-	return {
-		topLeft: [minX, minY] as [number, number],
-		orientation: orientationAfterRotation,
-	};
 }
 
 function rotateRelativeTile(tile: Point, steps: number) {
@@ -351,28 +230,6 @@ function rotateRelativeTile(tile: Point, steps: number) {
 	if (normalizedSteps === 2) return { x: -tile.x, y: -tile.y };
 	if (normalizedSteps === 3) return { x: tile.y, y: -tile.x };
 	return { x: tile.x, y: tile.y };
-}
-
-function rotateSide(side: Side, steps: number): Side {
-	let rotated = side;
-	const normalizedSteps = ((steps % 4) + 4) % 4;
-	for (let index = 0; index < normalizedSteps; index += 1)
-		switch (rotated) {
-			case 'north':
-				rotated = 'east';
-				break;
-			case 'east':
-				rotated = 'south';
-				break;
-			case 'south':
-				rotated = 'west';
-				break;
-			case 'west':
-				rotated = 'north';
-				break;
-		}
-
-	return rotated;
 }
 
 function computeConnectorCandidates(
@@ -438,12 +295,12 @@ function connectorSideOutside(
 }
 
 function dedupeConnectors(connectors: ConnectorWithSide[]) {
-	const seen: Record<string, true | undefined> = {};
+	const seen = new Set<string>();
 	const unique: ConnectorWithSide[] = [];
 	for (const connector of connectors) {
 		const key = `${connector.topLeft[0]},${connector.topLeft[1]},${connector.orientation},${connector.side}`;
-		if (seen[key]) continue;
-		seen[key] = true;
+		if (seen.has(key)) continue;
+		seen.add(key);
 		unique.push(connector);
 	}
 	return unique;
@@ -526,10 +383,6 @@ function computeBounds(tiles: Point[]): RotationGeometry['bounds'] {
 
 function tileKey(x: number, y: number) {
 	return `${x},${y}`;
-}
-
-function connectorPlacementKey(topLeft: [number, number], orientation: Orientation) {
-	return `${topLeft[0]},${topLeft[1]},${orientation}`;
 }
 
 function connectorToTiles(topLeft: [number, number], orientation: Orientation) {
