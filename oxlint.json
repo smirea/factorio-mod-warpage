@@ -1,7 +1,7 @@
 {
 	"$schema": "./node_modules/oxlint/configuration_schema.json",
 	"plugins": ["typescript", "unicorn", "oxc", "import", "promise", "node"],
-	"jsPlugins": [{ "name": "factorio", "specifier": "./scripts/oxlint-plugin-warpage.mjs" }],
+	"jsPlugins": [{ "name": "factorio", "specifier": "./scripts/oxlint-plugin-factorio.mjs" }],
 	"categories": {
 		"correctness": "error"
 	},
