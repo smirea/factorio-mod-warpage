@@ -85,17 +85,14 @@ Status: implemented baseline (updated 2026-03-02).
 ## Build-time generated artifacts
 
 - Build script computes module geometry as the first step before TSTL.
-- Build script decodes module blueprints and precomputes all rotations.
-- Build output includes normalized tiles per rotation.
-- Build output includes per-rotation bounds.
-- Build output includes all outside-reachable perimeter connector candidates.
-- Build output includes rotated default connectors.
+- Build script decodes module blueprints and stores normalized module tiles once.
+- Build output includes module width/height and per-side outside-reachable connector edge tiles.
 - Build script writes [src/modules/ship/generated.ts](/Users/stefan/code/factorio-mod-warpage/src/modules/ship/generated.ts).
-- `generated.ts` exports `shipGeneratedGeometry`.
-- `generated.ts` exports `shipGeneratedIcons`.
-- Runtime uses generated geometry and does not decode blueprint geometry on load.
+- `generated.ts` exports `shipModuleData`.
+- `generated.ts` exports `shipGeneratedPlacementPreviews`.
+- Runtime computes rotated connector candidates from generated module tiles and does not decode blueprint geometry on load.
 - Module icon PNGs and placement previews are generated to `src/modules/ship/graphics/`.
-- Data stage sprite/item/entity icon paths are sourced from `shipGeneratedIcons`.
+- Data stage sprite/item/entity icon paths are sourced from `shipModuleData`.
 - Module shape image is used as the module technology icon.
 
 ## Known deferred

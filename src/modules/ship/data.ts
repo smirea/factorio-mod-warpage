@@ -1,6 +1,6 @@
 import * as util from 'util';
 import { names, shipConnectorSizes, shipModuleIds, shipModules, ShipConnectorSize, ShipModuleId } from './constants';
-import { shipGeneratedGeometry, shipGeneratedIcons, shipGeneratedPlacementPreviews } from './generated';
+import { shipGeneratedPlacementPreviews, shipModuleData } from './generated';
 import { addTechnology, extend } from '@/lib/data-utils';
 
 const hiddenOffGridFlags = ['placeable-neutral', 'placeable-off-grid', 'not-on-map'] as const;
@@ -171,17 +171,10 @@ const makeConnectorPlacementEntity = (size: ShipConnectorSize) =>
 		picture: connectorPicture(size),
 	});
 
-const moduleIconPath = (moduleId: ShipModuleId) => shipGeneratedIcons[moduleId];
+const moduleIconPath = (moduleId: ShipModuleId) => shipModuleData[moduleId].icon;
 const modulePlacementPreviewScale = (moduleId: ShipModuleId) => {
-	const rotations = shipGeneratedGeometry[moduleId];
-	let maxSpan = 0;
-	for (const key of ['north', 'east', 'south', 'west'] as const) {
-		const bounds = rotations[key].bounds;
-		const width = bounds.maxX - bounds.minX + 1;
-		const height = bounds.maxY - bounds.minY + 1;
-		const span = math.max(width, height);
-		if (span > maxSpan) maxSpan = span;
-	}
+	const module = shipModuleData[moduleId];
+	const maxSpan = math.max(module.width, module.height);
 	const rasterTileSize = math.max(4, math.floor(52 / maxSpan));
 	return 32 / rasterTileSize;
 };
@@ -205,7 +198,7 @@ const makeModulePlacementItem = (moduleId: ShipModuleId) => {
 		place_result: names.modulePlacementEntity(moduleId),
 		hidden: true,
 		hidden_in_factoriopedia: true,
-		flags: ['only-in-cursor'] as const,
+		flags: ['only-in-cursor'],
 		subgroup: 'space-interactors',
 		order: order(`m[module-placement-item-${moduleId}]`),
 		stack_size: 1,

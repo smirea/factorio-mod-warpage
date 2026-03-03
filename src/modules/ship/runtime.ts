@@ -1,6 +1,6 @@
 import type { LuaEntity, MapPosition } from 'factorio:runtime';
 import { ShipConnectorSize, ShipModuleId } from './constants';
-import { GeneratedShipRotation, shipGeneratedGeometry } from './generated';
+import { shipModuleData } from './generated';
 
 export type ShipRotation =
 	| defines.direction.north
@@ -37,6 +37,11 @@ type RotatedModuleGeometry = {
 	defaultConnectors: ShipConnectorPlacementWithSide[];
 	tiles: ShipTilePosition[];
 	tileKeys: Record<string, true | undefined>;
+};
+type ConnectorCandidate = {
+	orientation: ShipConnectorOrientation;
+	side: ShipConnectorSide;
+	topLeft: [number, number];
 };
 
 const geometryCache: Partial<Record<ShipModuleId, Record<ShipRotation, RotatedModuleGeometry>>> = {};
@@ -351,13 +356,10 @@ function getRotatedModuleGeometry(moduleId: ShipModuleId, rotation: ShipRotation
 	const cached = moduleCache[normalizedRotation];
 	if (cached !== undefined) return cached;
 
-	const generated = shipGeneratedGeometry[moduleId][rotationName(normalizedRotation)];
-	const tileKeys: Record<string, true | undefined> = {};
-	const tiles = generated.tiles.map(([x, y]) => {
-		const tile = { x, y };
-		tileKeys[tileKey(x, y)] = true;
-		return tile;
-	});
+	const tiles = shipModuleData[moduleId].tiles.map(([x, y]) => rotateRelativeTile({ x, y }, normalizedRotation));
+	tiles.sort((a, b) => (a.y === b.y ? a.x - b.x : a.y - b.y));
+	const tileKeys = toTileSet(tiles);
+	const bounds = computeBounds(tiles);
 
 	const toPlacement = (input: {
 		topLeft: [number, number];
@@ -382,8 +384,7 @@ function getRotatedModuleGeometry(moduleId: ShipModuleId, rotation: ShipRotation
 	const connectorCandidateSidesBySize = {} as RotatedModuleGeometry['connectorCandidateSidesBySize'];
 	const connectorCandidatesBySize = {} as RotatedModuleGeometry['connectorCandidatesBySize'];
 	for (const size of [2, 3, 4] as const) {
-		const key = `${size}` as keyof typeof generated.connectorCandidatesBySize;
-		const generatedCandidates = generated.connectorCandidatesBySize[key];
+		const generatedCandidates = computeConnectorCandidates(tiles, tileKeys, bounds, size);
 		const sideMap: Record<string, ShipConnectorSide[] | undefined> = {};
 		const placements: ShipConnectorPlacementWithSide[] = [];
 		for (const connector of generatedCandidates) {
@@ -406,20 +407,11 @@ function getRotatedModuleGeometry(moduleId: ShipModuleId, rotation: ShipRotation
 	}
 
 	const defaultConnectors: ShipConnectorPlacementWithSide[] = [];
-	for (const connector of generated.defaultConnectors)
-		defaultConnectors.push(
-			toPlacement({
-				topLeft: connector.topLeft,
-				orientation: connector.orientation,
-				side: connector.side,
-				size: 2,
-			}),
-		);
 
 	const geometry: RotatedModuleGeometry = {
 		tiles,
 		tileKeys,
-		bounds: generated.bounds,
+		bounds,
 		connectorCandidateSidesBySize,
 		connectorCandidatesBySize,
 		defaultConnectors,
@@ -428,17 +420,153 @@ function getRotatedModuleGeometry(moduleId: ShipModuleId, rotation: ShipRotation
 	return geometry;
 }
 
-function rotationName(rotation: ShipRotation): GeneratedShipRotation {
-	switch (normalizeRotation(rotation)) {
-		case defines.direction.east:
-			return 'east';
-		case defines.direction.south:
-			return 'south';
-		case defines.direction.west:
-			return 'west';
-		default:
-			return 'north';
+function computeConnectorCandidates(
+	tiles: ShipTilePosition[],
+	tileSet: Record<string, true | undefined>,
+	bounds: RotatedModuleGeometry['bounds'],
+	size: 2 | 3 | 4,
+) {
+	const outside = computeOutsideReachable(tileSet, bounds);
+	const candidates: ConnectorCandidate[] = [];
+	for (const tile of tiles) {
+		const horizontalTopLeft: [number, number] = [tile.x, tile.y];
+		if (connectorTilesInside(horizontalTopLeft, 'horizontal', size, tileSet)) {
+			const northOpen = connectorSideOutside(horizontalTopLeft, 'horizontal', size, outside, 'north');
+			const southOpen = connectorSideOutside(horizontalTopLeft, 'horizontal', size, outside, 'south');
+			if (northOpen) candidates.push({ topLeft: horizontalTopLeft, orientation: 'horizontal', side: 'north' });
+			if (southOpen) candidates.push({ topLeft: horizontalTopLeft, orientation: 'horizontal', side: 'south' });
+		}
+
+		const verticalTopLeft: [number, number] = [tile.x, tile.y];
+		if (connectorTilesInside(verticalTopLeft, 'vertical', size, tileSet)) {
+			const westOpen = connectorSideOutside(verticalTopLeft, 'vertical', size, outside, 'west');
+			const eastOpen = connectorSideOutside(verticalTopLeft, 'vertical', size, outside, 'east');
+			if (eastOpen) candidates.push({ topLeft: verticalTopLeft, orientation: 'vertical', side: 'east' });
+			if (westOpen) candidates.push({ topLeft: verticalTopLeft, orientation: 'vertical', side: 'west' });
+		}
 	}
+	return sortConnectorCandidates(dedupeConnectorCandidates(candidates));
+}
+
+function connectorTilesInside(
+	topLeft: [number, number],
+	orientation: ShipConnectorOrientation,
+	size: 2 | 3 | 4,
+	tileSet: Record<string, true | undefined>,
+) {
+	if (orientation === 'horizontal') {
+		for (let offset = 0; offset < size; offset += 1)
+			if (!tileSet[tileKey(topLeft[0] + offset, topLeft[1])]) return false;
+		return true;
+	}
+
+	for (let offset = 0; offset < size; offset += 1) if (!tileSet[tileKey(topLeft[0], topLeft[1] + offset)]) return false;
+	return true;
+}
+
+function connectorSideOutside(
+	topLeft: [number, number],
+	orientation: ShipConnectorOrientation,
+	size: 2 | 3 | 4,
+	outside: Record<string, true | undefined>,
+	side: ShipConnectorSide,
+) {
+	if (orientation === 'horizontal') {
+		const y = side === 'north' ? topLeft[1] - 1 : topLeft[1] + 1;
+		for (let offset = 0; offset < size; offset += 1) if (!outside[tileKey(topLeft[0] + offset, y)]) return false;
+		return true;
+	}
+
+	const x = side === 'west' ? topLeft[0] - 1 : topLeft[0] + 1;
+	for (let offset = 0; offset < size; offset += 1) if (!outside[tileKey(x, topLeft[1] + offset)]) return false;
+	return true;
+}
+
+function computeOutsideReachable(tileSet: Record<string, true | undefined>, bounds: RotatedModuleGeometry['bounds']) {
+	const minX = bounds.minX - 1;
+	const maxX = bounds.maxX + 1;
+	const minY = bounds.minY - 1;
+	const maxY = bounds.maxY + 1;
+	const outside: Record<string, true | undefined> = {};
+	const queue: ShipTilePosition[] = [];
+
+	const enqueue = (x: number, y: number) => {
+		if (x < minX || x > maxX || y < minY || y > maxY) return;
+		const key = tileKey(x, y);
+		if (tileSet[key]) return;
+		if (outside[key]) return;
+		outside[key] = true;
+		queue.push({ x, y });
+	};
+
+	for (let x = minX; x <= maxX; x += 1) {
+		enqueue(x, minY);
+		enqueue(x, maxY);
+	}
+	for (let y = minY; y <= maxY; y += 1) {
+		enqueue(minX, y);
+		enqueue(maxX, y);
+	}
+
+	for (let index = 0; index < queue.length; index += 1) {
+		const point = queue[index]!;
+		enqueue(point.x + 1, point.y);
+		enqueue(point.x - 1, point.y);
+		enqueue(point.x, point.y + 1);
+		enqueue(point.x, point.y - 1);
+	}
+	return outside;
+}
+
+function computeBounds(tiles: ShipTilePosition[]): RotatedModuleGeometry['bounds'] {
+	let minX = tiles[0]!.x;
+	let maxX = tiles[0]!.x;
+	let minY = tiles[0]!.y;
+	let maxY = tiles[0]!.y;
+	for (const tile of tiles) {
+		if (tile.x < minX) minX = tile.x;
+		if (tile.x > maxX) maxX = tile.x;
+		if (tile.y < minY) minY = tile.y;
+		if (tile.y > maxY) maxY = tile.y;
+	}
+	return { minX, maxX, minY, maxY };
+}
+
+function toTileSet(tiles: ShipTilePosition[]) {
+	const tileSet: Record<string, true | undefined> = {};
+	for (const tile of tiles) tileSet[tileKey(tile.x, tile.y)] = true;
+	return tileSet;
+}
+
+function dedupeConnectorCandidates(connectors: ConnectorCandidate[]) {
+	const seen = new Set<string>();
+	const unique: ConnectorCandidate[] = [];
+	for (const connector of connectors) {
+		const key = `${connector.topLeft[0]},${connector.topLeft[1]},${connector.orientation},${connector.side}`;
+		if (seen.has(key)) continue;
+		seen.add(key);
+		unique.push(connector);
+	}
+	return unique;
+}
+
+function sortConnectorCandidates(connectors: ConnectorCandidate[]) {
+	const sideOrder: Record<ShipConnectorSide, number> = {
+		north: 0,
+		east: 1,
+		south: 2,
+		west: 3,
+	};
+	const orientationOrder: Record<ShipConnectorOrientation, number> = {
+		horizontal: 0,
+		vertical: 1,
+	};
+	return [...connectors].sort((a, b) => {
+		if (a.topLeft[1] !== b.topLeft[1]) return a.topLeft[1] - b.topLeft[1];
+		if (a.topLeft[0] !== b.topLeft[0]) return a.topLeft[0] - b.topLeft[0];
+		if (a.orientation !== b.orientation) return orientationOrder[a.orientation] - orientationOrder[b.orientation];
+		return sideOrder[a.side] - sideOrder[b.side];
+	});
 }
 
 function directionToSide(direction: defines.direction): ShipConnectorSide | undefined {
