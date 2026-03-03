@@ -47,6 +47,32 @@ export default {
 				type: 'problem',
 			},
 		},
+		'no-nullish-inline-object-values': {
+			create(context) {
+				return {
+					ObjectExpression(node) {
+						for (const property of node.properties) {
+							if (property.type !== 'Property' || property.kind !== 'init') continue;
+							if (!isNullishInlineObjectValue(property.value)) continue;
+
+							context.report({
+								message:
+									'Avoid inline `null` or `undefined` in object literals. Lua tables are sparse and remove `nil` values, so assign these fields after object creation.',
+								node: property.value,
+							});
+						}
+					},
+				};
+			},
+			meta: {
+				docs: {
+					description:
+						'Disallow inline `null` and `undefined` object literal values because they are dropped when converted to Lua tables.',
+				},
+				schema: [],
+				type: 'problem',
+			},
+		},
 	},
 };
 
@@ -83,4 +109,40 @@ function getApiPath(expression) {
 	if (expression.object.type !== 'Identifier' || expression.property.type !== 'Identifier') return undefined;
 
 	return `${expression.object.name}.${expression.property.name}()`;
+}
+
+function isNullishInlineObjectValue(value) {
+	const expression = unwrapExpression(value);
+	if (!expression) return false;
+
+	if (expression.type === 'Literal' && expression.value === null) return true;
+	if (expression.type === 'Identifier' && expression.name === 'undefined') return true;
+	if (expression.type === 'UnaryExpression' && expression.operator === 'void') return true;
+
+	return false;
+}
+
+function unwrapExpression(expression) {
+	let current = expression;
+	while (current && typeof current === 'object') {
+		if (current.type === 'ChainExpression') {
+			current = current.expression;
+			continue;
+		}
+
+		if (
+			current.type === 'ParenthesizedExpression' ||
+			current.type === 'TSAsExpression' ||
+			current.type === 'TSNonNullExpression' ||
+			current.type === 'TSSatisfiesExpression' ||
+			current.type === 'TSTypeAssertion'
+		) {
+			current = current.expression;
+			continue;
+		}
+
+		break;
+	}
+
+	return current;
 }

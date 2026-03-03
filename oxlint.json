@@ -35,7 +35,8 @@
 					"message": "Use createEntity from '@/lib/utils.ts' instead"
 				}
 			]
-		]
+		],
+		"factorio/no-nullish-inline-object-values": "error"
 	},
 	"ignorePatterns": [
 		"node_modules",
