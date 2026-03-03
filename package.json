@@ -6,7 +6,7 @@
 	"scripts": {
 		"build": "bun scripts/build.ts",
 		"dev": "tstl --watch",
-		"lint": "oxlint -c oxlint.json --fix && oxfmt",
+		"lint": "oxlint -c oxlint.json --type-aware --fix && oxfmt",
 		"launch": "bun scripts/launch.ts"
 	},
 	"dependencies": {
@@ -19,6 +19,7 @@
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
+		"oxlint-tsgolint": "^0.14.1",
 		"ts-node": "^10.9.2"
 	}
 }
