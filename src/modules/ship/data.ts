@@ -1,6 +1,6 @@
 import * as util from 'util';
 import { names, shipConnectorSizes, shipModuleIds, shipModules, ShipConnectorSize, ShipModuleId } from './constants';
-import { shipGeneratedPlacementPreviews, shipModuleData } from './generated';
+import { shipModuleData } from './generated';
 import { addTechnology, extend } from '@/lib/data-utils';
 
 const hiddenOffGridFlags = ['placeable-neutral', 'placeable-off-grid', 'not-on-map'] as const;
@@ -177,6 +177,7 @@ const makeModulePlacementItem = (moduleId: ShipModuleId) => {
 };
 const makeModulePlacementEntity = (moduleId: ShipModuleId) => {
 	const previewScale = modulePlacementPreviewScale(moduleId);
+	const previews = shipModuleData[moduleId].previews;
 	return extend(
 		data.raw['simple-entity-with-owner']['simple-entity-with-owner']!,
 		{
@@ -201,25 +202,25 @@ const makeModulePlacementEntity = (moduleId: ShipModuleId) => {
 			allow_copy_paste: false,
 			picture: {
 				north: {
-					filename: shipGeneratedPlacementPreviews[moduleId].north,
+					filename: previews.north,
 					width: 64,
 					height: 64,
 					scale: previewScale,
 				},
 				east: {
-					filename: shipGeneratedPlacementPreviews[moduleId].east,
+					filename: previews.east,
 					width: 64,
 					height: 64,
 					scale: previewScale,
 				},
 				south: {
-					filename: shipGeneratedPlacementPreviews[moduleId].south,
+					filename: previews.south,
 					width: 64,
 					height: 64,
 					scale: previewScale,
 				},
 				west: {
-					filename: shipGeneratedPlacementPreviews[moduleId].west,
+					filename: previews.west,
 					width: 64,
 					height: 64,
 					scale: previewScale,

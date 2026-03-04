@@ -32,18 +32,20 @@ type RotationGeometry = {
 	tiles: Array<[number, number]>;
 };
 type ModuleGeometry = Record<Rotation, RotationGeometry>;
-type ModuleConnectorPoints = Record<Side, Array<[number, number]>>;
 type ShipModuleData = {
-	connector: ModuleConnectorPoints;
-	height: number;
 	icon: string;
-	tiles: Array<[number, number]>;
 	width: number;
+	height: number;
+	previews: Record<Rotation, string>;
+	/** minimum number of points used to make this shape to work in conjunction with `LuaSurface.clone_brush({ source_positions })` */
+	shapePoints: Array<[number, number]>;
+	/** all tiles that are on the outer edge of the module (used to see valid connector placement areas) */
+	externalTiles: Array<[number, number]>;
+	tiles: Array<[number, number]>;
 };
 type ModuleBuildData = {
 	moduleId: ModuleId;
 	moduleData: ShipModuleData;
-	placementPreviewPaths: Record<Rotation, string>;
 };
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -117,29 +119,35 @@ function generateShipModuleArtifacts() {
 		keepIconNames.add(iconFileName);
 		writePng(path.join(iconDir, iconFileName), 64, 64, rasterizeShape(normalizedTiles));
 
-		const bounds = computeBounds(normalizedTiles);
-		const moduleData: ShipModuleData = {
-			connector: computeConnectorPoints(normalizedTiles),
-			height: bounds.maxY - bounds.minY + 1,
-			icon: iconPath,
-			tiles: normalizedTiles.map(tile => [tile.x, tile.y]),
-			width: bounds.maxX - bounds.minX + 1,
-		};
+		const previews = {} as Record<Rotation, string>;
 		const geometry = buildModuleGeometry(normalizedTiles);
-		const placementPreviewPaths = {} as Record<Rotation, string>;
 		for (const rotation of ['north', 'east', 'south', 'west'] as const) {
 			const placementFileName = `module-${moduleId}-placement-${rotation}.png`;
 			const placementPath = `__warpage__/modules/ship/graphics/${placementFileName}`;
 			keepIconNames.add(placementFileName);
-			placementPreviewPaths[rotation] = placementPath;
+			previews[rotation] = placementPath;
 			const tiles = geometry[rotation].tiles.map(([x, y]) => ({ x, y }));
 			const candidateTileKeys = connectorCandidateTileKeys(geometry[rotation].connectorCandidatesBySize['2']);
 			writePng(path.join(iconDir, placementFileName), 64, 64, rasterizeShape(tiles, candidateTileKeys));
 		}
+
+		const bounds = computeBounds(normalizedTiles);
+		const normalizedTilePairs = normalizedTiles.map(tile => [tile.x, tile.y] as [number, number]);
+		const externalTiles = computeExternalTiles(normalizedTiles);
+		const minimizedShapePoints = minimizeExternalTiles(externalTiles).map(tile => [tile.x, tile.y] as [number, number]);
+		const externalTilePairs = externalTiles.map(tile => [tile.x, tile.y] as [number, number]);
+		const moduleData: ShipModuleData = {
+			icon: iconPath,
+			width: bounds.maxX - bounds.minX + 1,
+			height: bounds.maxY - bounds.minY + 1,
+			previews,
+			shapePoints: minimizedShapePoints,
+			externalTiles: externalTilePairs,
+			tiles: normalizedTilePairs,
+		};
 		moduleBuildData.push({
 			moduleId,
 			moduleData,
-			placementPreviewPaths,
 		});
 	}
 
@@ -238,32 +246,43 @@ function buildModuleGeometry(baseTiles: Point[]): ModuleGeometry {
 	return byRotation;
 }
 
-function computeConnectorPoints(tiles: Point[]): ModuleConnectorPoints {
+function computeExternalTiles(tiles: Point[]) {
 	const tileSet = toTileSet(tiles);
 	const bounds = computeBounds(tiles);
 	const outside = computeOutsideReachable(tileSet, bounds);
-	const north: Array<[number, number]> = [];
-	const east: Array<[number, number]> = [];
-	const south: Array<[number, number]> = [];
-	const west: Array<[number, number]> = [];
+	const externalTiles: Point[] = [];
 
 	for (const tile of tiles) {
-		if (outside[tileKey(tile.x, tile.y - 1)]) north.push([tile.x, tile.y]);
-		if (outside[tileKey(tile.x + 1, tile.y)]) east.push([tile.x, tile.y]);
-		if (outside[tileKey(tile.x, tile.y + 1)]) south.push([tile.x, tile.y]);
-		if (outside[tileKey(tile.x - 1, tile.y)]) west.push([tile.x, tile.y]);
+		if (
+			outside[tileKey(tile.x, tile.y - 1)] ||
+			outside[tileKey(tile.x + 1, tile.y)] ||
+			outside[tileKey(tile.x, tile.y + 1)] ||
+			outside[tileKey(tile.x - 1, tile.y)]
+		)
+			externalTiles.push(tile);
 	}
 
-	return {
-		north: sortConnectorPoints(north, 'horizontal'),
-		east: sortConnectorPoints(east, 'vertical'),
-		south: sortConnectorPoints(south, 'horizontal'),
-		west: sortConnectorPoints(west, 'vertical'),
-	};
+	return externalTiles;
 }
 
-function sortConnectorPoints(points: Array<[number, number]>, axis: 'horizontal' | 'vertical') {
-	return [...points].sort((a, b) => (axis === 'horizontal' ? a[0] - b[0] || a[1] - b[1] : a[1] - b[1] || a[0] - b[0]));
+function minimizeExternalTiles(tiles: Point[]) {
+	if (tiles.length <= 2) return tiles;
+
+	const tileSet = toTileSet(tiles);
+	const minimized = tiles.filter(tile => {
+		const north = tileSet[tileKey(tile.x, tile.y - 1)] === true;
+		const east = tileSet[tileKey(tile.x + 1, tile.y)] === true;
+		const south = tileSet[tileKey(tile.x, tile.y + 1)] === true;
+		const west = tileSet[tileKey(tile.x - 1, tile.y)] === true;
+		const degree = (north ? 1 : 0) + (east ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0);
+
+		if (degree !== 2) return true;
+		const isStraight = (north && south) || (east && west);
+		return !isStraight;
+	});
+
+	if (minimized.length === 0) return [tiles[0]!];
+	return minimized.sort((a, b) => (a.y - b.y === 0 ? a.x - b.x : a.y - b.y));
 }
 
 function rotateRelativeTile(tile: Point, steps: number) {
@@ -451,11 +470,7 @@ function connectorCandidateTileKeys(candidates: ConnectorWithSide[]) {
 
 function renderGeneratedTs(modules: ModuleBuildData[]) {
 	const moduleData: Record<string, ShipModuleData> = {};
-	const placementPreviews: Record<string, Record<Rotation, string>> = {};
-	for (const module of modules) {
-		moduleData[module.moduleId] = module.moduleData;
-		placementPreviews[module.moduleId] = module.placementPreviewPaths;
-	}
+	for (const module of modules) moduleData[module.moduleId] = module.moduleData;
 
 	return [
 		'/* oxlint-disable */',
@@ -467,15 +482,20 @@ function renderGeneratedTs(modules: ModuleBuildData[]) {
 		'',
 		"export type GeneratedShipRotation = 'north' | 'east' | 'south' | 'west';",
 		'export type ShipModuleData = {',
-		"\tconnector: Record<'north' | 'east' | 'south' | 'west', Array<[number, number]>>;",
-		'\theight: number;',
+		'\t/** icon used for sprite buttons and technology icons */',
 		'\ticon: string;',
-		'\ttiles: Array<[number, number]>;',
 		'\twidth: number;',
+		'\theight: number;',
+		'\t/** direction-specific module placement previews */',
+		'\tpreviews: Record<GeneratedShipRotation, string>;',
+		'\t/** minimum number of points used to make this shape to work in conjunction with `LuaSurface.clone_brush({ source_positions })` */',
+		'\tshapePoints: Array<[number, number]>;',
+		'\t/** all tiles that are on the outer edge of the module (used to see valid connector placement areas) */',
+		'\texternalTiles: Array<[number, number]>;',
+		'\ttiles: Array<[number, number]>;',
 		'};',
 		'',
 		`export const shipModuleData: Record<ShipModuleId, ShipModuleData> = ${JSON.stringify(moduleData)};`,
-		`export const shipGeneratedPlacementPreviews: Record<ShipModuleId, Record<GeneratedShipRotation, string>> = ${JSON.stringify(placementPreviews)};`,
 		'',
 	].join('\n');
 }

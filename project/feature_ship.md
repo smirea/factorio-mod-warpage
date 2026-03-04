@@ -94,7 +94,7 @@ Status: implemented baseline (updated 2026-03-02).
 - Build output includes module width/height and per-side outside-reachable connector edge tiles.
 - Build script writes [src/modules/ship/generated.ts](/Users/stefan/code/factorio-mod-warpage/src/modules/ship/generated.ts).
 - `generated.ts` exports `shipModuleData`.
-- `generated.ts` exports `shipGeneratedPlacementPreviews`.
+- `shipModuleData` includes per-rotation placement `previews`.
 - Runtime computes rotated connector candidates from generated module tiles and does not decode blueprint geometry on load.
 - Module icon PNGs and placement previews are generated to `src/modules/ship/graphics/`.
 - Data stage sprite/item/entity icon paths are sourced from `shipModuleData`.
