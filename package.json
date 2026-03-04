@@ -5,7 +5,7 @@
 	"module": "index.ts",
 	"scripts": {
 		"build": "bun scripts/build.ts",
-		"dev": "tstl --watch",
+		"dev": "tstl -p tsconfig.tstl.json --watch",
 		"lint": "oxlint -c oxlint.json --type-aware --fix && oxfmt",
 		"launch": "bun scripts/launch.ts"
 	},

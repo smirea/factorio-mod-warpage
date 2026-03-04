@@ -90,7 +90,7 @@ function main() {
 	}
 
 	cmd('rm -rf compiled');
-	cmd('./node_modules/.bin/tstl');
+	cmd('./node_modules/.bin/tstl -p tsconfig.tstl.json');
 
 	for (const fullFilePath of toCopy) {
 		const source = fullFilePath.replace(rootDir + path.sep, '');
