@@ -8,7 +8,7 @@
 	"rules": {
 		"no-unused-vars": "warn",
 		"no-console": "off",
-		"curly": ["error", "multi"],
+		// "curly": ["error", "multi"],
 		"typescript/array-type": "off",
 		"typescript/strict-boolean-expressions": "error",
 		"sort-keys": "off",

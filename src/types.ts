@@ -16,7 +16,8 @@ declare global {
 			| 'recipe-name'
 			| 'technology-description'
 			| 'technology-effect'
-			| 'technology-name',
+			| 'technology-name'
+			| 'other',
 		key: string,
 		...args: (string | number)[]
 	) => [string, ...(string | number)[]];

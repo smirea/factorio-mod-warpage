@@ -3,5 +3,8 @@
 		".tmp": true,
 		"compiled": true,
 		"mod": true
+	},
+	"files.readonlyInclude": {
+		"src/modules/ship/generated.ts": true
 	}
 }

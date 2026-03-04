@@ -14,6 +14,12 @@ High level design documennts available under `./project/*`, they were true at th
 - factorio data path: `/Applications/factorio.app/Contents/data` (for referencing canonical assets)
 - prefer absolute imports using `@` alias outside of modules, so `import '@/lib/utils'` instead of `import './lib/utils'`
 
+# Common gotcha-s with TS to Lua
+
+- lua tables are sparse and delete `nil` keys, using `{ someKey: null, other: undefined, foo: 123 }` will result in `{ foo: 123 }`
+- a `nil` value is `true` in lua, so `if (someArray) ...` will evaluate to true when `someArray = null | undefined`. you need to explicitly check array size or null, i.e. `if (someArray != null)`
+- also see: https://typescripttolua.github.io/docs/caveats
+
 # Factorio references
 
 Use these as source-of-truth references when implementing mechanics, prototypes, settings, and runtime scripting or needing to reference anything about the factorio behavior or API.

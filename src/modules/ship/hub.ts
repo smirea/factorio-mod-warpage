@@ -1,4 +1,4 @@
-import { createEntity, createHolographicText, getCurrentSurface, on_nth_tick, registerGlobal } from '@/lib/utils';
+import { createEntity, createHolographicText, on_nth_tick, registerGlobal } from '@/lib/utils';
 import type {
 	CargoLandingPadEntity,
 	LuaEntity,
@@ -7,7 +7,7 @@ import type {
 	SpeechBubbleEntity,
 } from 'factorio:runtime';
 import { names } from './constants';
-import { ensureInitialShipModule } from './building';
+import { getCurrentSurface } from '@/storage';
 
 const hubClearRadius = 4;
 const repairRequirements: Record<string, number> = {
@@ -17,10 +17,10 @@ const repairRequirements: Record<string, number> = {
 	'iron-plate': 100,
 	stone: 200,
 };
-const entities = {
-	destroyedHub: undefined as undefined | LuaEntity,
-	hub: undefined as undefined | LuaEntity,
-	repairSpeechBubble: undefined as undefined | SpeechBubbleEntity,
+const entities = {} as {
+	destroyedHub: undefined | LuaEntity;
+	hub: undefined | LuaEntity;
+	repairSpeechBubble: undefined | SpeechBubbleEntity;
 };
 
 registerGlobal('createHub', createHub);
@@ -39,7 +39,6 @@ function startHubRepairChecks() {
 
 export function createHub() {
 	const surface = getCurrentSurface();
-	ensureInitialShipModule(surface);
 	const landingPad = createEntity<CargoLandingPadEntity>(surface, {
 		name: names.hubLandingPad,
 		position: [0, 0],
@@ -66,7 +65,6 @@ export function createHub() {
 }
 
 export function createDestroyedHub(surface = getCurrentSurface()) {
-	ensureInitialShipModule(surface);
 	storage.hubRepaired = false;
 	lastRepairText = '';
 	entities.repairSpeechBubble?.destroy();

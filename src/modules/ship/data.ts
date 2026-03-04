@@ -63,48 +63,6 @@ const connectorPicture = (size: ShipConnectorSize) => ({
 	east: { layers: connectorLayers(size, 'vertical') },
 	west: { layers: connectorLayers(size, 'vertical') },
 });
-const applyShipTileBuildabilityRule = () => {
-	const requiredTiles = {
-		layers: {
-			[names.tileCollisionLayer]: true as const,
-		},
-	};
-	const rawByType = data.raw as Record<string, Record<string, any> | undefined>;
-	const placeableEntityNames = new Set<string>();
-	const ignoredPlaceResults = new Set<string>();
-	for (const moduleId of shipModuleIds) ignoredPlaceResults.add(names.modulePlacementEntity(moduleId));
-	for (const connectorSize of shipConnectorSizes)
-		ignoredPlaceResults.add(names.connectorPlacementEntity(connectorSize));
-
-	for (const prototypesByName of Object.values(rawByType)) {
-		if (!prototypesByName) continue;
-
-		for (const prototype of Object.values(prototypesByName)) {
-			if (typeof prototype?.place_result !== 'string') continue;
-			if (ignoredPlaceResults.has(prototype.place_result)) continue;
-
-			placeableEntityNames.add(prototype.place_result);
-		}
-	}
-
-	for (const prototypesByName of Object.values(rawByType)) {
-		if (!prototypesByName) continue;
-
-		for (const prototype of Object.values(prototypesByName)) {
-			if (!prototype?.name || !prototype.collision_box) continue;
-
-			if (!placeableEntityNames.has(prototype.name)) continue;
-
-			prototype.tile_buildability_rules = [
-				...(prototype.tile_buildability_rules ?? []),
-				{
-					area: prototype.collision_box,
-					required_tiles: requiredTiles,
-				},
-			];
-		}
-	}
-};
 
 const connectorSelectionBox = (size: ShipConnectorSize) =>
 	[
@@ -112,25 +70,32 @@ const connectorSelectionBox = (size: ShipConnectorSize) =>
 		[size / 2, 0.5],
 	] as const;
 const makeConnectorEntity = (size: ShipConnectorSize) =>
-	extend(data.raw['simple-entity-with-owner']['simple-entity-with-owner']!, {
-		name: names.connectorEntity(size),
-		icons: connectorIcons,
-		collision_box: zeroBox,
-		corpse: undefined,
-		hidden: false,
-		hidden_in_factoriopedia: false,
-		icon: undefined,
-		max_health: 1000,
-		order: order(`c[connector-entity-${size}]`),
-		picture: connectorPicture(size),
-		render_layer: 'floor',
-		selection_box: connectorSelectionBox(size),
-		tile_width: size,
-		tile_height: 1,
-		minable: {
-			mining_time: 0.1,
+	extend(
+		data.raw['simple-entity-with-owner']['simple-entity-with-owner']!,
+		{
+			name: names.connectorEntity(size),
+			icons: connectorIcons,
+			collision_box: connectorSelectionBox(size),
+			max_health: 1000,
+			order: order(`c[connector-entity-${size}]`),
+			picture: connectorPicture(size),
+			render_layer: 'floor',
+			selection_box: connectorSelectionBox(size),
+			tile_width: size,
+			tile_height: 1,
+			minable: {
+				mining_time: 1,
+			},
+			collision_mask: {
+				layers: {
+					[names.tileCollisionLayer]: true,
+				},
+			},
 		},
-	});
+		{
+			remove: ['corpse', 'icon'],
+		},
+	);
 const makeConnectorPlacementItem = (size: ShipConnectorSize) => {
 	const item = extend(data.raw.item['hazard-concrete']!, {
 		name: names.connectorPlacementItem(size),
@@ -149,27 +114,29 @@ const makeConnectorPlacementItem = (size: ShipConnectorSize) => {
 	return item;
 };
 const makeConnectorPlacementEntity = (size: ShipConnectorSize) =>
-	extend(data.raw['simple-entity-with-owner']['simple-entity-with-owner']!, {
-		name: names.connectorPlacementEntity(size),
-		icons: connectorIcons,
-		icon: undefined,
-		collision_box: zeroBox,
-		selection_box: zeroBox,
-		corpse: undefined,
-		hidden: true,
-		hidden_in_factoriopedia: true,
-		max_health: 1,
-		order: order(`c[connector-placement-entity-${size}]`),
-		render_layer: 'object',
-		selectable_in_game: false,
-		tile_width: size,
-		tile_height: 1,
-		flags: ['placeable-player', 'player-creation', 'not-on-map'] as const,
-		allow_copy_paste: false,
-		minable: undefined,
-		placeable_position_visualization: undefined,
-		picture: connectorPicture(size),
-	});
+	extend(
+		data.raw['simple-entity-with-owner']['simple-entity-with-owner']!,
+		{
+			name: names.connectorPlacementEntity(size),
+			icons: connectorIcons,
+			collision_box: zeroBox,
+			selection_box: zeroBox,
+			hidden: true,
+			hidden_in_factoriopedia: true,
+			max_health: 1,
+			order: order(`c[connector-placement-entity-${size}]`),
+			render_layer: 'object',
+			selectable_in_game: false,
+			tile_width: size,
+			tile_height: 1,
+			flags: ['placeable-player', 'player-creation', 'not-on-map'] as const,
+			allow_copy_paste: false,
+			picture: connectorPicture(size),
+		},
+		{
+			remove: ['icon', 'corpse', 'minable', 'placeable_position_visualization'],
+		},
+	);
 
 const moduleIconPath = (moduleId: ShipModuleId) => shipModuleData[moduleId].icon;
 const modulePlacementPreviewScale = (moduleId: ShipModuleId) => {
@@ -210,57 +177,59 @@ const makeModulePlacementItem = (moduleId: ShipModuleId) => {
 };
 const makeModulePlacementEntity = (moduleId: ShipModuleId) => {
 	const previewScale = modulePlacementPreviewScale(moduleId);
-	return extend(data.raw['simple-entity-with-owner']['simple-entity-with-owner']!, {
-		name: names.modulePlacementEntity(moduleId),
-		icons: [
-			{
-				icon: moduleIconPath(moduleId),
-				icon_size: 64,
-			},
-		],
-		icon: undefined,
-		collision_box: zeroBox,
-		selection_box: zeroBox,
-		corpse: undefined,
-		hidden: true,
-		hidden_in_factoriopedia: true,
-		max_health: 1,
-		order: order(`m[module-placement-entity-${moduleId}]`),
-		render_layer: 'object',
-		selectable_in_game: false,
-		tile_width: 1,
-		tile_height: 1,
-		flags: ['placeable-player', 'player-creation', 'not-on-map'] as const,
-		allow_copy_paste: false,
-		minable: undefined,
-		placeable_position_visualization: undefined,
-		picture: {
-			north: {
-				filename: shipGeneratedPlacementPreviews[moduleId].north,
-				width: 64,
-				height: 64,
-				scale: previewScale,
-			},
-			east: {
-				filename: shipGeneratedPlacementPreviews[moduleId].east,
-				width: 64,
-				height: 64,
-				scale: previewScale,
-			},
-			south: {
-				filename: shipGeneratedPlacementPreviews[moduleId].south,
-				width: 64,
-				height: 64,
-				scale: previewScale,
-			},
-			west: {
-				filename: shipGeneratedPlacementPreviews[moduleId].west,
-				width: 64,
-				height: 64,
-				scale: previewScale,
+	return extend(
+		data.raw['simple-entity-with-owner']['simple-entity-with-owner']!,
+		{
+			name: names.modulePlacementEntity(moduleId),
+			icons: [
+				{
+					icon: moduleIconPath(moduleId),
+					icon_size: 64,
+				},
+			],
+			collision_box: zeroBox,
+			selection_box: zeroBox,
+			hidden: true,
+			hidden_in_factoriopedia: true,
+			max_health: 1,
+			order: order(`m[module-placement-entity-${moduleId}]`),
+			render_layer: 'object',
+			selectable_in_game: false,
+			tile_width: 1,
+			tile_height: 1,
+			flags: ['placeable-player', 'player-creation', 'not-on-map'] as const,
+			allow_copy_paste: false,
+			picture: {
+				north: {
+					filename: shipGeneratedPlacementPreviews[moduleId].north,
+					width: 64,
+					height: 64,
+					scale: previewScale,
+				},
+				east: {
+					filename: shipGeneratedPlacementPreviews[moduleId].east,
+					width: 64,
+					height: 64,
+					scale: previewScale,
+				},
+				south: {
+					filename: shipGeneratedPlacementPreviews[moduleId].south,
+					width: 64,
+					height: 64,
+					scale: previewScale,
+				},
+				west: {
+					filename: shipGeneratedPlacementPreviews[moduleId].west,
+					width: 64,
+					height: 64,
+					scale: previewScale,
+				},
 			},
 		},
-	});
+		{
+			remove: ['icon', 'corpse', 'minable', 'placeable_position_visualization'],
+		},
+	);
 };
 
 const modulePlacementPrototypes: any[] = [];
@@ -278,68 +247,72 @@ for (const connectorSize of shipConnectorSizes) {
 }
 
 const makeHubFluidPipe = () => {
-	const clone = extend(data.raw['storage-tank']['storage-tank']!, {
-		collision_box: [
-			[-0.29, -0.29],
-			[0.29, 0.29],
-		],
-		fast_replaceable_group: undefined,
-		flags: ['placeable-neutral', 'placeable-player', 'player-creation'] as const,
-		hidden: true,
-		hidden_in_factoriopedia: true,
-		icon: '__base__/graphics/icons/pipe.png',
-		minable: undefined,
-		name: names.hubFluidPipe,
-		order: order('d[hub-fluid-pipe]'),
-		pictures: {
-			flow_sprite: {
-				filename: '__base__/graphics/entity/pipe/fluid-flow-low-temperature.png',
-				height: 18,
-				priority: 'extra-high',
-				width: 160,
+	const clone = extend(
+		data.raw['storage-tank']['storage-tank']!,
+		{
+			collision_box: [
+				[-0.29, -0.29],
+				[0.29, 0.29],
+			],
+			flags: ['placeable-neutral', 'placeable-player', 'player-creation'] as const,
+			hidden: true,
+			hidden_in_factoriopedia: true,
+			icon: '__base__/graphics/icons/pipe.png',
+			name: names.hubFluidPipe,
+			order: order('d[hub-fluid-pipe]'),
+			pictures: {
+				flow_sprite: {
+					filename: '__base__/graphics/entity/pipe/fluid-flow-low-temperature.png',
+					height: 18,
+					priority: 'extra-high',
+					width: 160,
+				},
+				fluid_background: {
+					filename: '__base__/graphics/entity/pipe/fluid-background.png',
+					height: 40,
+					priority: 'extra-high',
+					scale: 0.5,
+					width: 64,
+				},
+				gas_flow: {
+					animation_speed: 0.25,
+					filename: '__base__/graphics/entity/pipe/steam.png',
+					frame_count: 60,
+					height: 30,
+					line_length: 10,
+					priority: 'extra-high',
+					scale: 0.5,
+					width: 48,
+				},
+				picture: {
+					filename: '__base__/graphics/entity/pipe/pipe-cross.png',
+					height: 128,
+					priority: 'extra-high',
+					scale: 0.5,
+					width: 128,
+				},
+				window_background: {
+					filename: '__base__/graphics/entity/pipe/pipe-horizontal-window-background.png',
+					height: 128,
+					priority: 'extra-high',
+					scale: 0.5,
+					width: 128,
+				},
 			},
-			fluid_background: {
-				filename: '__base__/graphics/entity/pipe/fluid-background.png',
-				height: 40,
-				priority: 'extra-high',
-				scale: 0.5,
-				width: 64,
-			},
-			gas_flow: {
-				animation_speed: 0.25,
-				filename: '__base__/graphics/entity/pipe/steam.png',
-				frame_count: 60,
-				height: 30,
-				line_length: 10,
-				priority: 'extra-high',
-				scale: 0.5,
-				width: 48,
-			},
-			picture: {
-				filename: '__base__/graphics/entity/pipe/pipe-cross.png',
-				height: 128,
-				priority: 'extra-high',
-				scale: 0.5,
-				width: 128,
-			},
-			window_background: {
-				filename: '__base__/graphics/entity/pipe/pipe-horizontal-window-background.png',
-				height: 128,
-				priority: 'extra-high',
-				scale: 0.5,
-				width: 128,
-			},
+			selection_box: [
+				[-0.5, -0.5],
+				[0.5, 0.5],
+			],
+			two_direction_only: false,
+			window_bounding_box: [
+				[-0.25, -0.25],
+				[0.25, 0.25],
+			],
 		},
-		selection_box: [
-			[-0.5, -0.5],
-			[0.5, 0.5],
-		],
-		two_direction_only: false,
-		window_bounding_box: [
-			[-0.25, -0.25],
-			[0.25, 0.25],
-		],
-	});
+		{
+			remove: ['minable', 'fast_replaceable_group'],
+		},
+	);
 
 	clone.fluid_box.volume = 2000;
 	clone.fluid_box.pipe_connections = [
@@ -352,14 +325,19 @@ const makeHubFluidPipe = () => {
 	return clone;
 };
 
-const caragoLandingPad = extend(data.raw['cargo-landing-pad']['cargo-landing-pad'], {
-	allow_copy_paste: false,
-	hidden: true,
-	hidden_in_factoriopedia: true,
-	minable: undefined,
-	name: names.hubLandingPad,
-	radar_range: 20,
-});
+const caragoLandingPad = extend(
+	data.raw['cargo-landing-pad']['cargo-landing-pad'],
+	{
+		allow_copy_paste: false,
+		hidden: true,
+		hidden_in_factoriopedia: true,
+		name: names.hubLandingPad,
+		radar_range: 20,
+	},
+	{
+		remove: ['minable'],
+	},
+);
 
 for (const moduleId of shipModuleIds) {
 	const { tech, expands } = shipModules[moduleId];
@@ -408,18 +386,36 @@ data.extend([
 		name: names.tileCollisionLayer,
 		type: 'collision-layer',
 	},
-	extend(data.raw.tile['foundation']!, {
+	extend(data.raw.item['foundation'], {
+		name: names.tile,
 		hidden: true,
 		hidden_in_factoriopedia: true,
-		minable: undefined,
-		name: names.tile,
-		order: order('a[ship-tile]'),
-		collision_mask: {
-			layers: {
-				[names.tileCollisionLayer]: true,
+		place_as_tile: {
+			result: names.tile,
+			condition: {
+				layers: {},
 			},
+			condition_size: 1,
 		},
 	}),
+	extend(
+		data.raw.tile['foundation']!,
+		{
+			hidden: true,
+			hidden_in_factoriopedia: true,
+			name: names.tile,
+			decorative_removal_probability: 1,
+			collision_mask: {
+				colliding_with_tiles_only: true,
+				layers: {
+					[names.tileCollisionLayer]: true,
+				},
+			},
+		},
+		{
+			remove: ['minable'],
+		},
+	),
 	...connectorPrototypes,
 	makeHubFluidPipe(),
 	...modulePlacementPrototypes,
@@ -441,45 +437,51 @@ data.extend([
 		selectable_in_game: false,
 		selection_box: zeroBox,
 	}),
-	extend(data.raw['electric-pole']['small-electric-pole'], {
-		auto_connect_up_to_n_wires: 0,
-		collision_box: zeroBox,
-		fast_replaceable_group: undefined,
-		flags: hiddenOffGridFlags,
-		hidden: true,
-		hidden_in_factoriopedia: true,
-		maximum_wire_distance: 0,
-		minable: undefined,
-		name: names.hubPowerPole,
-		selectable_in_game: false,
-		selection_box: zeroBox,
-		supply_area_distance: 10,
-	}),
-	extend(data.raw.container['wooden-chest'], {
-		collision_box: caragoLandingPad.collision_box,
-		fast_replaceable_group: undefined,
-		flags: ['placeable-neutral', 'player-creation', 'not-deconstructable'],
-		hidden: true,
-		hidden_in_factoriopedia: true,
-		icon: '__base__/graphics/icons/cargo-landing-pad.png',
-		inventory_size: 20,
-		inventory_type: 'with_filters_and_bar',
-		max_health: 1,
-		minable: undefined,
-		name: names.destroyedHub,
-		picture: {
-			layers: [
-				{
-					filename: '__base__/graphics/entity/cargo-hubs/hubs/planet-hub-remnants.png',
-					height: 610,
-					scale: 0.5,
-					shift: util.by_pixel(-12, 5.5),
-					width: 686,
-				},
-			],
+	extend(
+		data.raw['electric-pole']['small-electric-pole'],
+		{
+			auto_connect_up_to_n_wires: 0,
+			collision_box: zeroBox,
+			flags: hiddenOffGridFlags,
+			hidden: true,
+			hidden_in_factoriopedia: true,
+			maximum_wire_distance: 0,
+			name: names.hubPowerPole,
+			selectable_in_game: false,
+			selection_box: zeroBox,
+			supply_area_distance: 10,
 		},
-		selection_box: caragoLandingPad.selection_box,
-	}),
+		{
+			remove: ['minable', 'fast_replaceable_group'],
+		},
+	),
+	extend(
+		data.raw.container['wooden-chest'],
+		{
+			collision_box: caragoLandingPad.collision_box,
+			flags: ['placeable-neutral', 'player-creation', 'not-deconstructable'],
+			hidden: true,
+			hidden_in_factoriopedia: true,
+			icon: '__base__/graphics/icons/cargo-landing-pad.png',
+			inventory_size: 20,
+			inventory_type: 'with_filters_and_bar',
+			max_health: 1,
+			name: names.destroyedHub,
+			picture: {
+				layers: [
+					{
+						filename: '__base__/graphics/entity/cargo-hubs/hubs/planet-hub-remnants.png',
+						height: 610,
+						scale: 0.5,
+						shift: util.by_pixel(-12, 5.5),
+						width: 686,
+					},
+				],
+			},
+			selection_box: caragoLandingPad.selection_box,
+		},
+		{
+			remove: ['minable', 'fast_replaceable_group'],
+		},
+	),
 ]);
-
-applyShipTileBuildabilityRule();

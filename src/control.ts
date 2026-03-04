@@ -2,15 +2,9 @@ import '@/modules/ship/control.ts';
 import '@/modules/thermite/control.ts';
 import type { LuaPlayer, LuaSurface, MapPosition } from 'factorio:runtime';
 import { names as shipNames } from '@/modules/ship/constants';
-import {
-	ensureInitialShipModule,
-	ensureModuleRoster,
-	refreshAllShipModuleRosters,
-	refreshShipModuleUnlocks,
-} from '@/modules/ship/building';
 import { createDestroyedHub, createHub } from '@/modules/ship/hub';
-import { createEntity, getCurrentSurface, on_event, on_init, registerGlobal } from '@/lib/utils';
-import { initStorage } from './storage';
+import { createEntity, on_event, on_init, registerGlobal } from '@/lib/utils';
+import { getCurrentSurface, initStorage } from './storage';
 
 const forbiddenStartItems = [
 	'pistol',
@@ -54,7 +48,6 @@ on_event('on_player_created', event => {
 
 	const surface = getCurrentSurface();
 	applyStartupToPlayer(player, surface, resolveStartupAnchor(surface));
-	ensureModuleRoster(player);
 });
 
 registerGlobal('initStorage', initStorage);
@@ -80,7 +73,7 @@ function initStart() {
 	}
 
 	const surface = getCurrentSurface();
-	ensureInitialShipModule(surface);
+	// ensureInitialShipModule(surface);
 	const hub = surface.find_entity(shipNames.hubLandingPad, [0, 0]);
 	const destroyedHub = surface.find_entity(shipNames.destroyedHub, [0, 0]);
 
@@ -121,8 +114,8 @@ function initStart() {
 
 		applyStartupToPlayer(player, surface, startupAnchor);
 	}
-	refreshShipModuleUnlocks(game.forces.player);
-	refreshAllShipModuleRosters();
+	// refreshShipModuleUnlocks(game.forces.player);
+	// refreshAllShipModuleRosters();
 }
 
 function resolveStartupAnchor(surface: LuaSurface): MapPosition {

@@ -32,11 +32,18 @@ type RotationGeometry = {
 	tiles: Array<[number, number]>;
 };
 type ModuleGeometry = Record<Rotation, RotationGeometry>;
+type ModuleConnectorPoints = Record<Side, Array<[number, number]>>;
+type ShipModuleData = {
+	connector: ModuleConnectorPoints;
+	height: number;
+	icon: string;
+	tiles: Array<[number, number]>;
+	width: number;
+};
 type ModuleBuildData = {
-	geometry: ModuleGeometry;
-	iconPath: string;
-	placementPreviewPaths: Record<Rotation, string>;
 	moduleId: ModuleId;
+	moduleData: ShipModuleData;
+	placementPreviewPaths: Record<Rotation, string>;
 };
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -50,7 +57,7 @@ const iconDir = path.join(srcDir, 'modules', 'ship', 'graphics');
 function main() {
 	generateShipModuleArtifacts();
 
-	const allFiles = cmd(`find ${srcDir} -type f`, { stdio: undefined })
+	const allFiles = cmd(`find ${srcDir} -type f`, { stdio: 'pipe' })
 		.split('\n')
 		.filter(file => file.length > 0);
 	const errors: string[] = [];
@@ -65,7 +72,7 @@ function main() {
 		const moduleName = path.basename(path.dirname(file));
 		if (moduleName === 'src') continue;
 		const canonicalPath = path.join(srcDir, fileName);
-		const importString = `import '@/modules/${moduleName}/${fileName}';`;
+		const importString = `import '@/modules/${moduleName}/${path.basename(fileName)}';`;
 		if (!fs.existsSync(canonicalPath)) {
 			errors.push(`src/${fileName} does not exist, create it and add: \`${importString}\``);
 			continue;
@@ -110,6 +117,14 @@ function generateShipModuleArtifacts() {
 		keepIconNames.add(iconFileName);
 		writePng(path.join(iconDir, iconFileName), 64, 64, rasterizeShape(normalizedTiles));
 
+		const bounds = computeBounds(normalizedTiles);
+		const moduleData: ShipModuleData = {
+			connector: computeConnectorPoints(normalizedTiles),
+			height: bounds.maxY - bounds.minY + 1,
+			icon: iconPath,
+			tiles: normalizedTiles.map(tile => [tile.x, tile.y]),
+			width: bounds.maxX - bounds.minX + 1,
+		};
 		const geometry = buildModuleGeometry(normalizedTiles);
 		const placementPreviewPaths = {} as Record<Rotation, string>;
 		for (const rotation of ['north', 'east', 'south', 'west'] as const) {
@@ -123,9 +138,8 @@ function generateShipModuleArtifacts() {
 		}
 		moduleBuildData.push({
 			moduleId,
-			iconPath,
+			moduleData,
 			placementPreviewPaths,
-			geometry,
 		});
 	}
 
@@ -222,6 +236,34 @@ function buildModuleGeometry(baseTiles: Point[]): ModuleGeometry {
 	}
 
 	return byRotation;
+}
+
+function computeConnectorPoints(tiles: Point[]): ModuleConnectorPoints {
+	const tileSet = toTileSet(tiles);
+	const bounds = computeBounds(tiles);
+	const outside = computeOutsideReachable(tileSet, bounds);
+	const north: Array<[number, number]> = [];
+	const east: Array<[number, number]> = [];
+	const south: Array<[number, number]> = [];
+	const west: Array<[number, number]> = [];
+
+	for (const tile of tiles) {
+		if (outside[tileKey(tile.x, tile.y - 1)]) north.push([tile.x, tile.y]);
+		if (outside[tileKey(tile.x + 1, tile.y)]) east.push([tile.x, tile.y]);
+		if (outside[tileKey(tile.x, tile.y + 1)]) south.push([tile.x, tile.y]);
+		if (outside[tileKey(tile.x - 1, tile.y)]) west.push([tile.x, tile.y]);
+	}
+
+	return {
+		north: sortConnectorPoints(north, 'horizontal'),
+		east: sortConnectorPoints(east, 'vertical'),
+		south: sortConnectorPoints(south, 'horizontal'),
+		west: sortConnectorPoints(west, 'vertical'),
+	};
+}
+
+function sortConnectorPoints(points: Array<[number, number]>, axis: 'horizontal' | 'vertical') {
+	return [...points].sort((a, b) => (axis === 'horizontal' ? a[0] - b[0] || a[1] - b[1] : a[1] - b[1] || a[0] - b[0]));
 }
 
 function rotateRelativeTile(tile: Point, steps: number) {
@@ -408,13 +450,11 @@ function connectorCandidateTileKeys(candidates: ConnectorWithSide[]) {
 }
 
 function renderGeneratedTs(modules: ModuleBuildData[]) {
-	const icons: Record<string, string> = {};
+	const moduleData: Record<string, ShipModuleData> = {};
 	const placementPreviews: Record<string, Record<Rotation, string>> = {};
-	const geometry: Record<string, Record<Rotation, RotationGeometry>> = {};
 	for (const module of modules) {
-		icons[module.moduleId] = module.iconPath;
+		moduleData[module.moduleId] = module.moduleData;
 		placementPreviews[module.moduleId] = module.placementPreviewPaths;
-		geometry[module.moduleId] = module.geometry;
 	}
 
 	return [
@@ -426,28 +466,16 @@ function renderGeneratedTs(modules: ModuleBuildData[]) {
 		"import { ShipModuleId } from './constants';",
 		'',
 		"export type GeneratedShipRotation = 'north' | 'east' | 'south' | 'west';",
-		"export type GeneratedShipOrientation = 'horizontal' | 'vertical';",
-		"export type GeneratedShipSide = 'north' | 'east' | 'south' | 'west';",
-		'export type GeneratedShipConnector = {',
-		'\ttopLeft: [number, number];',
-		'\torientation: GeneratedShipOrientation;',
-		'\tside: GeneratedShipSide;',
-		'};',
-		'export type GeneratedShipModuleRotation = {',
-		'\tbounds: {',
-		'\t\tmaxX: number;',
-		'\t\tmaxY: number;',
-		'\t\tminX: number;',
-		'\t\tminY: number;',
-		'\t};',
-		"\tconnectorCandidatesBySize: Record<'2' | '3' | '4', GeneratedShipConnector[]>;",
-		'\tdefaultConnectors: GeneratedShipConnector[];',
+		'export type ShipModuleData = {',
+		"\tconnector: Record<'north' | 'east' | 'south' | 'west', Array<[number, number]>>;",
+		'\theight: number;',
+		'\ticon: string;',
 		'\ttiles: Array<[number, number]>;',
+		'\twidth: number;',
 		'};',
 		'',
-		`export const shipGeneratedIcons: Record<ShipModuleId, string> = ${JSON.stringify(icons)};`,
+		`export const shipModuleData: Record<ShipModuleId, ShipModuleData> = ${JSON.stringify(moduleData)};`,
 		`export const shipGeneratedPlacementPreviews: Record<ShipModuleId, Record<GeneratedShipRotation, string>> = ${JSON.stringify(placementPreviews)};`,
-		`export const shipGeneratedGeometry: Record<ShipModuleId, Record<GeneratedShipRotation, GeneratedShipModuleRotation>> = ${JSON.stringify(geometry)};`,
 		'',
 	].join('\n');
 }

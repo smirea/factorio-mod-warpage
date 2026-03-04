@@ -42,6 +42,11 @@ Repair cost: 200 stone, 200 coal, 100 copper ore, 100 iron plate, 10 calcite
 
 Status: implemented baseline (updated 2026-03-02).
 
+## Future ideas
+
+- replicant ship modules: a midgame tech that gives you access to small modules that clone themselves when built. extra replications would be unlocked with more tech. we'd need to make all clones non-interactible to avoid prevent players from mining them
+- quality ship modules: a midgame technology that increases the quality of all entities inside it. to be decided wether we want a separate kind of module for this or a way of applying an effect on existing modules (conceptually similar to inserting a quality module inside a beacon)
+
 ## Current specification
 
 - Buildings are restricted to a custom ship tile via prototype `tile_buildability_rules`.

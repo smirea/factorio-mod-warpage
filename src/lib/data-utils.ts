@@ -33,11 +33,18 @@ function loadItemTechnologyMap() {
 export function extend<T extends Record<string, any> | undefined>(
 	base: T,
 	diff?: Partial<NonNullable<T>>,
+	{ remove }: { remove?: T extends never ? string[] : Array<keyof T> } = {},
 ): NonNullable<T> {
 	if (!base) throw new Error('must pass a table');
 
 	const clone = util.copy(base);
-	if (diff) Object.assign(clone, diff);
+	Object.assign(clone, diff);
+
+	if (remove != null)
+		for (const k of remove) {
+			delete (clone as any)[k];
+			if (diff?.[k] != null) throw new Error(`you cannot both extend and remove the key "${k}"`);
+		}
 
 	return clone;
 }
