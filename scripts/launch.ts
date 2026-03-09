@@ -77,7 +77,7 @@ if (!existsSync(saveFile)) {
 		configFile,
 		'--mod-directory',
 		runModDir,
-		'--disable-audio',
+		// '--disable-audio',
 		'--verbose',
 		'--create',
 		saveFile,
@@ -124,7 +124,7 @@ function resolveSaveFile(saveSelector: string, savesDir: string, root: string): 
 }
 
 function resolveFactorioBin(explicitPath: string | undefined, home: string | undefined): string {
-	if (explicitPath && explicitPath.trim().length > 0) {
+	if (explicitPath != null && explicitPath.trim().length > 0) {
 		const candidate = explicitPath.trim();
 		if (isExecutable(candidate)) return candidate;
 
@@ -133,10 +133,10 @@ function resolveFactorioBin(explicitPath: string | undefined, home: string | und
 
 	const candidates = [
 		'/Applications/factorio.app/Contents/MacOS/factorio',
-		home ? join(home, 'Applications/factorio.app/Contents/MacOS/factorio') : undefined,
-		home ? join(home, '.factorio/bin/x64/factorio') : undefined,
-		home ? join(home, 'Library/Application Support/factorio/bin/x64/factorio') : undefined,
-		home
+		home != null ? join(home, 'Applications/factorio.app/Contents/MacOS/factorio') : undefined,
+		home != null ? join(home, '.factorio/bin/x64/factorio') : undefined,
+		home != null ? join(home, 'Library/Application Support/factorio/bin/x64/factorio') : undefined,
+		home != null
 			? join(home, 'Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/MacOS/factorio')
 			: undefined,
 	].filter((value): value is string => value !== undefined);
@@ -148,7 +148,8 @@ function resolveFactorioBin(explicitPath: string | undefined, home: string | und
 
 function readModInfo(filePath: string): { name: string; version: string } {
 	const parsed = JSON.parse(readFileSync(filePath, 'utf8')) as ModInfo;
-	if (!parsed.name || !parsed.version) fail(`Unable to read mod name/version from ${filePath}`);
+	if (parsed.name == null || parsed.name.length === 0 || parsed.version == null || parsed.version.length === 0)
+		fail(`Unable to read mod name/version from ${filePath}`);
 
 	return { name: parsed.name, version: parsed.version };
 }
