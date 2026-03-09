@@ -339,6 +339,22 @@ const caragoLandingPad = extend(
 		remove: ['minable'],
 	},
 );
+const moduleMoveBeam = extend(
+	data.raw.beam['chain-tesla-turret-beam-start']!,
+	{
+		name: names.moduleMoveBeam,
+		flags: ['not-on-map'],
+		hidden: true,
+		hidden_in_factoriopedia: true,
+		width: 0.5,
+		random_target_offset: false,
+		action_triggered_automatically: false,
+		target_offset: [0, 0],
+	},
+	{
+		remove: ['action', 'working_sound'],
+	},
+);
 
 for (const moduleId of shipModuleIds) {
 	const { tech, expands } = shipModules[moduleId];
@@ -420,6 +436,7 @@ data.extend([
 	...connectorPrototypes,
 	makeHubFluidPipe(),
 	...modulePlacementPrototypes,
+	moduleMoveBeam,
 	caragoLandingPad,
 	extend(data.raw['electric-energy-interface']['hidden-electric-energy-interface'], {
 		collision_box: zeroBox,

@@ -27,6 +27,7 @@ export const names = {
 		'hubAccumulator',
 		'hubFluidPipe',
 		'hubLandingPad',
+		'moduleMoveBeam',
 		'hubPowerPole',
 		// 'connectorRosterSection',
 		// 'moduleRosterFrame',

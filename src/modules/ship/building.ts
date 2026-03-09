@@ -1,6 +1,6 @@
 import { gui, on_event, parseBlueprint } from '@/lib/utils';
 import { getShipModule, names, placeableModules, shipConnectorSizes, ShipModuleId, shipModules } from './constants';
-import { LuaEntity, LuaPlayer, LuaRenderObject, TileWrite } from 'factorio:runtime';
+import { LuaEntity, LuaPlayer, TileWrite } from 'factorio:runtime';
 import { MapPositionStruct } from 'factorio:prototype';
 import { BBox, bboxIntersect, rotateCoordinate } from '@/lib/geometry';
 
@@ -8,7 +8,7 @@ let placing:
 	| { type: 'module'; player_index: number; id: (typeof placeableModules)[number] }
 	| { type: 'connector'; player_index: number; size: number }
 	| null = null;
-let movingModuleBorder: LuaRenderObject | null = null;
+let movingModuleBorder: LuaEntity[] = [];
 
 /**
  * Trade-offs on module build mode: Blueprint VS Item
@@ -178,17 +178,7 @@ on_event('on_pre_build', event => {
 			manual_collision_mode: true,
 		});
 		if (rotationChanged) {
-			player.cursor_stack
-				.build_blueprint({
-					force: player.force,
-					position: placementPosition,
-					surface: player.surface,
-					direction: placementDirection,
-				})
-				.forEach(item => {
-					if (item == null || !item.valid) return;
-					item.revive();
-				});
+			buildModuleTemplateBlueprint(player, placing.id, placementPosition, placementDirection);
 		}
 		for (const character of player.surface.find_entities_filtered({
 			type: 'character',
@@ -222,17 +212,7 @@ on_event('on_pre_build', event => {
 		}
 		player.surface.set_tiles(resetTiles);
 	} else {
-		player.cursor_stack
-			.build_blueprint({
-				force: player.force,
-				position: placementPosition,
-				surface: player.surface,
-				direction: placementDirection,
-			})
-			.forEach(item => {
-				if (item == null || !item.valid) return;
-				item.revive();
-			});
+		buildModuleTemplateBlueprint(player, placing.id, placementPosition, placementDirection);
 	}
 
 	storage.ship.modules[placing.id] = {
@@ -280,14 +260,20 @@ export function createGUI(player: LuaPlayer) {
 				player.clear_cursor();
 			} else {
 				placing = { type: 'module', id: moduleId, player_index: event.player_index };
-				const mod = shipModules[moduleId];
-				const bp = parseBlueprint(mod.blueprint);
+				player.clear_cursor();
 				const cursor = player.cursor_stack;
 				if (cursor) {
-					player.clear_cursor();
 					cursor.set_stack({ name: 'blueprint', count: 1 });
-					if (bp.entities != null) cursor.set_blueprint_entities(bp.entities);
-					if (bp.tiles != null) cursor.set_blueprint_tiles(bp.tiles);
+					const existingModule = storage.ship.modules[moduleId];
+					if (existingModule == null) setCursorBlueprintFromTemplate(cursor, moduleId);
+					else
+						setCursorBlueprintFromWorldModule(
+							player,
+							cursor,
+							moduleId,
+							existingModule.position,
+							existingModule.direction,
+						);
 					player.cursor_stack_temporary = true;
 				}
 				drawMovingModuleBorder(player, moduleId);
@@ -323,9 +309,9 @@ export function createGUI(player: LuaPlayer) {
 			} else {
 				placing = { type: 'connector', size, player_index: event.player_index };
 				clearMovingModuleBorder();
+				player.clear_cursor();
 				const cursor = player.cursor_stack;
 				if (cursor) {
-					player.clear_cursor();
 					cursor.set_stack({ name: names.connectorPlacementItem(size), count: 1 });
 					player.cursor_stack_temporary = true;
 				}
@@ -336,9 +322,66 @@ export function createGUI(player: LuaPlayer) {
 }
 
 function clearMovingModuleBorder() {
-	if (movingModuleBorder == null) return;
-	movingModuleBorder.destroy();
-	movingModuleBorder = null;
+	for (const beam of movingModuleBorder) {
+		if (!beam.valid) continue;
+		beam.destroy();
+	}
+	movingModuleBorder = [];
+}
+
+function setCursorBlueprintFromTemplate(cursor: LuaPlayer['cursor_stack'], moduleId: ShipModuleId) {
+	if (cursor == null) return;
+	const blueprint = parseBlueprint(shipModules[moduleId].blueprint);
+	cursor.clear_blueprint();
+	cursor.set_blueprint_entities(blueprint.entities ?? []);
+	cursor.set_blueprint_tiles(blueprint.tiles ?? []);
+}
+
+function buildModuleTemplateBlueprint(
+	player: LuaPlayer,
+	moduleId: ShipModuleId,
+	position: MapPositionStruct,
+	direction: defines.direction,
+) {
+	const cursor = player.cursor_stack;
+	if (cursor == null) return;
+	setCursorBlueprintFromTemplate(cursor, moduleId);
+	cursor
+		.build_blueprint({
+			force: player.force,
+			position,
+			surface: player.surface,
+			direction,
+		})
+		.forEach(item => {
+			if (item == null || !item.valid) return;
+			item.revive();
+		});
+}
+
+function setCursorBlueprintFromWorldModule(
+	player: LuaPlayer,
+	cursor: NonNullable<LuaPlayer['cursor_stack']>,
+	moduleId: ShipModuleId,
+	position: MapPositionStruct,
+	direction: defines.direction,
+) {
+	const bounds = getModuleTileBounds(moduleId, position, direction);
+	cursor.clear_blueprint();
+	cursor.create_blueprint({
+		surface: player.surface,
+		force: player.force,
+		area: {
+			left_top: bounds.topLeft,
+			right_bottom: bounds.bottomRight,
+		},
+		always_include_tiles: true,
+		include_entities: true,
+		include_modules: true,
+		include_station_names: true,
+		include_trains: true,
+		include_fuel: true,
+	});
 }
 
 function drawMovingModuleBorder(player: LuaPlayer, moduleId: ShipModuleId) {
@@ -346,20 +389,36 @@ function drawMovingModuleBorder(player: LuaPlayer, moduleId: ShipModuleId) {
 	const module = storage.ship.modules[moduleId];
 	if (module == null) return;
 	const bounds = getModuleTileBounds(moduleId, module.position, module.direction);
-	movingModuleBorder = rendering.draw_rectangle({
-		surface: player.surface,
-		left_top: bounds.topLeft,
-		color: {
-			r: 0.96,
-			g: 0.39,
-			b: 0.2,
-			a: 0.95,
-		},
-		width: 3,
-		players: [player.index],
-		draw_on_ground: true,
-		right_bottom: bounds.bottomRight,
-	});
+	const topLeft = bounds.topLeft;
+	const topRight = {
+		x: bounds.bottomRight.x,
+		y: bounds.topLeft.y,
+	};
+	const bottomRight = bounds.bottomRight;
+	const bottomLeft = {
+		x: bounds.topLeft.x,
+		y: bounds.bottomRight.y,
+	};
+	const edges: Array<{ from: MapPositionStruct; to: MapPositionStruct }> = [
+		{ from: topLeft, to: topRight },
+		{ from: topRight, to: bottomRight },
+		{ from: bottomRight, to: bottomLeft },
+		{ from: bottomLeft, to: topLeft },
+	];
+	for (const edge of edges) {
+		const beam = player.surface.create_entity({
+			name: names.moduleMoveBeam,
+			force: player.force,
+			position: edge.from,
+			source: edge.from,
+			target: edge.to,
+			source_position: edge.from,
+			target_position: edge.to,
+			duration: 60 * 60 * 24,
+			create_build_effect_smoke: false,
+		});
+		if (beam != null) movingModuleBorder.push(beam);
+	}
 }
 
 function getModuleBoudingBox(id: ShipModuleId, position: MapPositionStruct, direction: defines.direction): BBox {
